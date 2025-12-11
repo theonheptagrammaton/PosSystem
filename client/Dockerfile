@@ -6,16 +6,19 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+# Build sonucunu kontrol et (Loglarda görünmesi için)
+RUN echo "Build klasörü içeriği:" && ls -la /app/dist && ls -la /app/dist/assets
+
 # 2. Aşama: Serve
 FROM nginx:alpine
 
 # React build dosyalarını kopyala
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# --- GARANTİLİ NGINX AYARI (Dosya kopyalama yok, direkt yazıyoruz) ---
-# mime.types dosyasını zorla dahil ediyoruz ve 
-# JS/CSS dosyalarının doğru header ile gitmesini sağlıyoruz.
+# İzinleri ayarla (CSS'in yüklenmemesinin gizli sebebi bu olabilir)
+RUN chmod -R 755 /usr/share/nginx/html
 
+# Nginx ayarını oluştur
 RUN printf 'server { \n\
     listen 80; \n\
     include /etc/nginx/mime.types; \n\
@@ -23,15 +26,17 @@ RUN printf 'server { \n\
     root /usr/share/nginx/html; \n\
     index index.html; \n\
     \n\
+    # Ana sayfa ve React Router \n\
     location / { \n\
         try_files $uri $uri/ /index.html; \n\
     } \n\
     \n\
-    # CSS ve JS dosyaları için özel header (Garanti olsun) \n\
-    location ~ \.(css|js)$ { \n\
+    # CSS ve JS dosyaları ASLA index.html e düşmemeli \n\
+    # Eğer dosya yoksa 404 ver ki tarayıcı anlasın \n\
+    location ~ ^/assets/ { \n\
         try_files $uri =404; \n\
-        expires 1y; \n\
         access_log off; \n\
+        expires 1y; \n\
         add_header Cache-Control "public"; \n\
     } \n\
     \n\
