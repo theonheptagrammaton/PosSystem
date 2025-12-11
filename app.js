@@ -8,21 +8,36 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+// Socket.io Ayarları
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    // Hem localhost hem de production domainine izin veriyoruz
+    origin: [
+      "http://localhost:5173", 
+      "https://pos.theon.com.tr", 
+      "https://app.theon.com.tr"
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
-// Store io instance in app to facilitate use in controllers
+// IO nesnesini app'e kaydet (Controller'larda kullanmak için)
 app.set('io', io);
 
-// Middleware
-app.use(cors());
+// Middleware - CORS Ayarları (Backend API için)
+app.use(cors({
+  origin: [
+    "http://localhost:5173", 
+    "https://pos.theon.com.tr",
+    "https://app.theon.com.tr"
+  ],
+  credentials: true
+}));
+
 app.use(express.json());
 
-// Socket.io Logic
+// Socket.io Mantığı
 io.on('connection', (socket) => {
   const tenantId = socket.handshake.query.tenantId;
 
@@ -38,26 +53,32 @@ io.on('connection', (socket) => {
   });
 });
 
-// Import Routes
+// Rota Dosyalarını İçe Aktar
 const testRoutes = require('./routes/testRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 
-// Basic Route
+// Temel Rota (Sağlık Kontrolü)
 app.get('/', (req, res) => {
   res.json({ message: 'Point of Sale SaaS API is running' });
 });
 
-// Use Routes
+// Rota Tanımlamaları
 app.use('/api/test', testRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/public', publicRoutes);
 
-// Database Connection Check
+// --- DÜZELTME BURADA ---
+// Frontend '/api/auth/login' adresine istek atıyor.
+// Eğer login fonksiyonun publicRoutes içindeyse, '/api/auth' yolunu da oraya bağlıyoruz.
+app.use('/api/auth', publicRoutes); 
+// -----------------------
+
+// Veritabanı Bağlantı Kontrolü
 pool.connect()
     .then(client => {
         return client.query('SELECT NOW()')
@@ -72,7 +93,7 @@ pool.connect()
     })
     .catch(err => console.error('Error acquiring client', err.stack));
 
-// Start Server (Change app.listen to server.listen)
+// Sunucuyu Başlat
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
