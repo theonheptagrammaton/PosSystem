@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-black font-sans antialiased;
+  }
+  
+  /* Enforce sharp corners globally just in case */
+  * {
+    @apply rounded-none;
+  }
+
+  button {
+    @apply font-medium border border-black px-6 py-2 transition-all active:bg-black active:text-white uppercase tracking-wider text-sm;
+  }
+
+  input {
+    @apply border border-gray outline-none px-4 py-2 focus:border-black transition-colors w-full;
+  }
+}

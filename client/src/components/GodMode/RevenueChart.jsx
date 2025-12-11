@@ -1,0 +1,70 @@
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+
+const data = [
+  { time: '09:00', amount: 1200 },
+  { time: '10:00', amount: 2100 },
+  { time: '11:00', amount: 1800 },
+  { time: '12:00', amount: 4500 },
+  { time: '13:00', amount: 3200 },
+  { time: '14:00', amount: 2800 },
+  { time: '15:00', amount: 3600 },
+  { time: '16:00', amount: 5100 },
+];
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-black text-white p-2 border-none outline-none rounded-none text-xs font-mono">
+        <p>{`${label} : $${payload[0].value}`}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
+export default function RevenueChart({ data }) {
+  // Use dummy data if no data provided
+  const chartData = data && data.length > 0 ? data : [
+    { time: '09:00', amount: 0 },
+    { time: '10:00', amount: 0 },
+    { time: '11:00', amount: 0 },
+    { time: '12:00', amount: 0 },
+  ];
+
+  return (
+    <div className="w-full h-[300px] border border-black p-4">
+      <h3 className="text-xs font-bold uppercase tracking-widest mb-4">Hourly Revenue</h3>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData}>
+          <CartesianGrid 
+            strokeDasharray="3 3" 
+            vertical={false} 
+            stroke="#E5E5E5" 
+          />
+          <XAxis 
+            dataKey="time" 
+            stroke="#000" 
+            tick={{fontSize: 10, fontFamily: 'monospace'}} 
+            tickLine={false}
+            axisLine={{ stroke: '#000' }}
+          />
+          <YAxis 
+            stroke="#000" 
+            tick={{fontSize: 10, fontFamily: 'monospace'}} 
+            tickLine={false}
+            axisLine={false}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#000', strokeWidth: 1 }} />
+          <Area 
+            type="monotone" 
+            dataKey="amount" 
+            stroke="#000" 
+            strokeWidth={2}
+            fill="transparent" 
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
