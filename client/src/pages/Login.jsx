@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
+// import axios from 'axios';  <-- Bunu kaldırdık
+import api from '../api';     // <-- Yeni oluşturduğumuz merkezi API dosyasını çağırdık
 import { useNavigate } from 'react-router-dom';
 import { Terminal, Lock } from 'lucide-react';
 
@@ -11,8 +12,9 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Assuming backend runs on port 5001 as per previous setup
-      const response = await axios.post('http://localhost:5001/api/auth/login', {
+      // DÜZELTME: Artık 'http://localhost:5001' yok.
+      // api.post otomatik olarak doğru sunucu adresini başına ekleyecek.
+      const response = await api.post('/api/auth/login', {
         username,
         password
       });
@@ -28,7 +30,9 @@ export default function Login() {
       }
     } catch (error) {
       console.error('Login failed', error);
-      alert('LOGIN FAILED'); // Keeping it raw and simple as per design vibe
+      // Hata detayını görmek istersen konsola bunu da ekleyebilirsin:
+      // console.log(error.response?.data);
+      alert('LOGIN FAILED'); 
     }
   };
 
