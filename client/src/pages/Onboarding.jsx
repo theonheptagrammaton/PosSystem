@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../api'; // Merkezi API dosyamız
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
@@ -13,22 +13,31 @@ export default function Onboarding() {
     const token = localStorage.getItem('token');
     
     try {
-      await axios.post('http://localhost:5001/api/users/onboard', {
+      // DÜZELTME 1: Genelde güncelleme işlemleri PUT ile yapılır.
+      // DÜZELTME 2: Adres '/api/users/onboard' olmalı (Backend yapısına göre).
+      await api.put('/api/users/onboard', {
         company_name: companyName,
         full_name: fullName
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Update local user state
+      // LocalStorage'daki kullanıcıyı güncelle
       const user = JSON.parse(localStorage.getItem('user'));
-      user.is_onboarded = true;
-      localStorage.setItem('user', JSON.stringify(user));
+      if (user) {
+        user.is_onboarded = true;
+        user.full_name = fullName;
+        localStorage.setItem('user', JSON.stringify(user));
+      }
 
+      // Dashboard'a yönlendir
       navigate('/dashboard');
+      
     } catch (error) {
       console.error('Onboarding failed', error);
-      alert('SETUP FAILED');
+      // Hata detayını konsolda görmek için:
+      console.log(error.response?.data);
+      alert('SETUP FAILED: ' + (error.response?.data?.error || 'Server Error'));
     }
   };
 
