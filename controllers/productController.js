@@ -3,7 +3,7 @@ const { pool } = require('../config/db');
 // List Products
 const getAllProducts = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { category_id } = req.query;
 
     let query = 'SELECT * FROM products WHERE tenant_id = $1';
@@ -27,7 +27,7 @@ const getAllProducts = async (req, res) => {
 // Create Product
 const createProduct = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { category_id, name, description, price, is_available } = req.body;
 
     if (!name || price === undefined) {
@@ -52,7 +52,7 @@ const createProduct = async (req, res) => {
 // Update Product
 const updateProduct = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { id } = req.params;
     const { category_id, name, description, price, is_available } = req.body;
 
@@ -96,7 +96,7 @@ const updateProduct = async (req, res) => {
 // Delete Product
 const deleteProduct = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { id } = req.params;
 
     const result = await pool.query(

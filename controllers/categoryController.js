@@ -4,10 +4,10 @@ const { pool } = require('../config/db');
 const getAllCategories = async (req, res) => {
   try {
     console.log('getAllCategories Request User:', req.user); // DEBUG LOG
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     
     if (!tenantId) {
-       console.error('Tenant ID missing in request user');
+       console.error('Tenant ID missing in request user', req.user);
        return res.status(400).json({ error: 'Tenant ID missing' });
     }
 
@@ -25,7 +25,7 @@ const getAllCategories = async (req, res) => {
 // Create Category
 const createCategory = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { name, rank } = req.body;
 
     if (!name) {
@@ -46,7 +46,7 @@ const createCategory = async (req, res) => {
 // Update Category
 const updateCategory = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { id } = req.params;
     const { name, rank } = req.body;
 
@@ -69,7 +69,7 @@ const updateCategory = async (req, res) => {
 // Delete Category
 const deleteCategory = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { id } = req.params;
 
     const result = await pool.query(

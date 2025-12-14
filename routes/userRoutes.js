@@ -3,7 +3,11 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const authenticateToken = require('../middlewares/authMiddleware');
 
-// Route: PUT /api/users/onboard
-router.put('/onboard', authenticateToken, userController.onboardUser);
+router.use(authenticateToken);
+
+router.put('/onboard', userController.onboardUser);
+router.get('/', userController.getUsers);
+router.post('/', userController.createUser);
+router.delete('/:id', userController.deleteUser);
 
 module.exports = router;

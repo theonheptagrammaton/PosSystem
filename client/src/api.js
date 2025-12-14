@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // API adresini ortam değişkeninden al, yoksa (localde çalışıyorsan) localhost'u kullan
 // Coolify'da VITE_API_URL tanımladığımız için oradaki adresi alacak.
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const baseURL = import.meta.env.VITE_API_URL || ''; // Relative path for production, or set VITE_API_URL locally
 
 const api = axios.create({
   baseURL: baseURL,

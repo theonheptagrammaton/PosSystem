@@ -1,11 +1,14 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Store, Utensils, Boxes, Settings as SettingsIcon, LogOut, Building2 } from 'lucide-react';
+import { LayoutDashboard, Store, Utensils, Boxes, Settings as SettingsIcon, LogOut, Building2, User } from 'lucide-react';
 import { useGodMode } from '../context/GodModeContext';
 
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isGodMode, toggleGodMode } = useGodMode();
+  const user = JSON.parse(localStorage.getItem('user'));
+  const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'branch_manager';
 
   // Helper to get title based on path
   const getPageTitle = () => {
@@ -17,6 +20,7 @@ export default function Layout() {
       case 'inventory': return 'ENVANTER KONTROLÜ';
       case 'branches': return 'ŞUBE YÖNETİMİ';
       case 'settings': return 'SİSTEM AYARLARI';
+      case 'users': return 'KULLANICI YÖNETİMİ';
       default: return 'PANEL';
     }
   };
@@ -31,7 +35,10 @@ export default function Layout() {
     { path: '/dashboard/pos', label: 'POS / Kasa', icon: Store },
     { path: '/dashboard/tables', label: 'Masalar', icon: Utensils },
     { path: '/dashboard/inventory', label: 'Envanter', icon: Boxes },
-    { path: '/dashboard/branches', label: 'Şubeler', icon: Building2 }, // New Item
+    ...(isAdmin ? [
+      { path: '/dashboard/branches', label: 'Şubeler', icon: Building2 }, 
+      { path: '/dashboard/users', label: 'Kullanıcılar', icon: User }, // Admin Only
+    ] : []),
     { path: '/dashboard/settings', label: 'Ayarlar', icon: SettingsIcon },
   ];
 

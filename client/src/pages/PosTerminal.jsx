@@ -19,12 +19,17 @@ export default function PosTerminal() {
         try {
             // Need a single branch endpoint or filter from all
             // Ideally backend should have GET /api/branches/:id, but for now filtering from all if not exists
-            // Assuming we added GET /api/branches, but we only have getAll. 
-            // Let's assume we can fetch all and find, or backend supports it efficiently.
+            // Now backend filters branches based on user role. 
+            // If we are cashier, res.data will only contain our branch.
             const res = await api.get('/api/branches');
             const b = res.data.find(item => item.id === parseInt(branchId));
+            
             if (b) setBranch(b);
-            else alert('Şube bulunamadı');
+            else {
+                // If not found in the list, but we have an ID, it means unauthorized or invalid ID
+                alert('Bu şubeye erişim yetkiniz yok veya şube bulunamadı.');
+                window.close();
+            }
         } catch (err) {
             console.error(err);
         }

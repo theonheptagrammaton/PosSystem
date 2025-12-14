@@ -11,12 +11,7 @@ const server = http.createServer(app);
 // Socket.io Ayarları
 const io = new Server(server, {
   cors: {
-    // Hem localhost hem de production domainine izin veriyoruz
-    origin: [
-      "http://localhost:5173", 
-      "https://pos.theon.com.tr", 
-      "https://app.theon.com.tr"
-    ],
+    origin: process.env.FRONTEND_URL || "http://localhost:5173", // Use ENV or default for dev
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -27,11 +22,7 @@ app.set('io', io);
 
 // Middleware - CORS Ayarları (Backend API için)
 app.use(cors({
-  origin: [
-    "http://localhost:5173", 
-    "https://pos.theon.com.tr",
-    "https://app.theon.com.tr"
-  ],
+  origin: process.env.FRONTEND_URL || "http://localhost:5173", // Use ENV or default for dev
   credentials: true
 }));
 

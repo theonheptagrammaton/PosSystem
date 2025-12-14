@@ -64,7 +64,8 @@ const login = async (req, res) => {
       { 
         userId: user.id, 
         tenantId: user.tenant_id, 
-        role: user.role 
+        role: user.role,
+        branchId: user.branch_id // Add branch_id to token
       },
       process.env.JWT_SECRET || 'gizli_anahtar', // .env dosyasındaki secret
       { expiresIn: '24h' }
@@ -80,7 +81,8 @@ const login = async (req, res) => {
         role: user.role,
         is_onboarded: user.is_onboarded,
         full_name: user.full_name,
-        tenant_id: user.tenant_id // <-- İstemci tarafında kullanılıyor
+        tenant_id: user.tenant_id,
+        branch_id: user.branch_id // Add branch_id to response
       }
     });
 

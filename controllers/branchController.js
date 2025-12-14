@@ -3,11 +3,18 @@ const { pool } = require('../config/db');
 // List Branches
 const getAllBranches = async (req, res) => {
   try {
-    const { tenantId } = req.user;
-    const result = await pool.query(
-      'SELECT * FROM branches WHERE tenant_id = $1 ORDER BY id ASC', 
-      [tenantId]
-    );
+    const tenantId = req.user.tenantId || req.user.tenant_id;
+    let query = 'SELECT * FROM branches WHERE tenant_id = $1';
+    const params = [tenantId];
+
+    if (req.user.branch_id) {
+        query += ' AND id = $2';
+        params.push(req.user.branch_id);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching branches:', error);
@@ -18,7 +25,7 @@ const getAllBranches = async (req, res) => {
 // Create Branch
 const createBranch = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { name, address, phone, table_count } = req.body;
 
     if (!name) {
@@ -39,7 +46,7 @@ const createBranch = async (req, res) => {
 // Update Branch
 const updateBranch = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { id } = req.params;
     const { name, address, phone, table_count } = req.body;
 
@@ -62,7 +69,7 @@ const updateBranch = async (req, res) => {
 // Delete Branch
 const deleteBranch = async (req, res) => {
   try {
-    const { tenantId } = req.user;
+    const tenantId = req.user.tenantId || req.user.tenant_id;
     const { id } = req.params;
 
     const result = await pool.query(

@@ -8,6 +8,7 @@ import Tables from './pages/Tables';
 import Inventory from './pages/Inventory';
 import Settings from './pages/Settings';
 import Branches from './pages/Branches';
+import Users from './pages/Users';
 import PosTerminal from './pages/PosTerminal';
 
 import PublicLayout from './layouts/PublicLayout';
@@ -58,6 +59,7 @@ function App() {
           <Route path="tables" element={<Tables />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="branches" element={<Branches />} />
+          <Route path="users" element={<Users />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

@@ -20,7 +20,11 @@ export default function Login() {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      if (user.is_onboarded) {
+      if (user.role === 'cashier') {
+        // Cashier goes straight to POS
+        navigate(`/pos-terminal/${user.branch_id}`);
+      } else if (user.is_onboarded) {
+        // Admin and Managers go to Dashboard
         navigate('/dashboard');
       } else {
         navigate('/onboarding');
