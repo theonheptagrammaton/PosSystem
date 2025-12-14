@@ -1,0 +1,89 @@
+const { pool } = require('../config/db');
+
+// List Branches
+const getAllBranches = async (req, res) => {
+  try {
+    const { tenantId } = req.user;
+    const result = await pool.query(
+      'SELECT * FROM branches WHERE tenant_id = $1 ORDER BY id ASC', 
+      [tenantId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching branches:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Create Branch
+const createBranch = async (req, res) => {
+  try {
+    const { tenantId } = req.user;
+    const { name, address, phone } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Branch name is required' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO branches (tenant_id, name, address, phone) VALUES ($1, $2, $3, $4) RETURNING *',
+      [tenantId, name, address, phone]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating branch:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Update Branch
+const updateBranch = async (req, res) => {
+  try {
+    const { tenantId } = req.user;
+    const { id } = req.params;
+    const { name, address, phone } = req.body;
+
+    const result = await pool.query(
+      'UPDATE branches SET name = $1, address = $2, phone = $3 WHERE id = $4 AND tenant_id = $5 RETURNING *',
+      [name, address, phone, id, tenantId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Branch not found or unauthorized' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating branch:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Delete Branch
+const deleteBranch = async (req, res) => {
+  try {
+    const { tenantId } = req.user;
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM branches WHERE id = $1 AND tenant_id = $2 RETURNING *',
+      [id, tenantId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Branch not found or unauthorized' });
+    }
+
+    res.json({ message: 'Branch deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting branch:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+module.exports = {
+  getAllBranches,
+  createBranch,
+  updateBranch,
+  deleteBranch
+};

@@ -20,7 +20,7 @@ export default function MobileMenu() {
           setExpandedCategory(res.data.categories[0].id);
         }
       } catch (err) {
-        console.error('Error fetching menu:', err);
+        console.error('Menü getirilemedi:', err);
       }
     };
     fetchData();
@@ -133,7 +133,7 @@ export default function MobileMenu() {
                            <p className="text-xs text-gray-500 mt-1">{product.description}</p>
                          </div>
                          <div className="font-mono font-bold whitespace-nowrap ml-2">
-                           ${product.price}
+                           ₺{product.price}
                          </div>
                        </div>
                        
@@ -171,7 +171,7 @@ export default function MobileMenu() {
         <div className="fixed bottom-0 left-0 right-0 bg-black text-white p-4 flex justify-between items-center z-50 border-t border-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
            <div className="flex flex-col">
              <span className="text-[10px] text-gray-400 font-mono tracking-widest">TOPLAM</span>
-             <span className="text-xl font-bold font-mono tracking-tighter">${totalAmount.toFixed(2)}</span>
+             <span className="text-xl font-bold font-mono tracking-tighter">₺{totalAmount.toFixed(2)}</span>
            </div>
            
            <button 

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-// import axios from 'axios';  <-- Bunu kaldırdık
-import api from '../api';     // <-- Yeni oluşturduğumuz merkezi API dosyasını çağırdık
+import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import { Terminal, Lock } from 'lucide-react';
 
@@ -12,8 +11,6 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // DÜZELTME: Artık 'http://localhost:5001' yok.
-      // api.post otomatik olarak doğru sunucu adresini başına ekleyecek.
       const response = await api.post('/api/auth/login', {
         username,
         password
@@ -29,10 +26,8 @@ export default function Login() {
         navigate('/onboarding');
       }
     } catch (error) {
-      console.error('Login failed', error);
-      // Hata detayını görmek istersen konsola bunu da ekleyebilirsin:
-      // console.log(error.response?.data);
-      alert('LOGIN FAILED'); 
+      console.error('Giriş başarısız', error);
+      alert('GİRİŞ BAŞARISIZ: Kullanıcı adı veya şifre hatalı olabilir.'); 
     }
   };
 
@@ -42,24 +37,24 @@ export default function Login() {
         
         <div className="mb-8 text-center border-b border-black pb-4">
           <Terminal className="w-8 h-8 mx-auto mb-2" />
-          <h1 className="text-2xl font-bold tracking-widest">SYSTEM_ACCESS</h1>
+          <h1 className="text-2xl font-bold tracking-widest">SİSTEM GİRİŞİ</h1>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest block">User ID</label>
+            <label className="text-xs font-bold uppercase tracking-widest block">Kullanıcı Adı</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full border border-gray px-4 py-3 focus:border-black outline-none transition-colors rounded-none placeholder-gray-400"
-              placeholder="ENTER_USERNAME"
+              placeholder="kulanici_adi"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest block">Password</label>
+            <label className="text-xs font-bold uppercase tracking-widest block">Şifre</label>
             <div className="relative">
               <input
                 type="password"
@@ -77,7 +72,7 @@ export default function Login() {
             type="submit"
             className="w-full bg-black text-white py-4 font-bold uppercase tracking-widest border border-black hover:bg-white hover:text-black transition-colors rounded-none"
           >
-            Initiate Session
+            OTURUM AÇ
           </button>
         </form>
 

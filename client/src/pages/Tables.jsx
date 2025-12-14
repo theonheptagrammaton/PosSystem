@@ -8,7 +8,7 @@ export default function Tables() {
   // Dummy Tables Data (1-12)
   const tables = Array.from({ length: 12 }, (_, i) => ({
     id: i + 1,
-    status: Math.random() > 0.7 ? 'OCCUPIED' : 'EMPTY' 
+    status: Math.random() > 0.7 ? 'DOLU' : 'BOŞ' 
   }));
 
   const user = JSON.parse(localStorage.getItem('user'));
@@ -32,7 +32,7 @@ export default function Tables() {
       ctx.drawImage(img, 0, 0);
       const pngFile = canvas.toDataURL("image/png");
       const downloadLink = document.createElement("a");
-      downloadLink.download = `Table-${selectedTable.id}-QR.png`;
+      downloadLink.download = `Masa-${selectedTable.id}-QR.png`;
       downloadLink.href = pngFile;
       downloadLink.click();
     };
@@ -40,7 +40,6 @@ export default function Tables() {
     img.src = "data:image/svg+xml;base64," + btoa(svgData);
   };
 
-  // Simpler SVG Download as fallback or primary if Canvas fails in some envs
   const downloadSvg = () => {
     const svg = document.getElementById("qr-code-svg");
     const svgData = new XMLSerializer().serializeToString(svg);
@@ -48,7 +47,7 @@ export default function Tables() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Table-${selectedTable?.id}-QR.svg`;
+    link.download = `Masa-${selectedTable?.id}-QR.svg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -57,7 +56,7 @@ export default function Tables() {
   return (
     <div className="p-8 h-full">
       <h1 className="text-2xl font-bold uppercase mb-6 tracking-widest border-b border-black pb-2 inline-block">
-        Tables Manager
+        Masa Yönetimi
       </h1>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -66,7 +65,7 @@ export default function Tables() {
             <div className="text-4xl font-bold font-mono">#{table.id}</div>
             
             <div className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${
-              table.status === 'OCCUPIED' ? 'bg-black text-white' : 'text-gray-400 border border-gray-200'
+              table.status === 'DOLU' ? 'bg-black text-white' : 'text-gray-400 border border-gray-200'
             }`}>
               {table.status}
             </div>
@@ -75,7 +74,7 @@ export default function Tables() {
               onClick={() => setSelectedTable(table)}
               className="w-full mt-4 bg-black text-white py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black border border-black transition-colors"
             >
-              QR Show
+              QR KOD GÖSTER
             </button>
           </div>
         ))}
@@ -85,7 +84,7 @@ export default function Tables() {
       <Modal 
         isOpen={!!selectedTable} 
         onClose={() => setSelectedTable(null)} 
-        title={`TABLE ${selectedTable?.id} QR CODE`}
+        title={`MASA ${selectedTable?.id} QR KODU`}
       >
         <div className="flex flex-col items-center gap-6">
           <div className="bg-white p-4 border border-black">
@@ -99,13 +98,13 @@ export default function Tables() {
             )}
           </div>
           
-          <div className="text-center">
-            <p className="text-xs font-mono mb-2">{getQrUrl(selectedTable?.id)}</p>
+          <div className="text-center w-full">
+            <p className="text-xs font-mono mb-2 truncate">{getQrUrl(selectedTable?.id)}</p>
             <button 
               onClick={downloadSvg}
               className="bg-black text-white px-6 py-3 font-bold uppercase tracking-widest hover:opacity-80 w-full"
             >
-              DOWNLOAD SVG
+              SVG İNDİR
             </button>
           </div>
         </div>

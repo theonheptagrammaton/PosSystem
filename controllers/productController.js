@@ -3,11 +3,11 @@ const { pool } = require('../config/db');
 // List Products
 const getAllProducts = async (req, res) => {
   try {
-    const { tenant_id } = req.user;
+    const { tenantId } = req.user;
     const { category_id } = req.query;
 
     let query = 'SELECT * FROM products WHERE tenant_id = $1';
-    let params = [tenant_id];
+    let params = [tenantId];
 
     if (category_id) {
       query += ' AND category_id = $2';
@@ -27,7 +27,7 @@ const getAllProducts = async (req, res) => {
 // Create Product
 const createProduct = async (req, res) => {
   try {
-    const { tenant_id } = req.user;
+    const { tenantId } = req.user;
     const { category_id, name, description, price, is_available } = req.body;
 
     if (!name || price === undefined) {
@@ -40,7 +40,7 @@ const createProduct = async (req, res) => {
 
     const result = await pool.query(
       'INSERT INTO products (tenant_id, category_id, name, description, price, is_available) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [tenant_id, category_id || null, name, description, price, is_available !== undefined ? is_available : true]
+      [tenantId, category_id || null, name, description, price, is_available !== undefined ? is_available : true]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -52,7 +52,7 @@ const createProduct = async (req, res) => {
 // Update Product
 const updateProduct = async (req, res) => {
   try {
-    const { tenant_id } = req.user;
+    const { tenantId } = req.user;
     const { id } = req.params;
     const { category_id, name, description, price, is_available } = req.body;
 
@@ -76,7 +76,7 @@ const updateProduct = async (req, res) => {
     }
 
     values.push(id);
-    values.push(tenant_id);
+    values.push(tenantId);
 
     const query = `UPDATE products SET ${fields.join(', ')} WHERE id = $${idx++} AND tenant_id = $${idx++} RETURNING *`;
 
@@ -96,12 +96,12 @@ const updateProduct = async (req, res) => {
 // Delete Product
 const deleteProduct = async (req, res) => {
   try {
-    const { tenant_id } = req.user;
+    const { tenantId } = req.user;
     const { id } = req.params;
 
     const result = await pool.query(
       'DELETE FROM products WHERE id = $1 AND tenant_id = $2 RETURNING *',
-      [id, tenant_id]
+      [id, tenantId]
     );
 
     if (result.rows.length === 0) {

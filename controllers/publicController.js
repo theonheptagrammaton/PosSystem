@@ -70,8 +70,10 @@ const login = async (req, res) => {
         id: user.id,
         username: user.username,
         role: user.role,
+        role: user.role,
         is_onboarded: user.is_onboarded,
-        full_name: user.full_name
+        full_name: user.full_name,
+        tenant_id: user.tenant_id // <-- İstemci tarafında kullanılıyor
       }
     });
 

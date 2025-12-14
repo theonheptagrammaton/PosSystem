@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import api from '../api'; // Merkezi API dosyamız
+import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
@@ -10,16 +10,11 @@ export default function Onboarding() {
 
   const handleOnboard = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
     
     try {
-      // DÜZELTME 1: Genelde güncelleme işlemleri PUT ile yapılır.
-      // DÜZELTME 2: Adres '/api/users/onboard' olmalı (Backend yapısına göre).
       await api.put('/api/users/onboard', {
         company_name: companyName,
         full_name: fullName
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       // LocalStorage'daki kullanıcıyı güncelle
@@ -35,9 +30,7 @@ export default function Onboarding() {
       
     } catch (error) {
       console.error('Onboarding failed', error);
-      // Hata detayını konsolda görmek için:
-      console.log(error.response?.data);
-      alert('SETUP FAILED: ' + (error.response?.data?.error || 'Server Error'));
+      alert('KURULUM HATASI: ' + (error.response?.data?.error || 'Sunucu Hatası'));
     }
   };
 
@@ -46,32 +39,32 @@ export default function Onboarding() {
       <div className="w-full max-w-lg border-2 border-black p-12">
         
         <div className="mb-10">
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mb-2">Initial Setup</h1>
-          <p className="text-sm font-mono text-gray-500">COMPLETE_REGISTRATION_PROTOCOL</p>
+          <h1 className="text-3xl font-bold uppercase tracking-tighter mb-2">Başlangıç Kurulumu</h1>
+          <p className="text-sm font-mono text-gray-500">KAYIT_PROTOKOLUNU_TAMAMLA</p>
         </div>
 
         <form onSubmit={handleOnboard} className="space-y-8">
           
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest block">Company Name</label>
+            <label className="text-xs font-bold uppercase tracking-widest block">Firma Adı</label>
             <input
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               className="w-full border-b-2 border-gray px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
-              placeholder="ENTER_BUSINESS_NAME"
+              placeholder="İŞLETME ADINI GİRİNİZ"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest block">Full Name</label>
+            <label className="text-xs font-bold uppercase tracking-widest block">Ad Soyad</label>
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full border-b-2 border-gray px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
-              placeholder="ENTER_FULL_NAME"
+              placeholder="AD SOYAD GİRİNİZ"
               required
             />
           </div>
@@ -81,7 +74,7 @@ export default function Onboarding() {
               type="submit"
               className="group w-full flex items-center justify-between bg-white border-2 border-black text-black px-6 py-4 font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors rounded-none"
             >
-              <span>Complete Setup</span>
+              <span>Kurulumu Tamamla</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>

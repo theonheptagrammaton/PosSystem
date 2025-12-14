@@ -40,7 +40,7 @@ export default function Inventory() {
         setSelectedCategory(res.data[0]);
       }
     } catch (err) {
-      console.error('Error fetching categories:', err);
+      console.error('Kategoriler alınamadı:', err);
     }
   };
 
@@ -49,7 +49,7 @@ export default function Inventory() {
       const res = await api.get(`/api/products?category_id=${categoryId}`);
       setProducts(res.data);
     } catch (err) {
-      console.error('Error fetching products:', err);
+      console.error('Ürünler alınamadı:', err);
     }
   };
 
@@ -60,13 +60,13 @@ export default function Inventory() {
       setNewCategoryName('');
       fetchCategories();
     } catch (err) {
-      alert('Failed to add category');
+      alert('Kategori eklenemedi');
     }
   };
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
-    if (!selectedCategory) return alert('Select a category first');
+    if (!selectedCategory) return alert('Önce bir kategori seçmelisiniz');
     
     try {
       await api.post('/api/products', {
@@ -79,17 +79,17 @@ export default function Inventory() {
       setFormData({ name: '', price: '', description: '', is_available: true });
       fetchProducts(selectedCategory.id);
     } catch (err) {
-      alert('Failed to add product');
+      alert('Ürün eklenemedi');
     }
   };
 
   const handleDeleteProduct = async (id) => {
-    if (!confirm('Are you sure?')) return;
+    if (!confirm('Emin misiniz?')) return;
     try {
       await api.delete(`/api/products/${id}`);
       fetchProducts(selectedCategory.id);
     } catch (err) {
-      alert('Failed to delete product');
+      alert('Ürün silinemedi');
     }
   };
 
@@ -97,7 +97,7 @@ export default function Inventory() {
     <div className="flex h-full p-8 gap-8">
       {/* Sidebar: Categories */}
       <div className="w-1/4 flex flex-col gap-4">
-        <h2 className="font-bold uppercase tracking-widest border-b border-black pb-2">Categories</h2>
+        <h2 className="font-bold uppercase tracking-widest border-b border-black pb-2">KATEGORİLER</h2>
         
         {/* Add Category */}
         <div className="flex gap-2">
@@ -105,7 +105,7 @@ export default function Inventory() {
             type="text" 
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            placeholder="NEW CAT..."
+            placeholder="YENİ KAT..."
             className="flex-1 border border-black p-2 text-xs focus:bg-gray-100 outline-none placeholder:text-gray-400"
           />
           <button 
@@ -130,7 +130,7 @@ export default function Inventory() {
              </div>
            ))}
            {categories.length === 0 && (
-             <div className="p-4 text-xs text-gray-400 text-center">NO CATEGORIES</div>
+             <div className="p-4 text-xs text-gray-400 text-center">KATEGORİ YOK</div>
            )}
         </div>
       </div>
@@ -141,7 +141,7 @@ export default function Inventory() {
           <>
             <div className="flex justify-between items-center border-b border-black pb-2">
               <h2 className="font-bold uppercase tracking-widest">
-                {selectedCategory.name} <span className="text-gray-400 text-xs ml-2">({products.length} ITEMS)</span>
+                {selectedCategory.name} <span className="text-gray-400 text-xs ml-2">({products.length} ÜRÜN)</span>
               </h2>
               <button 
                 onClick={() => setIsProductModalOpen(true)}
@@ -156,28 +156,28 @@ export default function Inventory() {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/2">PRODUCT NAME</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/4">PRICE</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/6 text-center">ACTIVE</th>
-                    <th className="p-3 border-b border-black font-bold text-xs text-center">ACTIONS</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/2">ÜRÜN ADI</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/4">FİYAT</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/6 text-center">AKTİF</th>
+                    <th className="p-3 border-b border-black font-bold text-xs text-center">İŞLEM</th>
                   </tr>
                 </thead>
                 <tbody>
                   {products.map(p => (
                     <tr key={p.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50">
                       <td className="p-3 border-r border-black font-mono text-sm">{p.name}</td>
-                      <td className="p-3 border-r border-black font-mono text-sm">${p.price}</td>
+                      <td className="p-3 border-r border-black font-mono text-sm">₺{p.price}</td>
                       <td className="p-3 border-r border-black text-center">
                         <input type="checkbox" checked={p.is_available} readOnly className="accent-black" />
                       </td>
                       <td className="p-3 text-center space-x-2">
-                        <button className="text-xs underline hover:no-underline">EDIT</button> 
+                        <button className="text-xs underline hover:no-underline">DÜZENLE</button> 
                         <span className="text-gray-300">|</span>
                         <button 
                           onClick={() => handleDeleteProduct(p.id)}
                           className="text-xs underline hover:no-underline text-gray-500 hover:text-black"
                         >
-                          DELETE
+                          SİL
                         </button>
                       </td>
                     </tr>
@@ -185,7 +185,7 @@ export default function Inventory() {
                   {products.length === 0 && (
                     <tr>
                       <td colSpan="4" className="p-8 text-center text-gray-400 text-xs italic">
-                        NO PRODUCTS IN THIS CATEGORY
+                        BU KATEGORİDE ÜRÜN YOK
                       </td>
                     </tr>
                   )}
@@ -195,7 +195,7 @@ export default function Inventory() {
           </>
         ) : (
            <div className="flex-1 border border-black border-dashed flex items-center justify-center text-gray-400 font-mono text-sm">
-             SELECT A CATEGORY TO MANAGE PRODUCTS
+             ÜRÜN YÖNETİMİ İÇİN BİR KATEGORİ SEÇİN
            </div>
         )}
       </div>
@@ -204,11 +204,11 @@ export default function Inventory() {
       <Modal 
         isOpen={isProductModalOpen} 
         onClose={() => setIsProductModalOpen(false)} 
-        title="ADD NEW PRODUCT"
+        title="YENİ ÜRÜN EKLE"
       >
         <form onSubmit={handleAddProduct} className="flex flex-col gap-4">
           <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Name</label>
+            <label className="block text-xs font-bold mb-1 uppercase">Ürün Adı</label>
             <input 
               type="text" 
               required
@@ -219,7 +219,7 @@ export default function Inventory() {
           </div>
           
           <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Price ($)</label>
+            <label className="block text-xs font-bold mb-1 uppercase">Fiyat (₺)</label>
             <input 
               type="number" 
               required
@@ -239,7 +239,7 @@ export default function Inventory() {
                  checked={formData.is_available}
                  onChange={e => setFormData({...formData, is_available: e.target.checked})}
                />
-               <span className="text-xs font-bold uppercase">Available for Sale</span>
+               <span className="text-xs font-bold uppercase">Satışa Uygun</span>
              </label>
           </div>
 
@@ -247,7 +247,7 @@ export default function Inventory() {
             type="submit" 
             className="bg-black text-white p-3 font-bold uppercase tracking-widest hover:bg-gray-800 mt-4"
           >
-            SAVE PRODUCT
+            KAYDET
           </button>
         </form>
       </Modal>

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Store, Utensils, Boxes, Settings as SettingsIcon, LogOut } from 'lucide-react';
+import { LayoutDashboard, Store, Utensils, Boxes, Settings as SettingsIcon, LogOut, Building2 } from 'lucide-react';
 import { useGodMode } from '../context/GodModeContext';
 
 export default function Layout() {
@@ -11,12 +11,13 @@ export default function Layout() {
   const getPageTitle = () => {
     const path = location.pathname.split('/')[2] || 'overview';
     switch (path) {
-      case 'overview': return 'SYSTEM OVERVIEW';
-      case 'pos': return 'POINT OF SALE';
-      case 'tables': return 'TABLE MANAGEMENT';
-      case 'inventory': return 'INVENTORY CONTROL';
-      case 'settings': return 'SYSTEM CONFIGURATION';
-      default: return 'DASHBOARD';
+      case 'overview': return 'SİSTEM ÖZETİ';
+      case 'pos': return 'SATIŞ NOKTASI (POS)';
+      case 'tables': return 'MASA YÖNETİMİ';
+      case 'inventory': return 'ENVANTER KONTROLÜ';
+      case 'branches': return 'ŞUBE YÖNETİMİ';
+      case 'settings': return 'SİSTEM AYARLARI';
+      default: return 'PANEL';
     }
   };
 
@@ -30,6 +31,7 @@ export default function Layout() {
     { path: '/dashboard/pos', label: 'POS / Kasa', icon: Store },
     { path: '/dashboard/tables', label: 'Masalar', icon: Utensils },
     { path: '/dashboard/inventory', label: 'Envanter', icon: Boxes },
+    { path: '/dashboard/branches', label: 'Şubeler', icon: Building2 }, // New Item
     { path: '/dashboard/settings', label: 'Ayarlar', icon: SettingsIcon },
   ];
 

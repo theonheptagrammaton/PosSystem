@@ -7,6 +7,7 @@ import Pos from './pages/Pos';
 import Tables from './pages/Tables';
 import Inventory from './pages/Inventory';
 import Settings from './pages/Settings';
+import Branches from './pages/Branches';
 
 import PublicLayout from './layouts/PublicLayout';
 import MobileMenu from './pages/public/MobileMenu';
@@ -53,6 +54,7 @@ function App() {
           <Route path="pos" element={<Pos />} />
           <Route path="tables" element={<Tables />} />
           <Route path="inventory" element={<Inventory />} />
+          <Route path="branches" element={<Branches />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

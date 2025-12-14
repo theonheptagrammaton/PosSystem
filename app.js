@@ -81,6 +81,9 @@ app.use('/api/auth', publicRoutes);
 // Frontend '/api/users/onboard' adresine istek atıyor.
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
+
+const branchRoutes = require('./routes/branchRoutes');
+app.use('/api/branches', branchRoutes);
 // ---------------------
 
 // Veritabanı Bağlantı Kontrolü

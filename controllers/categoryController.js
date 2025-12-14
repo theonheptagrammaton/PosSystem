@@ -3,10 +3,10 @@ const { pool } = require('../config/db');
 // List Categories
 const getAllCategories = async (req, res) => {
   try {
-    const { tenant_id } = req.user;
+    const { tenantId } = req.user;
     const result = await pool.query(
       'SELECT * FROM categories WHERE tenant_id = $1 ORDER BY rank ASC, id ASC', 
-      [tenant_id]
+      [tenantId]
     );
     res.json(result.rows);
   } catch (error) {
@@ -18,7 +18,7 @@ const getAllCategories = async (req, res) => {
 // Create Category
 const createCategory = async (req, res) => {
   try {
-    const { tenant_id } = req.user;
+    const { tenantId } = req.user;
     const { name, rank } = req.body;
 
     if (!name) {
@@ -27,7 +27,7 @@ const createCategory = async (req, res) => {
 
     const result = await pool.query(
       'INSERT INTO categories (tenant_id, name, rank) VALUES ($1, $2, $3) RETURNING *',
-      [tenant_id, name, rank || 0]
+      [tenantId, name, rank || 0]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -39,13 +39,13 @@ const createCategory = async (req, res) => {
 // Update Category
 const updateCategory = async (req, res) => {
   try {
-    const { tenant_id } = req.user;
+    const { tenantId } = req.user;
     const { id } = req.params;
     const { name, rank } = req.body;
 
     const result = await pool.query(
       'UPDATE categories SET name = $1, rank = $2 WHERE id = $3 AND tenant_id = $4 RETURNING *',
-      [name, rank, id, tenant_id]
+      [name, rank, id, tenantId]
     );
 
     if (result.rows.length === 0) {
@@ -62,12 +62,12 @@ const updateCategory = async (req, res) => {
 // Delete Category
 const deleteCategory = async (req, res) => {
   try {
-    const { tenant_id } = req.user;
+    const { tenantId } = req.user;
     const { id } = req.params;
 
     const result = await pool.query(
       'DELETE FROM categories WHERE id = $1 AND tenant_id = $2 RETURNING *',
-      [id, tenant_id]
+      [id, tenantId]
     );
 
     if (result.rows.length === 0) {
