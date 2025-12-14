@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import Modal from '../components/Modal';
 
 export default function Inventory() {
@@ -16,11 +16,7 @@ export default function Inventory() {
     is_available: true
   });
   
-  // Auth Token
-  const token = localStorage.getItem('token');
-  const config = {
-    headers: { Authorization: `Bearer ${token}` }
-  };
+  // Auth Token automatically handled by api interceptor
 
   // Fetch Categories
   useEffect(() => {
@@ -38,7 +34,7 @@ export default function Inventory() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/api/categories', config);
+      const res = await api.get('/api/categories');
       setCategories(res.data);
       if (res.data.length > 0 && !selectedCategory) {
         setSelectedCategory(res.data[0]);
@@ -50,7 +46,7 @@ export default function Inventory() {
 
   const fetchProducts = async (categoryId) => {
     try {
-      const res = await axios.get(`http://localhost:5001/api/products?category_id=${categoryId}`, config);
+      const res = await api.get(`/api/products?category_id=${categoryId}`);
       setProducts(res.data);
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -60,7 +56,7 @@ export default function Inventory() {
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
     try {
-      await axios.post('http://localhost:5001/api/categories', { name: newCategoryName }, config);
+      await api.post('/api/categories', { name: newCategoryName });
       setNewCategoryName('');
       fetchCategories();
     } catch (err) {
@@ -73,11 +69,11 @@ export default function Inventory() {
     if (!selectedCategory) return alert('Select a category first');
     
     try {
-      await axios.post('http://localhost:5001/api/products', {
+      await api.post('/api/products', {
         ...formData,
         category_id: selectedCategory.id,
         price: parseFloat(formData.price)
-      }, config);
+      });
       
       setIsProductModalOpen(false);
       setFormData({ name: '', price: '', description: '', is_available: true });
@@ -90,7 +86,7 @@ export default function Inventory() {
   const handleDeleteProduct = async (id) => {
     if (!confirm('Are you sure?')) return;
     try {
-      await axios.delete(`http://localhost:5001/api/products/${id}`, config);
+      await api.delete(`/api/products/${id}`);
       fetchProducts(selectedCategory.id);
     } catch (err) {
       alert('Failed to delete product');

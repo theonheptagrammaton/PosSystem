@@ -76,7 +76,12 @@ app.use('/api/public', publicRoutes);
 // Frontend '/api/auth/login' adresine istek atıyor.
 // Eğer login fonksiyonun publicRoutes içindeyse, '/api/auth' yolunu da oraya bağlıyoruz.
 app.use('/api/auth', publicRoutes); 
-// -----------------------
+
+// --- YENI DÜZELTME ---
+// Frontend '/api/users/onboard' adresine istek atıyor.
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes);
+// ---------------------
 
 // Veritabanı Bağlantı Kontrolü
 pool.connect()

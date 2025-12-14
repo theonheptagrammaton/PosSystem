@@ -16,7 +16,7 @@ export default function Tables() {
   const branchId = 1; // Default branch for now
 
   const getQrUrl = (tableId) => {
-    return `http://localhost:5173/menu/${tenantId}/${branchId}/${tableId}`;
+    return `${window.location.origin}/menu/${tenantId}/${branchId}/${tableId}`;
   };
 
   const downloadQRCode = () => {

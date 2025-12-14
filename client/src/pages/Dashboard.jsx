@@ -3,7 +3,7 @@ import { useGodMode } from '../context/GodModeContext';
 import RevenueChart from '../components/GodMode/RevenueChart';
 import OccupancyGauge from '../components/GodMode/OccupancyGauge';
 import io from 'socket.io-client';
-import axios from 'axios';
+import api from '../api';
 import { Terminal } from 'lucide-react';
 
 export default function Dashboard() {
@@ -28,7 +28,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Initialize Socket connection
-    socketRef.current = io('http://localhost:5001', {
+    socketRef.current = io(api.defaults.baseURL, {
       query: { tenantId }
     });
 
@@ -65,7 +65,7 @@ export default function Dashboard() {
 
   const handleSimulateOrder = async () => {
     try {
-      await axios.post('http://localhost:5001/api/test/simulate-order', { tenantId });
+      await api.post('/api/test/simulate-order', { tenantId });
     } catch (error) {
       console.error('Simulation failed', error);
       alert('SIMULATION FAILED');

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 
 export default function MobileMenu() {
@@ -13,7 +13,7 @@ export default function MobileMenu() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://localhost:5001/api/public/menu/${tenantId}`);
+        const res = await api.get(`/api/public/menu/${tenantId}`);
         setData(res.data);
         // Expand first category by default
         if (res.data.categories.length > 0) {
@@ -73,7 +73,7 @@ export default function MobileMenu() {
     };
 
     try {
-      await axios.post('http://localhost:5001/api/orders', payload);
+      await api.post('/api/orders', payload);
       setOrderPlaced(true);
       setCart({});
     } catch (err) {
