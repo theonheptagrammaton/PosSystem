@@ -104,6 +104,12 @@ export default function MobileMenu() {
 
   return (
     <div className="bg-white min-h-screen pb-24">
+      {/* Header */}
+      <div className="p-6 border-b border-black flex flex-col items-center justify-center bg-black text-white">
+         <h1 className="text-xl font-bold uppercase tracking-widest">{data.company_name || 'RESTORAN MENÜ'}</h1>
+         <p className="text-xs font-mono text-gray-400 mt-1">Masa No: {tableId}</p>
+      </div>
+
       {/* Categories Accordion */}
       <div className="p-4 flex flex-col gap-4">
         {data.categories.map(cat => {

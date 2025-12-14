@@ -15,6 +15,12 @@ const getMenuData = async (req, res) => {
       [tenantId]
     );
 
+    const tenantResult = await pool.query(
+      'SELECT company_name FROM tenants WHERE id = $1',
+      [tenantId]
+    );
+    const companyName = tenantResult.rows.length > 0 ? tenantResult.rows[0].company_name : '';
+
     const productsResult = await pool.query(
       'SELECT * FROM products WHERE tenant_id = $1 AND is_available = true ORDER BY id ASC',
       [tenantId]
@@ -22,7 +28,8 @@ const getMenuData = async (req, res) => {
 
     res.json({
       categories: categoriesResult.rows,
-      products: productsResult.rows
+      products: productsResult.rows,
+      company_name: companyName
     });
   } catch (error) {
     console.error('Error fetching menu data:', error);

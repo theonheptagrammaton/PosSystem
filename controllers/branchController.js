@@ -19,15 +19,15 @@ const getAllBranches = async (req, res) => {
 const createBranch = async (req, res) => {
   try {
     const { tenantId } = req.user;
-    const { name, address, phone } = req.body;
+    const { name, address, phone, table_count } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Branch name is required' });
     }
 
     const result = await pool.query(
-      'INSERT INTO branches (tenant_id, name, address, phone) VALUES ($1, $2, $3, $4) RETURNING *',
-      [tenantId, name, address, phone]
+      'INSERT INTO branches (tenant_id, name, address, phone, table_count) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [tenantId, name, address, phone, table_count || 10]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -41,11 +41,11 @@ const updateBranch = async (req, res) => {
   try {
     const { tenantId } = req.user;
     const { id } = req.params;
-    const { name, address, phone } = req.body;
+    const { name, address, phone, table_count } = req.body;
 
     const result = await pool.query(
-      'UPDATE branches SET name = $1, address = $2, phone = $3 WHERE id = $4 AND tenant_id = $5 RETURNING *',
-      [name, address, phone, id, tenantId]
+      'UPDATE branches SET name = $1, address = $2, phone = $3, table_count = $4 WHERE id = $5 AND tenant_id = $6 RETURNING *',
+      [name, address, phone, table_count, id, tenantId]
     );
 
     if (result.rows.length === 0) {

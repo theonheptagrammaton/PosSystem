@@ -32,5 +32,6 @@ CREATE TABLE branches (
     name VARCHAR(100) NOT NULL,
     address TEXT,
     phone VARCHAR(20),
+    table_count INTEGER DEFAULT 10,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -6,7 +6,7 @@ import { Building2, Plus, Pencil, Trash2, MapPin, Phone } from 'lucide-react';
 export default function Branches() {
   const [branches, setBranches] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', address: '', phone: '' });
+  const [formData, setFormData] = useState({ name: '', address: '', phone: '', table_count: 10 });
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function Branches() {
         await api.post('/api/branches', formData);
       }
       setIsModalOpen(false);
-      setFormData({ name: '', address: '', phone: '' });
+      setFormData({ name: '', address: '', phone: '', table_count: 10 });
       setEditingId(null);
       fetchBranches();
     } catch (err) {
@@ -40,7 +40,7 @@ export default function Branches() {
   };
 
   const handleEdit = (branch) => {
-    setFormData({ name: branch.name, address: branch.address || '', phone: branch.phone || '' });
+    setFormData({ name: branch.name, address: branch.address || '', phone: branch.phone || '', table_count: branch.table_count || 10 });
     setEditingId(branch.id);
     setIsModalOpen(true);
   };
@@ -56,7 +56,7 @@ export default function Branches() {
   };
 
   const openNewModal = () => {
-    setFormData({ name: '', address: '', phone: '' });
+    setFormData({ name: '', address: '', phone: '', table_count: 10 });
     setEditingId(null);
     setIsModalOpen(true);
   };
@@ -101,6 +101,9 @@ export default function Branches() {
                   <span>{branch.phone}</span>
                 </div>
               )}
+               <div className="flex items-center gap-2 mt-2">
+                 <span className="text-xs font-bold uppercase bg-gray-200 px-2 py-1">Masa Kapasite: {branch.table_count || 10}</span>
+               </div>
                <div className="text-xs text-gray-400 mt-2">ID: {branch.id}</div>
             </div>
           </div>
@@ -148,6 +151,18 @@ export default function Branches() {
               value={formData.phone}
               onChange={e => setFormData({...formData, phone: e.target.value})}
               placeholder="0212..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold mb-1 uppercase">Masa Sayısı</label>
+            <input 
+              type="number" 
+              min="1"
+              max="100"
+              className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
+              value={formData.table_count}
+              onChange={e => setFormData({...formData, table_count: parseInt(e.target.value)})}
             />
           </div>
 

@@ -3,7 +3,14 @@ const { pool } = require('../config/db');
 // List Categories
 const getAllCategories = async (req, res) => {
   try {
+    console.log('getAllCategories Request User:', req.user); // DEBUG LOG
     const { tenantId } = req.user;
+    
+    if (!tenantId) {
+       console.error('Tenant ID missing in request user');
+       return res.status(400).json({ error: 'Tenant ID missing' });
+    }
+
     const result = await pool.query(
       'SELECT * FROM categories WHERE tenant_id = $1 ORDER BY rank ASC, id ASC', 
       [tenantId]

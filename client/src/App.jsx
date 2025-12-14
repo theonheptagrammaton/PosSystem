@@ -8,6 +8,7 @@ import Tables from './pages/Tables';
 import Inventory from './pages/Inventory';
 import Settings from './pages/Settings';
 import Branches from './pages/Branches';
+import PosTerminal from './pages/PosTerminal';
 
 import PublicLayout from './layouts/PublicLayout';
 import MobileMenu from './pages/public/MobileMenu';
@@ -41,6 +42,8 @@ function App() {
           } 
         />
         
+        <Route path="/pos-terminal/:branchId" element={<PosTerminal />} />
+
         {/* Dashboard Layout Routes */}
         <Route 
           path="/dashboard" 
