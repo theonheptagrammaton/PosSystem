@@ -63,6 +63,8 @@ exports.getUsers = async (req, res) => {
 exports.createUser = async (req, res) => {
   try {
     const tenantId = req.user.tenantId || req.user.tenant_id;
+    console.log('Creating user for Tenant:', tenantId, 'Body:', req.body); // DEBUG LOG
+
     const { username, password, role, branch_id, full_name } = req.body;
 
     if (!username || !password || !role) {
@@ -75,7 +77,7 @@ exports.createUser = async (req, res) => {
        return res.status(400).json({ error: 'Invalid role. Allowed: ' + allowedRoles.join(', ') });
     }
 
-    // Branch Required for non-admins (per requirements)
+    // Branch Required for non-admins
     if (!branch_id) {
         return res.status(400).json({ error: 'Branch assignment is required for this role.' });
     }
@@ -96,7 +98,8 @@ exports.createUser = async (req, res) => {
 
   } catch (error) {
     console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    // Return actual error in dev mode (or safe message)
+    res.status(500).json({ error: 'Internal Server Error: ' + error.message });
   }
 };
 

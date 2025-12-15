@@ -12,6 +12,8 @@ export default function PosTerminal() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
+  const [isTableModalOpen, setIsTableModalOpen] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(null);
   
   // Fetch Branch Info
   useEffect(() => {
@@ -95,14 +97,16 @@ export default function PosTerminal() {
     return cart.reduce((acc, item) => acc + (parseFloat(item.price) * item.quantity), 0);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckoutInit = () => {
     if (cart.length === 0) return alert('Sepet boş');
-    if (!confirm('Satışı tamamla?')) return;
+    setIsTableModalOpen(true);
+  };
 
+  const confirmOrder = async (tableId) => {
     try {
       const payload = {
         tenant_id: branch.tenant_id,
-        table_no: `POS-${branch.name.toUpperCase()}`,
+        table_no: `MASA-${tableId}`, // Format as requested
         total_amount: calculateTotal(),
         items: cart.map(i => ({
             id: i.id,
@@ -114,10 +118,12 @@ export default function PosTerminal() {
       
       await api.post('/api/orders', payload);
       setCart([]);
-      alert('Satış Başarılı');
+      setIsTableModalOpen(false);
+      setSelectedTable(null);
+      alert(`Sipariş MASA-${tableId} için oluşturuldu!`);
     } catch (err) {
       console.error(err);
-      alert('Satış Hatası');
+      alert('Satış Hatası: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -200,14 +206,37 @@ export default function PosTerminal() {
             </div>
             
             <button 
-                onClick={handleCheckout}
+                onClick={handleCheckoutInit}
                 className="w-full bg-white text-black py-4 font-bold uppercase tracking-widest hover:bg-gray-200 transition-colors border-2 border-transparent hover:border-white"
             >
-                ÖDEME AL
+                MASA SEÇ VE ONAYLA
             </button>
             </div>
         </div>
       </div>
+
+      {/* Table Selection Modal */}
+      <Modal
+        isOpen={isTableModalOpen}
+        onClose={() => setIsTableModalOpen(false)}
+        title={`${branch.name} - MASA SEÇİMİ`}
+      >
+        <div className="grid grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2">
+            {Array.from({ length: branch.table_count || 10 }).map((_, i) => {
+                const tableId = i + 1;
+                return (
+                    <button
+                        key={tableId}
+                        onClick={() => confirmOrder(tableId)}
+                        className="bg-gray-100 border border-black h-24 flex flex-col items-center justify-center hover:bg-black hover:text-white transition-colors gap-2"
+                    >
+                        <span className="font-bold text-xl">#{tableId}</span>
+                        <span className="text-xs tracking-widest">SEÇ</span>
+                    </button>
+                )
+            })}
+        </div>
+      </Modal>
     </div>
   );
 }

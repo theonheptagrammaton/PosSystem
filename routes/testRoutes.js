@@ -13,10 +13,13 @@ router.post('/simulate-order', (req, res) => {
   const amount = Math.floor(Math.random() * 450) + 50;
 
   // Emit event to specific tenant room
-  io.to(tenantId).emit('new_order', {
+  const roomName = String(tenantId);
+  io.to(roomName).emit('new_order', {
     amount: amount,
     timestamp: new Date().toISOString()
   });
+
+  console.log(`Simulating order for Tenant: ${tenantId}, Room: ${roomName}`);
 
   res.json({ 
     message: 'Order simulated successfully', 
