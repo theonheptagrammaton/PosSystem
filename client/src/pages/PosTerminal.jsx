@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { ShoppingCart, Plus, Minus, Trash2, ArrowLeft } from 'lucide-react';
-import Modal from '../../components/Modal';
+import Modal from '../components/Modal';
 
 export default function PosTerminal() {
   const { branchId } = useParams();
