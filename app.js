@@ -8,23 +8,36 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+// --- GÜVENLİK AYARLARI (CORS) ---
+// Hem canlı siteyi hem de kendi bilgisayarını kabul edecek liste
+const allowedOrigins = [
+  "https://pos.theon.com.tr",  // CANLI SİTE
+  "http://localhost:5173",     // Localhost (Vite)
+  "http://localhost:3000"      // Localhost (Yedek)
+];
+
 // Socket.io Ayarları
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173", // Use ENV or default for dev
+    origin: allowedOrigins, // Listeyi buraya verdik
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
-// IO nesnesini app'e kaydet (Controller'larda kullanmak için)
+// IO nesnesini app'e kaydet
 app.set('io', io);
 
 // Middleware - CORS Ayarları (Backend API için)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173", // Use ENV or default for dev
+  origin: allowedOrigins, // Listeyi buraya da verdik
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// Preflight istekleri için (Bazen tarayıcı önce options atar, onu da kabul edelim)
+app.options('*', cors());
 
 app.use(express.json());
 
@@ -50,6 +63,8 @@ const orderRoutes = require('./routes/orderRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const userRoutes = require('./routes/userRoutes');
+const branchRoutes = require('./routes/branchRoutes');
 
 // Temel Rota (Sağlık Kontrolü)
 app.get('/', (req, res) => {
@@ -63,19 +78,14 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/public', publicRoutes);
 
-// --- DÜZELTME BURADA ---
-// Frontend '/api/auth/login' adresine istek atıyor.
-// Eğer login fonksiyonun publicRoutes içindeyse, '/api/auth' yolunu da oraya bağlıyoruz.
+// Auth login için
 app.use('/api/auth', publicRoutes); 
 
-// --- YENI DÜZELTME ---
-// Frontend '/api/users/onboard' adresine istek atıyor.
-const userRoutes = require('./routes/userRoutes');
+// Onboarding için
 app.use('/api/users', userRoutes);
 
-const branchRoutes = require('./routes/branchRoutes');
+// Şubeler için
 app.use('/api/branches', branchRoutes);
-// ---------------------
 
 // Veritabanı Bağlantı Kontrolü
 pool.connect()
