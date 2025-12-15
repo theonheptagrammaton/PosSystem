@@ -24,6 +24,19 @@ export default function Dashboard() {
   const tenantId = user?.tenant_id;
 
   useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+      try {
+          const res = await api.get('/api/orders'); // Fetch persistent history
+          setOrders(res.data);
+      } catch (err) {
+          console.error(err);
+      }
+  };
+
+  useEffect(() => {
     // Initialize Socket connection
     socketRef.current = io(api.defaults.baseURL, {
       query: { tenantId }
@@ -31,29 +44,14 @@ export default function Dashboard() {
 
     // Listen for new orders
     socketRef.current.on('new_order', (data) => {
-      console.log('Yeni Sipariş:', data);
-      
-      // Update Chart Data (Rolling Window)
-      setChartData(prev => {
-        const newData = {
-          time: new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          amount: data.amount
-        };
-        const updated = [...prev, newData];
-        if (updated.length > 20) return updated.slice(updated.length - 20);
-        return updated;
-      });
-
-      // Update Orders Table
-      setOrders(prev => {
-        const newOrder = {
-          id: `SIP-${Math.floor(Math.random() * 1000)}`,
-          status: 'YENİ',
-          amount: `₺${data.amount}`,
-          details: data.items || 'Simule Edilmiş İçerik'
-        };
-        return [newOrder, ...prev].slice(0, 10); // Keep last 10
-      });
+      // Refresh list to get db state or optimistic update
+      // Simple re-fetch is safest for consistency
+      fetchOrders();
+    });
+    
+    // Also listen for closed tables to update status to COMPLETED
+    socketRef.current.on('table_closed', () => {
+        fetchOrders();
     });
 
     return () => {

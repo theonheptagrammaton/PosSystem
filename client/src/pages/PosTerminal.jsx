@@ -12,6 +12,7 @@ export default function PosTerminal() {
   // --- State ---
   const [branch, setBranch] = useState(null);
   const [tables, setTables] = useState([]); // List of table IDs
+  const [busyTables, setBusyTables] = useState([]); // List of table IDs with active orders
   const [selectedTable, setSelectedTable] = useState(null); // Currently selected table ID
   
   const [categories, setCategories] = useState([]);
@@ -47,6 +48,12 @@ export default function PosTerminal() {
              if (data.table_no === `MASA-${selectedTable}`) {
                  fetchTableOrders(selectedTable);
              }
+             // Refresh status map whenever any order comes in
+             fetchBranchStatus();
+         });
+         
+         socketRef.current.on('table_closed', () => {
+             fetchBranchStatus(); // Refresh status when a table is paid
          });
       }
     }
@@ -63,9 +70,20 @@ export default function PosTerminal() {
       // Generate Tables based on count
       const tableList = Array.from({ length: b.table_count || 10 }, (_, i) => i + 1);
       setTables(tableList);
+      fetchBranchStatus(); // Fetch initial status
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const fetchBranchStatus = async () => {
+      try {
+          if (!branch) return; // Need tenant_id
+          const res = await api.get(`/api/orders/status/${branch.tenant_id || branchId}`); // Try both just in case state isn't ready
+          // response is array of strings e.g. ["MASA-1", "MASA-5"]
+          const busyIds = res.data.map(str => parseInt(str.replace('MASA-', '')));
+          setBusyTables(busyIds);
+      } catch (err) { console.error('Status fetch error', err); }
   };
 
   const fetchCategories = async () => {
@@ -159,19 +177,25 @@ export default function PosTerminal() {
                     <Utensils size={16}/> Masalar
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 content-start">
-                    {tables.map(tId => (
+                    {tables.map(tId => {
+                        const isBusy = busyTables.includes(tId);
+                        const isSelected = selectedTable === tId;
+                        
+                        return (
                         <button 
                             key={tId}
                             onClick={() => handleTableSelect(tId)}
                             className={`h-20 rounded-lg border-2 flex flex-col items-center justify-center transition-all shadow-sm
-                                ${selectedTable === tId 
-                                    ? 'bg-black text-white border-black scale-105' 
-                                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50'}`}
+                                ${isSelected 
+                                    ? 'bg-black text-white border-black scale-105 z-10' 
+                                    : isBusy
+                                        ? 'bg-red-500 text-white border-red-600' // Occupied Style
+                                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50'}`}
                         >
                             <span className="font-bold text-xl">{tId}</span>
-                            <span className="text-[10px] uppercase tracking-widest">MASA</span>
+                            <span className="text-[10px] uppercase tracking-widest">{isBusy ? 'DOLU' : 'BOŞ'}</span>
                         </button>
-                    ))}
+                    )})}
                 </div>
             </div>
 

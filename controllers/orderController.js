@@ -107,10 +107,61 @@ const closeTable = async (req, res) => {
         console.error('Error closing table:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
-  };
+};
+
+// --- Get Branch Status (Active Tables) ---
+const getBranchStatus = async (req, res) => {
+    const { tenantId } = req.params;
+    try {
+        const query = `
+            SELECT DISTINCT table_no 
+            FROM orders 
+            WHERE tenant_id = $1 AND status = 'PENDING'
+        `;
+        const result = await pool.query(query, [tenantId]);
+        // Extract table numbers (e.g., "MASA-1" -> 1) or keep string
+        // Keeping string "MASA-1" is safer for matching
+        const busyTables = result.rows.map(row => row.table_no);
+        res.json(busyTables);
+    } catch (error) {
+        console.error('Error fetching branch status:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// --- Get All Orders (Dashboard History) ---
+const getAllOrders = async (req, res) => {
+    const tenantId = req.user.tenantId || req.user.tenant_id;
+    try {
+        const query = `
+            SELECT * FROM orders 
+            WHERE tenant_id = $1 
+            ORDER BY created_at DESC 
+            LIMIT 50
+        `;
+        const result = await pool.query(query, [tenantId]);
+        
+        // Transform for frontend if needed? 
+        // Frontend expects: { id, status, amount, details }
+        const formatted = result.rows.map(row => ({
+            id: `SIP-${row.id}`, // Format ID
+            status: row.status === 'PENDING' ? 'DOLU' : 'BOŞ', // Simplified status for dashboard
+            amount: `₺${row.total_amount}`,
+            details: row.items,
+            created_at: row.created_at
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error('Error fetching all orders:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
 module.exports = {
   createOrder,
   getTableOrders,
-  closeTable
+  closeTable,
+  getBranchStatus,
+  getAllOrders
 };

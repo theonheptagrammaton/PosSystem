@@ -46,8 +46,10 @@ export default function Layout() {
     <div className={`min-h-screen flex font-sans overflow-hidden transition-colors duration-300 ${isGodMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
       
       {/* Sidebar */}
-      <aside className={`w-[250px] border-r flex flex-col h-screen flex-shrink-0 transition-colors duration-300 ${isGodMode ? 'border-white bg-black' : 'border-black'}`}>
-        <div className={`h-[64px] border-b flex items-center px-6 transition-colors duration-300 ${isGodMode ? 'border-white' : 'border-black'}`}>
+      {/* Sidebar - HIDDEN IN GOD MODE */}
+      {!isGodMode && (
+      <aside className="w-[250px] border-r flex flex-col h-screen flex-shrink-0 border-black bg-white text-black transition-colors duration-300">
+        <div className="h-[64px] border-b border-black flex items-center px-6">
           <span className="font-bold tracking-tighter text-lg">SAAS_POS</span>
         </div>
 
@@ -60,8 +62,8 @@ export default function Layout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors border border-transparent ${
                   isActive 
-                    ? (isGodMode ? 'bg-white text-black' : 'bg-black text-white')
-                    : (isGodMode ? 'hover:bg-white hover:text-black hover:border-white' : 'hover:bg-black hover:text-white hover:border-black')
+                    ? 'bg-black text-white'
+                    : 'hover:bg-black hover:text-white hover:border-black'
                 }`
               }
             >
@@ -71,20 +73,17 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className={`p-4 border-t transition-colors duration-300 ${isGodMode ? 'border-white' : 'border-black'}`}>
+        <div className="p-4 border-t border-black">
            <button 
              onClick={handleLogout}
-             className={`w-full flex items-center gap-2 px-4 py-3 text-sm font-medium border border-transparent transition-colors ${
-                isGodMode 
-                ? 'text-red-400 hover:border-white hover:bg-white hover:text-black' 
-                : 'text-red-600 hover:border-black hover:bg-black hover:text-white'
-             }`}
+             className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium border border-transparent transition-colors text-red-600 hover:border-black hover:bg-black hover:text-white"
            >
              <LogOut size={18} />
              <span>ÇIKIŞ YAP</span>
            </button>
         </div>
       </aside>
+      )}
 
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -94,19 +93,23 @@ export default function Layout() {
           <h2 className="font-bold tracking-widest text-sm uppercase">{getPageTitle()}</h2>
           
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold tracking-widest">GOD MODE</span>
-            <div 
-              onClick={toggleGodMode}
-              className={`w-12 h-6 border p-0.5 cursor-pointer flex items-center transition-colors duration-300 ${isGodMode ? 'border-white' : 'border-black'}`}
-            >
-              <div 
-                className={`w-4 h-4 transition-all duration-200 ${
-                    isGodMode 
-                    ? 'translate-x-6 bg-white' 
-                    : 'translate-x-0 bg-black'
-                }`}
-              ></div>
-            </div>
+            {location.pathname === '/dashboard' && ( // ONLY SHOW ON DASHBOARD
+            <>
+                <span className={`text-xs font-bold tracking-widest ${isGodMode ? 'text-white' : 'text-black'}`}>GOD MODE</span>
+                <div 
+                onClick={toggleGodMode}
+                className={`w-12 h-6 border p-0.5 cursor-pointer flex items-center transition-colors duration-300 ${isGodMode ? 'border-white' : 'border-black'}`}
+                >
+                <div 
+                    className={`w-4 h-4 transition-all duration-200 ${
+                        isGodMode 
+                        ? 'translate-x-6 bg-white' 
+                        : 'translate-x-0 bg-black'
+                    }`}
+                ></div>
+                </div>
+            </>
+            )}
           </div>
         </header>
 
