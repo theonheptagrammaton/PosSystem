@@ -125,6 +125,7 @@ export default function PosTerminal() {
       try {
           const payload = {
             tenant_id: branch.tenant_id,
+            branch_id: branch.id, // SEND BRANCH ID
             table_no: `MASA-${selectedTable}`,
             total_amount: product.price, // Price of this single addition
             items: [{
@@ -141,6 +142,30 @@ export default function PosTerminal() {
       } catch (err) {
           alert('Ürün eklenirken hata oluştu.');
       }
+  };
+
+  const handleItemRemove = async (productId) => {
+      if (!selectedTable) return;
+      try {
+          await api.delete(`/api/orders/table/${branch.tenant_id}/MASA-${selectedTable}/item/${productId}`);
+          // Refresh happens via socket, but valid to optimistic update or fetch
+          fetchTableOrders(selectedTable);
+      } catch (err) {
+          alert('Ürün silinirken hata oluştu.');
+      }
+  };
+
+  // Helper to group identical items
+  const groupTableOrders = (items) => {
+      const grouped = {};
+      items.forEach(item => {
+          if (grouped[item.id]) {
+              grouped[item.id].quantity += item.quantity;
+          } else {
+              grouped[item.id] = { ...item };
+          }
+      });
+      return Object.values(grouped);
   };
 
   const handlePayment = async () => {
@@ -193,7 +218,7 @@ export default function PosTerminal() {
                                         : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50'}`}
                         >
                             <span className="font-bold text-xl">{tId}</span>
-                            <span className="text-[10px] uppercase tracking-widest">{isBusy ? 'DOLU' : 'BOŞ'}</span>
+                            <span className="text-[10px] uppercase tracking-widest">{isBusy ? 'DOLU' : ''}</span>
                         </button>
                     )})}
                 </div>
@@ -257,13 +282,30 @@ export default function PosTerminal() {
                     ) : tableOrders.length === 0 ? (
                         <div className="text-center text-gray-400 py-10 italic">Henüz sipariş yok.</div>
                     ) : (
-                        tableOrders.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-start border-b border-gray-100 pb-2 last:border-0">
-                                <div>
+                        groupTableOrders(tableOrders).map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center border-b border-gray-100 pb-2 last:border-0">
+                                <div className="flex-1">
                                     <div className="font-bold text-gray-800">{item.name}</div>
-                                    <div className="text-xs text-gray-500">x{item.quantity}</div>
+                                    <div className="text-xs text-gray-500 font-mono">₺{item.price}</div>
                                 </div>
-                                <div className="font-mono font-bold">₺{item.price}</div>
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={() => handleItemRemove(item.id)}
+                                        className="w-8 h-8 rounded-full bg-gray-200 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors font-bold"
+                                    >
+                                        -
+                                    </button>
+                                    <span className="font-bold w-6 text-center">{item.quantity}</span>
+                                    <button 
+                                        onClick={() => handleProductClick(item)} 
+                                        className="w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 flex items-center justify-center transition-colors font-bold"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                <div className="font-mono font-bold w-16 text-right">
+                                    ₺{(parseFloat(item.price) * item.quantity).toFixed(2)}
+                                </div>
                             </div>
                         ))
                     )}

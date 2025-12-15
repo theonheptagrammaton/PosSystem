@@ -9,6 +9,7 @@ router.post('/', orderController.createOrder);
 // Aggregation Routes
 router.get('/table/:tenantId/:tableNo', orderController.getTableOrders);
 router.post('/table/:tenantId/:tableNo/pay', orderController.closeTable);
+router.delete('/table/:tenantId/:tableNo/item/:productId', orderController.removeItem);
 router.get('/status/:tenantId', orderController.getBranchStatus);
 
 // Authenticated History Route (Dashboard)

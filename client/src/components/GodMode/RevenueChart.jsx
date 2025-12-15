@@ -36,6 +36,12 @@ export default function RevenueChart({ data }) {
       <h3 className="text-xs font-bold uppercase tracking-widest mb-4">Hourly Revenue</h3>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#ff0000" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="#ff0000" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
           <CartesianGrid 
             strokeDasharray="3 3" 
             vertical={false} 
@@ -43,18 +49,22 @@ export default function RevenueChart({ data }) {
           />
           <XAxis 
             dataKey="time" 
-            stroke="#000" 
-            tick={{fontSize: 10, fontFamily: 'monospace'}} 
-            tickLine={false}
-            axisLine={{ stroke: '#000' }}
+            stroke="#ffffff" 
+            fontSize={10} 
+            tickLine={false} 
+            axisLine={false}
           />
           <YAxis 
-            stroke="#000" 
-            tick={{fontSize: 10, fontFamily: 'monospace'}} 
+            stroke="#ffffff" 
+            fontSize={10} 
             tickLine={false}
             axisLine={false}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#000', strokeWidth: 1 }} />
+          <Tooltip 
+            contentStyle={{ backgroundColor: '#000', border: '1px solid #fff' }}
+            itemStyle={{ color: '#fff' }}
+            cursor={{ stroke: '#000', strokeWidth: 1 }} 
+          />
           <Area 
             type="monotone" 
             dataKey="amount" 

@@ -117,29 +117,34 @@ export default function Dashboard() {
     <div className="p-8 h-full relative">
       <h1 className="text-2xl font-bold uppercase mb-6">Canlı Durum</h1>
       
-      <div className="w-full border border-black max-w-4xl">
+      <div className="w-full border border-black max-w-5xl">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-black bg-gray-100">
-              <th className="p-4 border-r border-black font-bold uppercase text-sm w-1/4">Sipariş / Masa</th>
-              <th className="p-4 border-r border-black font-bold uppercase text-sm w-1/4">Durum</th>
-              <th className="p-4 font-bold uppercase text-sm w-1/4">Tutar</th>
-              <th className="p-4 border-l border-black font-bold uppercase text-sm w-1/4 text-center">İşlem</th>
+              <th className="p-4 border-r border-black font-bold uppercase text-sm">Sipariş ID</th>
+              <th className="p-4 border-r border-black font-bold uppercase text-sm">Bayi / Masa</th>
+              <th className="p-4 border-r border-black font-bold uppercase text-sm">Durum</th>
+              <th className="p-4 font-bold uppercase text-sm">Tutar</th>
+              <th className="p-4 border-l border-black font-bold uppercase text-sm text-center">İşlem</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 ? (
                <tr>
-                 <td colSpan="4" className="p-4 text-center text-gray-400 italic">HENÜZ SİPARİŞ YOK</td>
+                 <td colSpan="5" className="p-4 text-center text-gray-400 italic">HENÜZ SİPARİŞ YOK</td>
                </tr>
             ) : orders.map((row, idx) => (
               <tr key={idx} className="border-b border-black last:border-b-0 hover:bg-gray-50 transition-colors">
                 <td className="p-4 border-r border-black font-mono">{row.id}</td>
+                <td className="p-4 border-r border-black text-sm">
+                    <div className="font-bold">{row.branch_name || '-'}</div>
+                    <div className="text-xs text-gray-500">{row.table_no || '-'}</div>
+                </td>
                 <td className="p-4 border-r border-black text-xs font-bold">
                   <span className={`px-2 py-1 ${
-                    row.status === 'DOLU' ? 'bg-black text-white' : 
-                    row.status === 'YENİ' ? 'bg-black text-white animate-pulse' :
-                    row.status === 'BOŞ' ? 'border border-gray-400 text-gray-400' : 'bg-gray-200'
+                    row.status === 'DOLU' ? 'bg-red-600 text-white animate-pulse' : 
+                    row.status === 'TAMAMLANDI' ? 'bg-green-600 text-white' :
+                    'bg-gray-200'
                   }`}>
                     {row.status}
                   </span>
