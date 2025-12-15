@@ -29,9 +29,10 @@ export default function Login() {
       } else {
         navigate('/onboarding');
       }
-    } catch (error) {
-      console.error('Giriş başarısız', error);
-      alert('GİRİŞ BAŞARISIZ: Kullanıcı adı veya şifre hatalı olabilir.'); 
+    } catch (err) {
+      console.error('Login error:', err);
+      const errorMsg = err.response?.data?.error || 'GİRİŞ BAŞARISIZ: Kullanıcı adı veya şifre hatalı olabilir.';
+      alert(errorMsg);
     }
   };
 

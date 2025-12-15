@@ -43,19 +43,23 @@ const login = async (req, res) => {
 
   try {
     // 1. Kullanıcıyı bul
+    console.log(`Login attempt for username: ${username}`);
     const result = await pool.query(
       'SELECT * FROM users WHERE username = $1',
       [username]
     );
 
     if (result.rows.length === 0) {
+      console.warn(`User not found: ${username}`);
       return res.status(401).json({ error: 'Kullanıcı bulunamadı' });
     }
 
     const user = result.rows[0];
+    console.log(`User found: ${user.username}, Role: ${user.role}, ID: ${user.id}`);
 
     // 2. Şifreyi Kontrol Et (Düz Metin Karşılaştırması)
     if (password !== user.password) {
+      console.warn(`Invalid password for user: ${username}`);
       return res.status(401).json({ error: 'Hatalı şifre' });
     }
 
