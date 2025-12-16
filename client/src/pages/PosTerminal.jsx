@@ -217,7 +217,7 @@ export default function PosTerminal() {
                                 ${isSelected 
                                     ? 'bg-black text-white border-black scale-105 z-10' 
                                     : isBusy
-                                        ? 'bg-red-600 text-white border-red-600' // Occupied Style: Ensure Red BG and White Text
+                                        ? 'bg-red-600 text-black border-red-600' // Occupied Style: Red BG with Black Text
                                         : 'bg-white text-gray-800 border-gray-200 hover:border-gray-400 hover:bg-gray-50'}`}
                         >
                             {/* Table Number - Always Visible */}

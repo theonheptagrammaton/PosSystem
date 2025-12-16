@@ -91,13 +91,19 @@ const closeTable = async (req, res) => {
     }
 
     try {
+      // Ensure tenantId is parsed as integer for DB comparison
+      const parsedTenantId = parseInt(tenantId, 10);
+      if (isNaN(parsedTenantId)) {
+          return res.status(400).json({ error: 'Invalid Tenant ID format' });
+      }
+
       const query = `
           UPDATE orders 
           SET status = 'COMPLETED', updated_at = NOW()
           WHERE tenant_id = $1 AND table_no = $2 AND status = 'PENDING'
           RETURNING *
       `;
-      const result = await pool.query(query, [tenantId, tableNo]);
+      const result = await pool.query(query, [parsedTenantId, tableNo]);
   
       if (result.rowCount === 0) {
           // No active orders found for this table, or table already closed

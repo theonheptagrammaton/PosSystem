@@ -103,31 +103,29 @@ export default function Dashboard() {
     setSelectedOrder(order);
   };
 
-  // Calculate Hourly Revenue from Orders
-  const calculateHourlyRevenue = () => {
-    const hourlyData = {};
-    orders.forEach(order => {
-        if (!order.created_at) return;
-        const date = new Date(order.created_at);
-        const hour = date.getHours();
-        const hourStr = `${hour.toString().padStart(2, '0')}:00`;
-        
-        if (!hourlyData[hourStr]) hourlyData[hourStr] = 0;
-        hourlyData[hourStr] += parseFloat(order.amount.replace('₺', '')); // Remove currency symbol if present
+  // Calculate Revenue per Order (Real-time - each order is a data point)
+  const calculateOrderRevenue = () => {
+    // Filter to today's orders only for relevant chart
+    const today = new Date().toDateString();
+    const todayOrders = orders.filter(order => {
+        if (!order.created_at) return false;
+        return new Date(order.created_at).toDateString() === today;
     });
 
-    // Convert to array and sort
-    const chartArray = Object.keys(hourlyData).map(time => ({
-        time,
-        amount: hourlyData[time]
-    })).sort((a, b) => a.time.localeCompare(b.time));
+    // Map each order to a chart point
+    const chartArray = todayOrders.map((order, idx) => {
+        const date = new Date(order.created_at);
+        const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        return {
+            time: timeStr,
+            amount: parseFloat(order.amount.replace('₺', '')) || 0
+        };
+    });
 
-    // Fill missing hours if needed, or just return what we have. 
-    // For a nice graph, maybe ensuring a range? Let's keep it simple for now.
-    return chartArray.length > 0 ? chartArray : [{ time: '00:00', amount: 0 }];
+    return chartArray.length > 0 ? chartArray : [{ time: 'Şimdi', amount: 0 }];
   };
 
-  const realChartData = calculateHourlyRevenue();
+  const realChartData = calculateOrderRevenue();
 
   if (isGodMode) {
     return (
