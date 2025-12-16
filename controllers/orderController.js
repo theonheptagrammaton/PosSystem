@@ -99,7 +99,7 @@ const closeTable = async (req, res) => {
 
       const query = `
           UPDATE orders 
-          SET status = 'COMPLETED', updated_at = NOW()
+          SET status = 'COMPLETED'
           WHERE tenant_id = $1 AND table_no = $2 AND status = 'PENDING'
           RETURNING *
       `;

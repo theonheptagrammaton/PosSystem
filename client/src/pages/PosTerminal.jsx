@@ -49,11 +49,11 @@ export default function PosTerminal() {
                  fetchTableOrders(selectedTable);
              }
              // Refresh status map whenever any order comes in
-             fetchBranchStatus();
+             fetchBranchStatus(branch.tenant_id);
          });
          
          socketRef.current.on('table_closed', () => {
-             fetchBranchStatus(); // Refresh status when a table is paid
+             fetchBranchStatus(branch.tenant_id); // Refresh status when a table is paid
          });
       }
     }

@@ -8,14 +8,8 @@ export default function PublicLayout() {
 
   return (
     <div className="min-h-screen bg-white text-black font-sans">
-      {/* Public Header */}
-      <header className="sticky top-0 bg-white z-50 border-b border-black py-4 flex flex-col items-center justify-center">
-        <h1 className="text-xl font-bold uppercase tracking-widest">{restaurantName}</h1>
-        <div className="text-xs font-mono mt-1 text-gray-500">MASA NO: {tableId}</div>
-      </header>
-
-      {/* Content */}
-      <main className="pb-10">
+      {/* Content - Header is now handled by individual page components like MobileMenu */}
+      <main>
         <Outlet />
       </main>
     </div>
