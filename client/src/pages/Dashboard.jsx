@@ -18,6 +18,7 @@ export default function Dashboard() {
     { time: '13:00', amount: 3200 },
   ]);
   const [selectedOrder, setSelectedOrder] = useState(null); // For View Button
+  const [occupancyRate, setOccupancyRate] = useState(0); // Real Occupancy Rate
   
   const socketRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('user'));
@@ -31,9 +32,39 @@ export default function Dashboard() {
       try {
           const res = await api.get('/api/orders'); // Fetch persistent history
           setOrders(res.data);
+          calculateOccupancy(res.data);
       } catch (err) {
           console.error(err);
       }
+  };
+
+  const calculateOccupancy = async (ordersData) => {
+    try {
+       // 1. Get Total Capacity (from all branches)
+       const branchRes = await api.get('/api/branches');
+       const totalCapacity = branchRes.data.reduce((acc, b) => acc + (b.table_count || 10), 0);
+       
+       if (totalCapacity === 0) {
+           setOccupancyRate(0);
+           return;
+       }
+
+       // 2. Count Active Tables (Status = 'DOLU' or based on API pending logic)
+       // The orders data from /api/orders returns *all* orders (history + active).
+       // We need to filter for active ones. 
+       // Note: getAllOrders (Dashboard) creates view models. We need to check 'status' === 'DOLU'.
+       
+       // Count unique tables that are currently busy
+       const activeTables = new Set(
+           ordersData.filter(o => o.status === 'DOLU').map(o => o.table_no)
+       ).size;
+
+       const rate = Math.round((activeTables / totalCapacity) * 100);
+       setOccupancyRate(rate);
+
+    } catch(err) {
+        console.error('Occupancy calc error', err);
+    }
   };
 
   useEffect(() => {
@@ -112,13 +143,13 @@ export default function Dashboard() {
           </div>
 
           <div className="border border-white p-4">
-             <div className="mb-2 text-xs font-mono text-gray-400">METRİK: KAPASİTE // BÖLGE: A</div>
-             <OccupancyGauge percentage={75} />
+             <div className="mb-2 text-xs font-mono text-gray-400">METRİK: KAPASİTE // GENEL</div>
+             <OccupancyGauge percentage={occupancyRate} />
           </div>
 
           <div className="border border-white p-4">
-             <div className="mb-2 text-xs font-mono text-gray-400">METRİK: KAPASİTE // BÖLGE: B</div>
-             <OccupancyGauge percentage={42} />
+             <div className="mb-2 text-xs font-mono text-gray-400">METRİK: KAPASİTE // DOLULUK</div>
+             <OccupancyGauge percentage={occupancyRate} />
           </div>
 
           <div className="border border-white p-4">

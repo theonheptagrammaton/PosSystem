@@ -8,6 +8,7 @@ export default function Tables() {
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
   const [tables, setTables] = useState([]);
+  const [busyTables, setBusyTables] = useState([]); // Store busy table IDs
 
   // Fetch branches on mount
   useEffect(() => {
@@ -18,8 +19,10 @@ export default function Tables() {
   useEffect(() => {
     if (selectedBranch) {
         generateTables(selectedBranch.table_count || 10);
+        fetchBranchStatus(selectedBranch.tenant_id);
     } else {
         setTables([]);
+        setBusyTables([]);
     }
   }, [selectedBranch]);
 
@@ -35,10 +38,23 @@ export default function Tables() {
     }
   };
 
+  const fetchBranchStatus = async (tenantId) => {
+      if (!tenantId) return;
+      try {
+          const res = await api.get(`/api/orders/status/${tenantId}`);
+          // response is array of strings e.g. ["MASA-1", "MASA-5"]
+          const busyIds = res.data.map(str => parseInt(str.replace('MASA-', '')));
+          setBusyTables(busyIds);
+      } catch (err) {
+          console.error('Status fetch error', err);
+      }
+  };
+
   const generateTables = (count) => {
     const newTables = Array.from({ length: count }, (_, i) => ({
         id: i + 1,
-        status: 'BOŞ' // For now, status is dummy or could be fetched later
+        // Status will be derived during render or we can map it here if we want static snapshot
+        // Better to derive in render to keep it simple sync with busyTables
     }));
     setTables(newTables);
   };
@@ -92,14 +108,16 @@ export default function Tables() {
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 overflow-y-auto pb-10">
-        {tables.map(table => (
+        {tables.map(table => {
+           const isBusy = busyTables.includes(table.id);
+           return (
           <div key={table.id} className="border border-black p-4 flex flex-col items-center justify-between h-40 hover:bg-gray-50 transition-colors bg-white">
             <div className="text-3xl font-bold font-mono">#{table.id}</div>
             
             <div className={`text-[10px] font-bold px-2 py-0.5 uppercase tracking-widest ${
-              table.status === 'DOLU' ? 'bg-black text-white' : 'text-gray-400 border border-gray-200'
+              isBusy ? 'bg-red-600 text-white' : 'text-gray-400 border border-gray-200'
             }`}>
-              {table.status}
+              {isBusy ? 'DOLU' : 'BOŞ'}
             </div>
 
             <button 
@@ -109,7 +127,7 @@ export default function Tables() {
               QR GÖSTER
             </button>
           </div>
-        ))}
+        )})}
       </div>
 
       {/* QR Code Modal */}
