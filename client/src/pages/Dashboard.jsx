@@ -72,6 +72,32 @@ export default function Dashboard() {
     setSelectedOrder(order);
   };
 
+  // Calculate Hourly Revenue from Orders
+  const calculateHourlyRevenue = () => {
+    const hourlyData = {};
+    orders.forEach(order => {
+        if (!order.created_at) return;
+        const date = new Date(order.created_at);
+        const hour = date.getHours();
+        const hourStr = `${hour.toString().padStart(2, '0')}:00`;
+        
+        if (!hourlyData[hourStr]) hourlyData[hourStr] = 0;
+        hourlyData[hourStr] += parseFloat(order.amount.replace('₺', '')); // Remove currency symbol if present
+    });
+
+    // Convert to array and sort
+    const chartArray = Object.keys(hourlyData).map(time => ({
+        time,
+        amount: hourlyData[time]
+    })).sort((a, b) => a.time.localeCompare(b.time));
+
+    // Fill missing hours if needed, or just return what we have. 
+    // For a nice graph, maybe ensuring a range? Let's keep it simple for now.
+    return chartArray.length > 0 ? chartArray : [{ time: '00:00', amount: 0 }];
+  };
+
+  const realChartData = calculateHourlyRevenue();
+
   if (isGodMode) {
     return (
       <div className="p-8 h-full bg-black text-white overflow-y-auto relative">
@@ -82,7 +108,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
           <div className="border border-white p-4">
              <div className="mb-2 text-xs font-mono text-gray-400">METRİK: SATIŞ AKIŞI // BÖLGE: A</div>
-             <RevenueChart data={chartData} />
+             <RevenueChart data={realChartData} />
           </div>
 
           <div className="border border-white p-4">
@@ -97,7 +123,7 @@ export default function Dashboard() {
 
           <div className="border border-white p-4">
              <div className="mb-2 text-xs font-mono text-gray-400">METRİK: SATIŞ AKIŞI // PAKET SERVİS</div>
-             <RevenueChart data={chartData} />
+             <RevenueChart data={realChartData} />
           </div>
         </div>
 
@@ -142,9 +168,9 @@ export default function Dashboard() {
                 </td>
                 <td className="p-4 border-r border-black text-xs font-bold">
                   <span className={`px-2 py-1 ${
-                    row.status === 'DOLU' ? 'bg-red-600 text-white animate-pulse' : 
-                    row.status === 'TAMAMLANDI' ? 'bg-green-600 text-white' :
-                    'bg-gray-200'
+                    row.status === 'DOLU' ? 'bg-red-600 text-black animate-pulse' : 
+                    row.status === 'TAMAMLANDI' ? 'bg-green-600 text-black' :
+                    'bg-gray-200 text-black'
                   }`}>
                     {row.status}
                   </span>

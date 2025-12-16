@@ -70,16 +70,18 @@ export default function PosTerminal() {
       // Generate Tables based on count
       const tableList = Array.from({ length: b.table_count || 10 }, (_, i) => i + 1);
       setTables(tableList);
-      fetchBranchStatus(); // Fetch initial status
+      fetchBranchStatus(b.tenant_id); // Pass tenant_id directly because setBranch is async
     } catch (err) {
       console.error(err);
     }
   };
 
-  const fetchBranchStatus = async () => {
+  const fetchBranchStatus = async (tenantIdOverride = null) => {
       try {
-          if (!branch) return; // Need tenant_id
-          const res = await api.get(`/api/orders/status/${branch.tenant_id || branchId}`); // Try both just in case state isn't ready
+          const tId = tenantIdOverride || branch?.tenant_id;
+          if (!tId) return; // Need tenant_id
+
+          const res = await api.get(`/api/orders/status/${tId}`); 
           // response is array of strings e.g. ["MASA-1", "MASA-5"]
           const busyIds = res.data.map(str => parseInt(str.replace('MASA-', '')));
           setBusyTables(busyIds);
@@ -178,7 +180,8 @@ export default function PosTerminal() {
           alert('Ödeme Alındı, Masa Temizlendi.');
           fetchTableOrders(selectedTable);
       } catch (err) {
-          alert('Ödeme işlemi başarısız.');
+          console.error('Ödeme hatası:', err);
+          alert('Ödeme işlemi başarısız: ' + (err.response?.data?.error || err.message));
       }
   };
 
