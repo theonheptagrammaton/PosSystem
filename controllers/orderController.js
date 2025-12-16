@@ -44,7 +44,91 @@ const createOrder = async (req, res) => {
 };
 
 // --- Get Aggregated Table Orders ---
-// ... (getTableOrders remains unchanged) ...
+const getTableOrders = async (req, res) => {
+  const { tenantId, tableNo } = req.params; // Make sure these match route params
+
+  try {
+    const query = `
+        SELECT * FROM orders 
+        WHERE tenant_id = $1 AND table_no = $2 AND status = 'PENDING'
+        ORDER BY created_at ASC
+    `;
+    const result = await pool.query(query, [tenantId, tableNo]);
+    
+    // Aggregation Logic
+    let aggregatedItems = [];
+    let totalAmount = 0;
+
+    result.rows.forEach(row => {
+        const items = row.items; // JSONB is auto-parsed by pg
+        // Merge items (simple append for now, could be smarter)
+        if (Array.isArray(items)) {
+            aggregatedItems = [...aggregatedItems, ...items];
+        }
+        totalAmount += parseFloat(row.total_amount);
+    });
+
+    res.json({
+        table_no: tableNo,
+        items: aggregatedItems,
+        total_amount: totalAmount,
+        order_count: result.rowCount
+    });
+
+  } catch (error) {
+      console.error('Error fetching table orders:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// --- Close Table (Payment) ---
+const closeTable = async (req, res) => {
+    const { tenantId, tableNo } = req.params;
+    const io = req.app.get('io');
+  
+    try {
+      const query = `
+          UPDATE orders 
+          SET status = 'COMPLETED', updated_at = NOW()
+          WHERE tenant_id = $1 AND table_no = $2 AND status = 'PENDING'
+          RETURNING *
+      `;
+      const result = await pool.query(query, [tenantId, tableNo]);
+  
+      if (io) {
+          io.to(String(tenantId)).emit('table_closed', {
+              table_no: tableNo,
+              timestamp: new Date()
+          });
+      }
+  
+      res.json({ message: 'Table closed successfully', closed_orders: result.rowCount });
+  
+    } catch (error) {
+        console.error('Error closing table:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// --- Get Branch Status (Active Tables) ---
+const getBranchStatus = async (req, res) => {
+    const { tenantId } = req.params;
+    try {
+        const query = `
+            SELECT DISTINCT table_no 
+            FROM orders 
+            WHERE tenant_id = $1 AND status = 'PENDING'
+        `;
+        const result = await pool.query(query, [tenantId]);
+        // Extract table numbers (e.g., "MASA-1" -> 1) or keep string
+        // Keeping string "MASA-1" is safer for matching
+        const busyTables = result.rows.map(row => row.table_no);
+        res.json(busyTables);
+    } catch (error) {
+        console.error('Error fetching branch status:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
 // --- Get All Orders (Dashboard History) ---
 const getAllOrders = async (req, res) => {
