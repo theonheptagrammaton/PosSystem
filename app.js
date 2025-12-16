@@ -11,9 +11,7 @@ const server = http.createServer(app);
 // --- GÜVENLİK AYARLARI (CORS) ---
 // Hem canlı siteyi hem de kendi bilgisayarını kabul edecek liste
 const allowedOrigins = [
-  "https://pos.theon.com.tr",  // CANLI SİTE
-  "http://localhost:5173",     // Localhost (Vite)
-  "http://localhost:3000"      // Localhost (Yedek)
+  "https://pos.theon.com.tr"  // CANLI SİTE (Strict Production)
 ];
 
 // Socket.io Ayarları
