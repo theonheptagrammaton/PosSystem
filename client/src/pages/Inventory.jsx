@@ -9,6 +9,7 @@ export default function Inventory() {
   const [newCategoryName, setNewCategoryName] = useState('');
   
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState(null); // Track if editing
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -69,17 +70,53 @@ export default function Inventory() {
     if (!selectedCategory) return alert('Önce bir kategori seçmelisiniz');
     
     try {
-      await api.post('/api/products', {
-        ...formData,
-        category_id: selectedCategory.id,
-        price: parseFloat(formData.price)
-      });
+      if (editingProductId) {
+        // UPDATE existing product
+        await api.put(`/api/products/${editingProductId}`, {
+          ...formData,
+          category_id: selectedCategory.id,
+          price: parseFloat(formData.price)
+        });
+      } else {
+        // CREATE new product
+        await api.post('/api/products', {
+          ...formData,
+          category_id: selectedCategory.id,
+          price: parseFloat(formData.price)
+        });
+      }
       
       setIsProductModalOpen(false);
+      setEditingProductId(null); // Reset editing state
       setFormData({ name: '', price: '', description: '', is_available: true });
       fetchProducts(selectedCategory.id);
     } catch (err) {
-      alert('Ürün eklenemedi');
+      alert(editingProductId ? 'Ürün güncellenemedi' : 'Ürün eklenemedi');
+    }
+  };
+
+  const handleEditProduct = (product) => {
+    setEditingProductId(product.id);
+    setFormData({
+      name: product.name,
+      price: product.price,
+      description: product.description || '',
+      is_available: product.is_available
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const handleToggleStatus = async (product) => {
+    try {
+      await api.put(`/api/products/${product.id}`, {
+        ...product, // Send other fields if needed by backend, usually backend handles partial updates or we send full object
+        is_available: !product.is_available
+      });
+      // Refresh list to show new status
+      fetchProducts(selectedCategory.id);
+    } catch (err) {
+      console.error('Durum değiştirilemedi', err);
+      alert('Durum güncellenemedi');
     }
   };
 
@@ -144,7 +181,11 @@ export default function Inventory() {
                 {selectedCategory.name} <span className="text-gray-400 text-xs ml-2">({products.length} ÜRÜN)</span>
               </h2>
               <button 
-                onClick={() => setIsProductModalOpen(true)}
+                onClick={() => {
+                  setEditingProductId(null);
+                  setFormData({ name: '', price: '', description: '', is_available: true });
+                  setIsProductModalOpen(true);
+                }}
                 className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black border border-black transition-colors"
               >
                 YENİ ÜRÜN EKLE
@@ -168,10 +209,20 @@ export default function Inventory() {
                       <td className="p-3 border-r border-black font-mono text-sm">{p.name}</td>
                       <td className="p-3 border-r border-black font-mono text-sm">₺{p.price}</td>
                       <td className="p-3 border-r border-black text-center">
-                        <input type="checkbox" checked={p.is_available} readOnly className="accent-black" />
+                        <input 
+                          type="checkbox" 
+                          checked={p.is_available} 
+                          onChange={() => handleToggleStatus(p)}
+                          className="accent-black cursor-pointer w-4 h-4" 
+                        />
                       </td>
                       <td className="p-3 text-center space-x-2">
-                        <button className="text-xs underline hover:no-underline">DÜZENLE</button> 
+                        <button 
+                          onClick={() => handleEditProduct(p)}
+                          className="text-xs underline hover:no-underline"
+                        >
+                          DÜZENLE
+                        </button> 
                         <span className="text-gray-300">|</span>
                         <button 
                           onClick={() => handleDeleteProduct(p.id)}
@@ -204,7 +255,7 @@ export default function Inventory() {
       <Modal 
         isOpen={isProductModalOpen} 
         onClose={() => setIsProductModalOpen(false)} 
-        title="YENİ ÜRÜN EKLE"
+        title={editingProductId ? "ÜRÜNÜ DÜZENLE" : "YENİ ÜRÜN EKLE"}
       >
         <form onSubmit={handleAddProduct} className="flex flex-col gap-4">
           <div>

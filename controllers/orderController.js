@@ -86,6 +86,10 @@ const closeTable = async (req, res) => {
     const { tenantId, tableNo } = req.params;
     const io = req.app.get('io');
   
+    if (!tenantId || !tableNo) {
+        return res.status(400).json({ error: 'Tenant ID and Table No are required' });
+    }
+
     try {
       const query = `
           UPDATE orders 
@@ -95,6 +99,12 @@ const closeTable = async (req, res) => {
       `;
       const result = await pool.query(query, [tenantId, tableNo]);
   
+      if (result.rowCount === 0) {
+          // No active orders found for this table, or table already closed
+          // We can return 404 or just success message saying "No active orders"
+          return res.status(200).json({ message: 'No active orders found to close.', closed_orders: 0 });
+      }
+
       if (io) {
           io.to(String(tenantId)).emit('table_closed', {
               table_no: tableNo,
@@ -102,11 +112,11 @@ const closeTable = async (req, res) => {
           });
       }
   
-      res.json({ message: 'Table closed successfully', closed_orders: result.rowCount });
+      res.json({ message: 'Ödeme alındı, masa temizlendi.', closed_orders: result.rowCount });
   
     } catch (error) {
         console.error('Error closing table:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ error: 'Sunucu hatası: Ödeme alınamadı.', details: error.message });
     }
 };
 

@@ -32,20 +32,20 @@ export default function RevenueChart({ data }) {
   ];
 
   return (
-    <div className="w-full h-[300px] border border-black p-4">
-      <h3 className="text-xs font-bold uppercase tracking-widest mb-4">Hourly Revenue</h3>
+    <div className="w-full h-[300px] border border-white p-4">
+      <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-white">SAATLİK CİRO</h3>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData}>
           <defs>
             <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ff0000" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#ff0000" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#fff" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="#fff" stopOpacity={0}/>
             </linearGradient>
           </defs>
           <CartesianGrid 
             strokeDasharray="3 3" 
             vertical={false} 
-            stroke="#E5E5E5" 
+            stroke="#333" 
           />
           <XAxis 
             dataKey="time" 
@@ -63,14 +63,14 @@ export default function RevenueChart({ data }) {
           <Tooltip 
             contentStyle={{ backgroundColor: '#000', border: '1px solid #fff' }}
             itemStyle={{ color: '#fff' }}
-            cursor={{ stroke: '#000', strokeWidth: 1 }} 
+            cursor={{ stroke: '#fff', strokeWidth: 1 }} 
           />
           <Area 
             type="monotone" 
             dataKey="amount" 
-            stroke="#000" 
+            stroke="#ffffff" 
             strokeWidth={2}
-            fill="transparent" 
+            fill="url(#colorAmount)"
             isAnimationActive={false}
           />
         </AreaChart>
