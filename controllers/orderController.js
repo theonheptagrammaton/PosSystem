@@ -45,15 +45,15 @@ const createOrder = async (req, res) => {
 
 // --- Get Aggregated Table Orders ---
 const getTableOrders = async (req, res) => {
-  const { tenantId, tableNo } = req.params; // Make sure these match route params
+  const { tenantId, branchId, tableNo } = req.params; 
 
   try {
     const query = `
         SELECT * FROM orders 
-        WHERE tenant_id = $1 AND table_no = $2 AND status = 'PENDING'
+        WHERE tenant_id = $1 AND branch_id = $2 AND table_no = $3 AND status = 'PENDING'
         ORDER BY created_at ASC
     `;
-    const result = await pool.query(query, [tenantId, tableNo]);
+    const result = await pool.query(query, [tenantId, branchId, tableNo]);
     
     // Aggregation Logic
     let aggregatedItems = [];
@@ -83,27 +83,25 @@ const getTableOrders = async (req, res) => {
 
 // --- Close Table (Payment) ---
 const closeTable = async (req, res) => {
-    const { tenantId, tableNo } = req.params;
+    const { tenantId, branchId, tableNo } = req.params;
     const io = req.app.get('io');
   
-    if (!tenantId || !tableNo) {
-        return res.status(400).json({ error: 'Tenant ID and Table No are required' });
+    if (!tenantId || !tableNo || !branchId) {
+        return res.status(400).json({ error: 'Tenant ID, Branch ID and Table No are required' });
     }
 
     try {
-      // Ensure tenantId is parsed as integer for DB comparison
+      // Ensure tenantId and branchId are parsed as integer
       const parsedTenantId = parseInt(tenantId, 10);
-      if (isNaN(parsedTenantId)) {
-          return res.status(400).json({ error: 'Invalid Tenant ID format' });
-      }
-
+      const parsedBranchId = parseInt(branchId, 10);
+      
       const query = `
           UPDATE orders 
           SET status = 'COMPLETED'
-          WHERE tenant_id = $1 AND table_no = $2 AND status = 'PENDING'
+          WHERE tenant_id = $1 AND branch_id = $2 AND table_no = $3 AND status = 'PENDING'
           RETURNING *
       `;
-      const result = await pool.query(query, [parsedTenantId, tableNo]);
+      const result = await pool.query(query, [parsedTenantId, parsedBranchId, tableNo]);
   
       if (result.rowCount === 0) {
           // No active orders found for this table, or table already closed
@@ -128,16 +126,15 @@ const closeTable = async (req, res) => {
 
 // --- Get Branch Status (Active Tables) ---
 const getBranchStatus = async (req, res) => {
-    const { tenantId } = req.params;
+    const { tenantId, branchId } = req.params;
     try {
         const query = `
             SELECT DISTINCT table_no 
             FROM orders 
-            WHERE tenant_id = $1 AND status = 'PENDING'
+            WHERE tenant_id = $1 AND branch_id = $2 AND status = 'PENDING'
         `;
-        const result = await pool.query(query, [tenantId]);
-        // Extract table numbers (e.g., "MASA-1" -> 1) or keep string
-        // Keeping string "MASA-1" is safer for matching
+        const result = await pool.query(query, [tenantId, branchId]);
+        // Extract table numbers
         const busyTables = result.rows.map(row => row.table_no);
         res.json(busyTables);
     } catch (error) {
@@ -180,16 +177,16 @@ const getAllOrders = async (req, res) => {
 
 // --- Remove Item (Decrease Quantity/Delete) ---
 const removeItem = async (req, res) => {
-    const { tenantId, tableNo, productId } = req.params;
+    const { tenantId, branchId, tableNo, productId } = req.params;
     const io = req.app.get('io');
 
     try {
         // 1. Get Pending Orders for Table
         const query = `
             SELECT * FROM orders 
-            WHERE tenant_id = $1 AND table_no = $2 AND status = 'PENDING'
+            WHERE tenant_id = $1 AND branch_id = $2 AND table_no = $3 AND status = 'PENDING'
         `;
-        const result = await pool.query(query, [tenantId, tableNo]);
+        const result = await pool.query(query, [tenantId, branchId, tableNo]);
         
         let targetOrder = null;
         let itemIndex = -1;

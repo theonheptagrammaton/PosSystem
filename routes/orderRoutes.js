@@ -7,10 +7,10 @@ const authenticateToken = require('../middlewares/authMiddleware');
 router.post('/', orderController.createOrder);
 
 // Aggregation Routes
-router.get('/table/:tenantId/:tableNo', orderController.getTableOrders);
-router.post('/table/:tenantId/:tableNo/pay', orderController.closeTable);
-router.delete('/table/:tenantId/:tableNo/item/:productId', orderController.removeItem);
-router.get('/status/:tenantId', orderController.getBranchStatus);
+router.get('/table/:tenantId/:branchId/:tableNo', orderController.getTableOrders);
+router.post('/table/:tenantId/:branchId/:tableNo/pay', orderController.closeTable);
+router.delete('/table/:tenantId/:branchId/:tableNo/item/:productId', orderController.removeItem);
+router.get('/status/:tenantId/:branchId', orderController.getBranchStatus);
 
 // Authenticated History Route (Dashboard)
 router.get('/', authenticateToken, orderController.getAllOrders);

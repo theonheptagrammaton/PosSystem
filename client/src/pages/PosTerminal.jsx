@@ -49,11 +49,11 @@ export default function PosTerminal() {
                  fetchTableOrders(selectedTable);
              }
              // Refresh status map whenever any order comes in
-             fetchBranchStatus(branch.tenant_id);
+             fetchBranchStatus(branch.tenant_id, branch.id);
          });
          
          socketRef.current.on('table_closed', () => {
-             fetchBranchStatus(branch.tenant_id); // Refresh status when a table is paid
+             fetchBranchStatus(branch.tenant_id, branch.id); // Refresh status when a table is paid
          });
       }
     }
@@ -70,18 +70,19 @@ export default function PosTerminal() {
       // Generate Tables based on count
       const tableList = Array.from({ length: b.table_count || 10 }, (_, i) => i + 1);
       setTables(tableList);
-      fetchBranchStatus(b.tenant_id); // Pass tenant_id directly because setBranch is async
+      fetchBranchStatus(b.tenant_id, b.id); // Pass tenant_id and branchId directly because setBranch is async
     } catch (err) {
       console.error(err);
     }
   };
 
-  const fetchBranchStatus = async (tenantIdOverride = null) => {
+  const fetchBranchStatus = async (tenantIdOverride = null, branchIdOverride = null) => {
       try {
           const tId = tenantIdOverride || branch?.tenant_id;
-          if (!tId) return; // Need tenant_id
+          const bId = branchIdOverride || branch?.id;
+          if (!tId || !bId) return; // Need IDs
 
-          const res = await api.get(`/api/orders/status/${tId}`); 
+          const res = await api.get(`/api/orders/status/${tId}/${bId}`); 
           // response is array of strings e.g. ["MASA-1", "MASA-5"]
           const busyIds = res.data.map(str => parseInt(str.replace('MASA-', '')));
           setBusyTables(busyIds);
@@ -107,7 +108,7 @@ export default function PosTerminal() {
       if (!branch) return;
       try {
           // table_no format: MASA-1
-          const res = await api.get(`/api/orders/table/${branch.tenant_id}/MASA-${tableId}`);
+          const res = await api.get(`/api/orders/table/${branch.tenant_id}/${branch.id}/MASA-${tableId}`);
           setTableOrders(res.data.items || []);
           setTableTotal(res.data.total_amount || 0);
       } catch (err) {
@@ -149,7 +150,7 @@ export default function PosTerminal() {
   const handleItemRemove = async (productId) => {
       if (!selectedTable) return;
       try {
-          await api.delete(`/api/orders/table/${branch.tenant_id}/MASA-${selectedTable}/item/${productId}`);
+          await api.delete(`/api/orders/table/${branch.tenant_id}/${branch.id}/MASA-${selectedTable}/item/${productId}`);
           // Refresh happens via socket, but valid to optimistic update or fetch
           fetchTableOrders(selectedTable);
       } catch (err) {
@@ -176,7 +177,7 @@ export default function PosTerminal() {
       if (!confirm(`MASA-${selectedTable} ödemesi alındı mı? Tutar: ₺${tableTotal}`)) return;
 
       try {
-          await api.post(`/api/orders/table/${branch.tenant_id}/MASA-${selectedTable}/pay`);
+          await api.post(`/api/orders/table/${branch.tenant_id}/${branch.id}/MASA-${selectedTable}/pay`);
           alert('Ödeme Alındı, Masa Temizlendi.');
           fetchTableOrders(selectedTable);
       } catch (err) {

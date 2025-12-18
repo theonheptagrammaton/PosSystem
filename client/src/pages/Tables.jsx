@@ -19,7 +19,7 @@ export default function Tables() {
   useEffect(() => {
     if (selectedBranch) {
         generateTables(selectedBranch.table_count || 10);
-        fetchBranchStatus(selectedBranch.tenant_id);
+        fetchBranchStatus(selectedBranch.tenant_id, selectedBranch.id);
     } else {
         setTables([]);
         setBusyTables([]);
@@ -38,10 +38,10 @@ export default function Tables() {
     }
   };
 
-  const fetchBranchStatus = async (tenantId) => {
-      if (!tenantId) return;
+  const fetchBranchStatus = async (tenantId, branchId) => {
+      if (!tenantId || !branchId) return;
       try {
-          const res = await api.get(`/api/orders/status/${tenantId}`);
+          const res = await api.get(`/api/orders/status/${tenantId}/${branchId}`);
           // response is array of strings e.g. ["MASA-1", "MASA-5"]
           const busyIds = res.data.map(str => parseInt(str.replace('MASA-', '')));
           setBusyTables(busyIds);
