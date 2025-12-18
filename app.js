@@ -64,6 +64,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const userRoutes = require('./routes/userRoutes');
 // --- EKSİK OLAN SATIRLAR BURADA BİTİYOR ---
 
 // Temel Rota (Sağlık Kontrolü)
