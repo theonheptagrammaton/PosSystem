@@ -10,10 +10,10 @@ import OccupancyGauge from '../components/GodMode/OccupancyGauge';
 import io from 'socket.io-client';
 import api from '../api';
 import Modal from '../components/Modal'; // Assuming Modal exists, verified in file list
-import { Terminal } from 'lucide-react';
+import { Terminal, X } from 'lucide-react';
 
 export default function Dashboard() {
-  const { isGodMode } = useGodMode();
+  const { isGodMode, toggleGodMode } = useGodMode();
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -174,9 +174,18 @@ export default function Dashboard() {
   if (isGodMode) {
     return (
       <div className="p-8 h-full bg-black text-white overflow-y-auto relative">
-        <h1 className="text-2xl font-black uppercase mb-8 tracking-[0.2em] border-b-2 border-white pb-4 inline-block">
-          ANALİTİK KONTROL ÜSSÜ // GOD MODE
-        </h1>
+        <div className="flex justify-between items-start border-b-2 border-white pb-4 mb-8">
+            <h1 className="text-2xl font-black uppercase tracking-[0.2em]">
+                ANALİTİK KONTROL ÜSSÜ // GOD MODE
+            </h1>
+            <button 
+                onClick={toggleGodMode}
+                className="p-2 border-2 border-white hover:bg-white hover:text-black transition-colors"
+                title="PANELDEN ÇIK"
+            >
+                <X size={24} />
+            </button>
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
           {/* DAILY REVENUE */}

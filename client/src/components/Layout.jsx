@@ -95,22 +95,13 @@ export default function Layout() {
           <h2 className="font-bold tracking-widest text-sm uppercase">{getPageTitle()}</h2>
           
           <div className="flex items-center gap-3">
-            {location.pathname === '/dashboard' && ( // ONLY SHOW ON DASHBOARD
-            <>
-                <span className={`text-xs font-bold tracking-widest ${isGodMode ? 'text-white' : 'text-black'}`}>GOD MODE</span>
-                <div 
+            {location.pathname === '/dashboard' && !isGodMode && ( 
+              <button 
                 onClick={toggleGodMode}
-                className={`w-12 h-6 border p-0.5 cursor-pointer flex items-center transition-colors duration-300 ${isGodMode ? 'border-white' : 'border-black'}`}
-                >
-                <div 
-                    className={`w-4 h-4 transition-all duration-200 ${
-                        isGodMode 
-                        ? 'translate-x-6 bg-white' 
-                        : 'translate-x-0 bg-black'
-                    }`}
-                ></div>
-                </div>
-            </>
+                className="bg-black text-white px-4 py-2 text-[10px] font-black tracking-[0.2em] border border-black hover:bg-white hover:text-black transition-all uppercase"
+              >
+                GOD MODE PANEL
+              </button>
             )}
           </div>
         </header>

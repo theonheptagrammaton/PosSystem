@@ -159,20 +159,20 @@ export default function MobileMenu() {
                        <div className="flex items-center justify-end mt-2 gap-4">
                           <button 
                             onClick={() => updateCart(product.id, -1)}
-                            className="w-8 h-8 flex items-center justify-center border border-black hover:bg-black hover:text-white transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border-2 border-black text-black hover:bg-black hover:text-white transition-colors"
                           >
-                            <Minus size={14} />
+                            <Minus size={16} strokeWidth={3} />
                           </button>
                           
-                          <div className="font-mono font-bold w-4 text-center">
+                          <div className="font-mono font-bold w-6 text-center text-black">
                             {cart[product.id] || 0}
                           </div>
 
                           <button 
                             onClick={() => updateCart(product.id, 1)}
-                            className="w-8 h-8 flex items-center justify-center border border-black hover:bg-black hover:text-white transition-colors"
+                            className="w-8 h-8 flex items-center justify-center bg-black text-white border-2 border-black hover:bg-gray-800 transition-colors"
                           >
-                            <Plus size={14} />
+                            <Plus size={16} strokeWidth={3} />
                           </button>
                        </div>
                     </div>

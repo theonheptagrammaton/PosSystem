@@ -216,16 +216,18 @@ export default function Inventory() {
             <div className="border border-black flex-1 overflow-y-auto">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-gray-50 sticky top-0">
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/12 text-center">FOTO</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-5/12">ÜRÜN ADI</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-2/12">FİYAT</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/12 text-center">AKTİF</th>
-                    <th className="p-3 border-b border-black font-bold text-xs text-center">İŞLEM</th>
+                  <tr>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-16 text-center">FOTO</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs uppercase">Ürün Adı / Açıklama</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-24 text-right">Fiyat</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-20 text-center">Aktif</th>
+                    <th className="p-3 border-b border-black font-bold text-xs w-32 text-center">İşlem</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {products.map(p => (
-                    <tr key={p.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 flex items-center">
-                      <td className="p-3 border-r border-black text-center w-1/12">
+                    <tr key={p.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors">
+                      <td className="p-3 border-r border-black text-center">
                          {p.image_url ? (
                            <img 
                             src={p.image_url.startsWith('http') ? p.image_url : `${api.defaults.baseURL}${p.image_url}`} 
@@ -236,8 +238,11 @@ export default function Inventory() {
                            <div className="w-10 h-10 border border-black bg-gray-100 flex items-center justify-center text-[8px] font-mono text-gray-400">NO IMG</div>
                          )}
                       </td>
-                      <td className="p-3 border-r border-black font-mono text-sm w-5/12">{p.name}</td>
-                      <td className="p-3 border-r border-black font-mono text-sm w-2/12">₺{p.price}</td>
+                      <td className="p-3 border-r border-black">
+                        <div className="font-bold text-sm uppercase">{p.name}</div>
+                        {p.description && <div className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{p.description}</div>}
+                      </td>
+                      <td className="p-3 border-r border-black font-mono text-sm text-right">₺{parseFloat(p.price).toFixed(2)}</td>
                       <td className="p-3 border-r border-black text-center">
                         <input 
                           type="checkbox" 
@@ -249,14 +254,14 @@ export default function Inventory() {
                       <td className="p-3 text-center space-x-2">
                         <button 
                           onClick={() => handleEditProduct(p)}
-                          className="text-xs underline hover:no-underline"
+                          className="text-xs underline hover:no-underline font-bold"
                         >
                           DÜZENLE
                         </button> 
                         <span className="text-gray-300">|</span>
                         <button 
                           onClick={() => handleDeleteProduct(p.id)}
-                          className="text-xs underline hover:no-underline text-gray-500 hover:text-black"
+                          className="text-xs underline hover:no-underline text-gray-500 hover:text-black font-bold"
                         >
                           SİL
                         </button>
