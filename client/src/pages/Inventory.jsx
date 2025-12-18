@@ -283,6 +283,16 @@ export default function Inventory() {
           </div>
 
           <div>
+            <label className="block text-xs font-bold mb-1 uppercase">Açıklama</label>
+            <textarea 
+              className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none resize-none h-20"
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
+              placeholder="Ürün açıklaması..."
+            />
+          </div>
+
+          <div>
              <label className="flex items-center gap-2 cursor-pointer">
                <input 
                  type="checkbox" 

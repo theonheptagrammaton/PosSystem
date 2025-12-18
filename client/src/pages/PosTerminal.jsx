@@ -257,7 +257,10 @@ export default function PosTerminal() {
                                 onClick={() => handleProductClick(p)}
                                 className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-black text-left flex flex-col justify-between h-32 group"
                             >
-                                <div className="font-bold text-gray-800 leading-tight group-hover:underline">{p.name}</div>
+                                <div>
+                                    <div className="font-bold text-gray-800 leading-tight group-hover:underline">{p.name}</div>
+                                    <div className="text-[10px] text-gray-400 mt-1 line-clamp-2">{p.description}</div>
+                                </div>
                                 <div className="font-mono text-lg font-bold text-black mt-2">₺{p.price}</div>
                             </button>
                         ))}
