@@ -9,19 +9,20 @@ const getReportData = async (req, res) => {
     const { range, branchId } = req.query;
 
     try {
+        const TZ = "'Europe/Istanbul'";
         let dateFilter = '';
-        const TZ = "'Europe/Istanbul'"; // User is in TR
         
+        // Robust Date Logic: Get the start of today in TR and convert to UTC for comparison with TIMESTAMPTZ
         if (range === 'daily') {
-            dateFilter = `AND created_at AT TIME ZONE ${TZ} >= (CURRENT_DATE AT TIME ZONE ${TZ})`;
+            dateFilter = `AND created_at >= ( (now() AT TIME ZONE ${TZ})::date AT TIME ZONE ${TZ} )`;
         } else if (range === 'weekly') {
-            dateFilter = `AND created_at AT TIME ZONE ${TZ} >= (CURRENT_DATE AT TIME ZONE ${TZ} - INTERVAL '7 days')`;
+            dateFilter = `AND created_at >= ( (now() AT TIME ZONE ${TZ})::date - INTERVAL '7 days' ) AT TIME ZONE ${TZ}`;
         } else if (range === 'monthly') {
-            dateFilter = `AND created_at AT TIME ZONE ${TZ} >= (CURRENT_DATE AT TIME ZONE ${TZ} - INTERVAL '30 days')`;
+            dateFilter = `AND created_at >= ( (now() AT TIME ZONE ${TZ})::date - INTERVAL '30 days' ) AT TIME ZONE ${TZ}`;
         }
 
         let branchFilter = '';
-        if (branchId && branchId !== 'all') {
+        if (branchId && branchId !== 'all' && !isNaN(parseInt(branchId))) {
             branchFilter = `AND branch_id = ${parseInt(branchId, 10)}`;
         }
 
@@ -29,8 +30,8 @@ const getReportData = async (req, res) => {
         const summaryQuery = `
             SELECT 
                 COUNT(*) as total_orders,
-                SUM(total_amount) as total_revenue,
-                AVG(total_amount) as avg_order_value
+                COALESCE(SUM(total_amount), 0) as total_revenue,
+                COALESCE(AVG(total_amount), 0) as avg_order_value
             FROM orders
             WHERE tenant_id = $1 ${dateFilter} ${branchFilter}
         `;
@@ -38,7 +39,6 @@ const getReportData = async (req, res) => {
         const summary = summaryResult.rows[0];
 
         // 2. Product Performance
-        // We need to parse the JSONB 'items' array. In Postgres we can use jsonb_array_elements
         const productQuery = `
             WITH flat_items AS (
                 SELECT jsonb_array_elements(items) as item
@@ -48,7 +48,7 @@ const getReportData = async (req, res) => {
             SELECT 
                 item->>'name' as name,
                 SUM((item->>'quantity')::int) as total_quantity,
-                SUM(((item->>'price')::numeric) * ((item->>'quantity')::int)) as total_sales
+                SUM( (COALESCE(item->>'price', '0')::numeric) * (COALESCE(item->>'quantity', '0')::int) ) as total_sales
             FROM flat_items
             GROUP BY name
             ORDER BY total_sales DESC
@@ -64,13 +64,14 @@ const getReportData = async (req, res) => {
                 WHERE tenant_id = $1 ${dateFilter} ${branchFilter}
             )
             SELECT 
-                p.category_id,
+                c.id as category_id,
                 c.name as category_name,
-                SUM(((item->>'price')::numeric) * ((item->>'quantity')::int)) as total_sales
+                SUM( (COALESCE(item->>'price', '0')::numeric) * (COALESCE(item->>'quantity', '0')::int) ) as total_sales
             FROM flat_items
-            JOIN products p ON p.name = (item->>'name') AND p.tenant_id = $1
+            JOIN products p ON p.id = (item->>'id')::int
             JOIN categories c ON c.id = p.category_id
-            GROUP BY p.category_id, c.name
+            WHERE p.tenant_id = $1
+            GROUP BY c.id, c.name
             ORDER BY total_sales DESC
         `;
         const categoryResult = await pool.query(categoryQuery, [tenantId]);

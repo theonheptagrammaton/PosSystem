@@ -9,18 +9,25 @@ export default function MobileMenu() {
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [cart, setCart] = useState({}); // { productId: quantity }
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const res = await api.get(`/api/public/menu/${tenantId}`);
         setData(res.data);
         // Expand first category by default
-        if (res.data.categories.length > 0) {
+        if (res.data.categories && res.data.categories.length > 0) {
           setExpandedCategory(res.data.categories[0].id);
         }
       } catch (err) {
         console.error('Menü getirilemedi:', err);
+        setError('Bağlantı hatası: Sunucuya ulaşılamıyor.');
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -85,19 +92,45 @@ export default function MobileMenu() {
 
   if (orderPlaced) {
     return (
-      <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center p-8 z-50 animate-fadeIn">
-        <div className="border-2 border-white p-8 text-center bg-black">
-          <h1 className="text-3xl font-bold uppercase tracking-widest mb-4">SİPARİŞİNİZ ALINDI</h1>
-          <p className="font-mono text-sm text-gray-300 mb-8">Masa No: {tableId}</p>
+      <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center p-8 z-50 animate-fadeIn text-center">
+        <div className="border-4 border-white p-10 bg-black">
+          <h1 className="text-3xl font-black uppercase tracking-[0.2em] mb-4">SİPARİŞİNİZ ALINDI</h1>
+          <p className="font-mono text-xs text-gray-500 mb-8">Masa No: {tableId}</p>
           <button 
             onClick={() => setOrderPlaced(false)}
-            className="bg-white text-black px-6 py-3 font-bold uppercase tracking-widest hover:bg-gray-200"
+            className="bg-white text-black px-10 py-5 font-black uppercase tracking-[0.2em] hover:bg-gray-200 transition-colors"
           >
             YENİ SİPARİŞ
           </button>
         </div>
       </div>
     );
+  }
+
+  if (loading) {
+      return (
+          <div className="min-h-screen flex flex-col items-center justify-center bg-white p-10 font-mono">
+              <div className="w-10 h-10 border-4 border-black border-t-transparent animate-spin mb-4"></div>
+              <p className="text-xs uppercase tracking-[0.2em]">Menü Yükleniyor...</p>
+          </div>
+      );
+  }
+
+  if (error) {
+      return (
+          <div className="min-h-screen flex flex-col items-center justify-center bg-white p-10 text-center">
+              <div className="border-2 border-red-600 p-8">
+                <h1 className="text-xl font-black text-red-600 uppercase mb-4">HATA OLUŞTU</h1>
+                <p className="text-sm font-mono mb-6">{error}</p>
+                <button 
+                    onClick={() => window.location.reload()}
+                    className="bg-black text-white px-6 py-2 text-xs font-bold uppercase"
+                >
+                    TEKRAR DENE
+                </button>
+              </div>
+          </div>
+      );
   }
 
   const totalAmount = calculateTotal();
