@@ -58,6 +58,13 @@ io.on('connection', (socket) => {
 
 const branchRoutes = require('./routes/branchRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+// --- EKSİK OLAN SATIRLAR BURADAN BAŞLIYOR ---
+const testRoutes = require('./routes/testRoutes'); // Dosya adın test.js ise './routes/test' yap
+const orderRoutes = require('./routes/orderRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
+const publicRoutes = require('./routes/publicRoutes');
+// --- EKSİK OLAN SATIRLAR BURADA BİTİYOR ---
 
 // Temel Rota (Sağlık Kontrolü)
 app.get('/', (req, res) => {
