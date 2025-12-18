@@ -9,95 +9,102 @@ const getReportData = async (req, res) => {
     const { range, branchId } = req.query;
 
     try {
-        const TZ = "'Europe/Istanbul'";
-        let dateFilter = '';
+        const TZ = 'Europe/Istanbul';
         
-        // Robust Date Logic: Get the start of today in TR and convert to UTC for comparison with TIMESTAMPTZ
+        // Use o. prefix for all filters to avoid ambiguity in joins
+        let queryParams = [tenantId];
+        let filterSql = 'WHERE o.tenant_id = $1';
+
+        // 1. Date Filtering (Robust casting)
         if (range === 'daily') {
-            dateFilter = `AND created_at >= ( (now() AT TIME ZONE ${TZ})::date AT TIME ZONE ${TZ} )`;
+            filterSql += ` AND (o.created_at AT TIME ZONE '${TZ}')::date = (now() AT TIME ZONE '${TZ}')::date`;
         } else if (range === 'weekly') {
-            dateFilter = `AND created_at >= ( (now() AT TIME ZONE ${TZ})::date - INTERVAL '7 days' ) AT TIME ZONE ${TZ}`;
+            filterSql += ` AND (o.created_at AT TIME ZONE '${TZ}')::date >= (now() AT TIME ZONE '${TZ}')::date - INTERVAL '7 days'`;
         } else if (range === 'monthly') {
-            dateFilter = `AND created_at >= ( (now() AT TIME ZONE ${TZ})::date - INTERVAL '30 days' ) AT TIME ZONE ${TZ}`;
+            filterSql += ` AND (o.created_at AT TIME ZONE '${TZ}')::date >= (now() AT TIME ZONE '${TZ}')::date - INTERVAL '30 days'`;
         }
 
-        let branchFilter = '';
-        if (branchId && branchId !== 'all' && !isNaN(parseInt(branchId))) {
-            branchFilter = `AND branch_id = ${parseInt(branchId, 10)}`;
+        // 2. Branch Filtering
+        if (branchId && branchId !== 'all') {
+            const bId = parseInt(branchId, 10);
+            if (!isNaN(bId)) {
+                queryParams.push(bId);
+                filterSql += ` AND o.branch_id = $${queryParams.length}`;
+            }
         }
 
-        // 1. Summary Stats
+        // 3. Summary Stats
         const summaryQuery = `
             SELECT 
-                COUNT(*) as total_orders,
-                COALESCE(SUM(total_amount), 0) as total_revenue,
-                COALESCE(AVG(total_amount), 0) as avg_order_value
-            FROM orders
-            WHERE tenant_id = $1 ${dateFilter} ${branchFilter}
+                COUNT(*)::int as total_orders,
+                COALESCE(SUM(total_amount), 0)::numeric as total_revenue,
+                COALESCE(AVG(total_amount), 0)::numeric as avg_order_value
+            FROM orders o
+            ${filterSql}
         `;
-        const summaryResult = await pool.query(summaryQuery, [tenantId]);
+        const summaryResult = await pool.query(summaryQuery, queryParams);
         const summary = summaryResult.rows[0];
 
-        // 2. Product Performance
+        // 4. Product Performance
         const productQuery = `
             WITH flat_items AS (
                 SELECT jsonb_array_elements(items) as item
-                FROM orders
-                WHERE tenant_id = $1 ${dateFilter} ${branchFilter}
+                FROM orders o
+                ${filterSql}
             )
             SELECT 
                 item->>'name' as name,
-                SUM((item->>'quantity')::int) as total_quantity,
-                SUM( (COALESCE(item->>'price', '0')::numeric) * (COALESCE(item->>'quantity', '0')::int) ) as total_sales
+                SUM((item->>'quantity')::int)::int as total_quantity,
+                SUM(((item->>'price')::numeric) * ((item->>'quantity')::int))::numeric as total_sales
             FROM flat_items
             GROUP BY name
             ORDER BY total_sales DESC
             LIMIT 10
         `;
-        const productResult = await pool.query(productQuery, [tenantId]);
+        const productResult = await pool.query(productQuery, queryParams);
 
-        // 3. Category Performance
+        // 5. Category Performance
+        // Using LEFT JOIN to avoid losing data if some items don't have product IDs (legacy/manual entries)
         const categoryQuery = `
             WITH flat_items AS (
                 SELECT jsonb_array_elements(items) as item
-                FROM orders
-                WHERE tenant_id = $1 ${dateFilter} ${branchFilter}
+                FROM orders o
+                ${filterSql}
             )
             SELECT 
-                c.id as category_id,
-                c.name as category_name,
-                SUM( (COALESCE(item->>'price', '0')::numeric) * (COALESCE(item->>'quantity', '0')::int) ) as total_sales
+                COALESCE(c.id, 0) as category_id,
+                COALESCE(c.name, 'Tanımsız') as category_name,
+                SUM(((item->>'price')::numeric) * ((item->>'quantity')::int))::numeric as total_sales
             FROM flat_items
-            JOIN products p ON p.id = (item->>'id')::int
-            JOIN categories c ON c.id = p.category_id
-            WHERE p.tenant_id = $1
+            LEFT JOIN products p ON p.id = (item->>'id')::int
+            LEFT JOIN categories c ON c.id = p.category_id
             GROUP BY c.id, c.name
             ORDER BY total_sales DESC
         `;
-        const categoryResult = await pool.query(categoryQuery, [tenantId]);
+        const categoryResult = await pool.query(categoryQuery, queryParams);
 
-        // 4. Detailed Transactions
+        // 6. Detailed Transactions
         const transactionsQuery = `
             SELECT 
                 o.id,
                 o.table_no,
                 b.name as branch_name,
-                o.total_amount,
+                o.total_amount::numeric,
                 o.status,
                 o.created_at
             FROM orders o
             LEFT JOIN branches b ON o.branch_id = b.id
-            WHERE o.tenant_id = $1 ${dateFilter} ${branchFilter}
+            ${filterSql}
             ORDER BY o.created_at DESC
             LIMIT 100
         `;
-        const transactionsResult = await pool.query(transactionsQuery, [tenantId]);
+        const transactionsResult = await pool.query(transactionsQuery, queryParams);
 
         res.json({
             summary: {
-                total_orders: parseInt(summary.total_orders) || 0,
-                total_revenue: parseFloat(summary.total_revenue) || 0,
-                avg_order_value: parseFloat(summary.avg_order_value) || 0
+                total_orders: summary.total_orders,
+                total_revenue: parseFloat(summary.total_revenue),
+                avg_order_value: parseFloat(summary.avg_order_value)
             },
             products: productResult.rows,
             categories: categoryResult.rows,
@@ -105,8 +112,11 @@ const getReportData = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error generating report:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('CRITICAL REPORT ERROR:', error);
+        res.status(500).json({ 
+            error: 'Rapor oluşturulurken bir hata oluştu.', 
+            details: error.message 
+        });
     }
 };
 
