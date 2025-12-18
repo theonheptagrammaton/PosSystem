@@ -4,7 +4,7 @@ import api from '../../api';
 import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 
 export default function MobileMenu() {
-  const { tenantId, tableId } = useParams(); // Using tableId as table_no
+  const { tenantId, branchId, tableId } = useParams(); // Using tableId as table_no
   const [data, setData] = useState({ categories: [], products: [] });
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [cart, setCart] = useState({}); // { productId: quantity }
@@ -67,7 +67,8 @@ export default function MobileMenu() {
 
     const payload = {
       tenant_id: tenantId,
-      table_no: tableId,
+      branch_id: branchId,
+      table_no: `MASA-${tableId}`,
       total_amount: calculateTotal(),
       items: items
     };
