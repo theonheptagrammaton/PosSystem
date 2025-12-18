@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import io from 'socket.io-client';
 import api from '../api';
 import { 
     Download, 
@@ -21,6 +22,9 @@ export default function Reports() {
         transactions: []
     });
     const [loading, setLoading] = useState(false);
+    const socketRef = useRef(null);
+    const user = JSON.parse(localStorage.getItem('user'));
+    const tenantId = user?.tenant_id;
 
     useEffect(() => {
         fetchBranches();
@@ -28,7 +32,29 @@ export default function Reports() {
 
     useEffect(() => {
         fetchReportData();
-    }, [range, selectedBranch]);
+        
+        // Setup Socket
+        if (!socketRef.current && tenantId) {
+            socketRef.current = io(api.defaults.baseURL, {
+                query: { tenantId }
+            });
+
+            const handleUpdate = () => {
+                console.log('Real-time report update triggered');
+                fetchReportData();
+            };
+
+            socketRef.current.on('new_order', handleUpdate);
+            socketRef.current.on('table_closed', handleUpdate);
+        }
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current = null;
+            }
+        };
+    }, [range, selectedBranch, tenantId]);
 
     const fetchBranches = async () => {
         try {

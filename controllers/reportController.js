@@ -10,12 +10,14 @@ const getReportData = async (req, res) => {
 
     try {
         let dateFilter = '';
+        const TZ = "'Europe/Istanbul'"; // User is in TR
+        
         if (range === 'daily') {
-            dateFilter = "AND created_at >= CURRENT_DATE";
+            dateFilter = `AND created_at AT TIME ZONE ${TZ} >= (CURRENT_DATE AT TIME ZONE ${TZ})`;
         } else if (range === 'weekly') {
-            dateFilter = "AND created_at >= CURRENT_DATE - INTERVAL '7 days'";
+            dateFilter = `AND created_at AT TIME ZONE ${TZ} >= (CURRENT_DATE AT TIME ZONE ${TZ} - INTERVAL '7 days')`;
         } else if (range === 'monthly') {
-            dateFilter = "AND created_at >= CURRENT_DATE - INTERVAL '30 days'";
+            dateFilter = `AND created_at AT TIME ZONE ${TZ} >= (CURRENT_DATE AT TIME ZONE ${TZ} - INTERVAL '30 days')`;
         }
 
         let branchFilter = '';
