@@ -14,5 +14,6 @@ CREATE TABLE products (
     description TEXT,
     price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
     is_available BOOLEAN DEFAULT TRUE,
+    image_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

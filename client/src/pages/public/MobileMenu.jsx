@@ -133,16 +133,27 @@ export default function MobileMenu() {
               {isExpanded && (
                 <div className="flex flex-col gap-4 mt-2 animate-fadeIn">
                   {categoryProducts.map(product => (
-                    <div key={product.id} className="border border-black p-4 flex flex-col gap-2">
-                       <div className="flex justify-between items-start">
-                         <div>
-                           <h3 className="font-bold text-sm uppercase">{product.name}</h3>
-                           <p className="text-xs text-gray-500 mt-1">{product.description}</p>
+                      <div key={product.id} className="border border-black p-4 flex flex-col gap-2">
+                         <div className="flex gap-4">
+                           {product.image_url && (
+                             <div className="w-20 h-20 shrink-0 border border-black overflow-hidden bg-gray-50">
+                               <img 
+                                 src={product.image_url.startsWith('http') ? product.image_url : `${api.defaults.baseURL}${product.image_url}`} 
+                                 alt={product.name}
+                                 className="w-full h-full object-cover"
+                               />
+                             </div>
+                           )}
+                           <div className="flex-1">
+                             <div className="flex justify-between items-start">
+                               <h3 className="font-bold text-sm uppercase">{product.name}</h3>
+                               <div className="font-mono font-bold whitespace-nowrap ml-2">
+                                 ₺{product.price}
+                               </div>
+                             </div>
+                             <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{product.description}</p>
+                           </div>
                          </div>
-                         <div className="font-mono font-bold whitespace-nowrap ml-2">
-                           ₺{product.price}
-                         </div>
-                       </div>
                        
                        {/* Controls */}
                        <div className="flex items-center justify-end mt-2 gap-4">

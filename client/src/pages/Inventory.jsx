@@ -14,7 +14,8 @@ export default function Inventory() {
     name: '',
     price: '',
     description: '',
-    is_available: true
+    is_available: true,
+    image_url: ''
   });
   
   // Auth Token automatically handled by api interceptor
@@ -88,10 +89,28 @@ export default function Inventory() {
       
       setIsProductModalOpen(false);
       setEditingProductId(null); // Reset editing state
-      setFormData({ name: '', price: '', description: '', is_available: true });
+      setFormData({ name: '', price: '', description: '', is_available: true, image_url: '' });
       fetchProducts(selectedCategory.id);
     } catch (err) {
       alert(editingProductId ? 'Ürün güncellenemedi' : 'Ürün eklenemedi');
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const uploadData = new FormData();
+    uploadData.append('image', file);
+
+    try {
+        const res = await api.post('/api/products/upload', uploadData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setFormData({ ...formData, image_url: res.data.imageUrl });
+    } catch (err) {
+        alert('Fotoğraf yüklenemedi');
+        console.error(err);
     }
   };
 
@@ -101,7 +120,8 @@ export default function Inventory() {
       name: product.name,
       price: product.price,
       description: product.description || '',
-      is_available: product.is_available
+      is_available: product.is_available,
+      image_url: product.image_url || ''
     });
     setIsProductModalOpen(true);
   };
@@ -183,7 +203,7 @@ export default function Inventory() {
               <button 
                 onClick={() => {
                   setEditingProductId(null);
-                  setFormData({ name: '', price: '', description: '', is_available: true });
+                  setFormData({ name: '', price: '', description: '', is_available: true, image_url: '' });
                   setIsProductModalOpen(true);
                 }}
                 className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black border border-black transition-colors"
@@ -196,18 +216,28 @@ export default function Inventory() {
             <div className="border border-black flex-1 overflow-y-auto">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/2">ÜRÜN ADI</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/4">FİYAT</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/6 text-center">AKTİF</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/12 text-center">FOTO</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-5/12">ÜRÜN ADI</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-2/12">FİYAT</th>
+                    <th className="p-3 border-b border-r border-black font-bold text-xs w-1/12 text-center">AKTİF</th>
                     <th className="p-3 border-b border-black font-bold text-xs text-center">İŞLEM</th>
-                  </tr>
                 </thead>
                 <tbody>
                   {products.map(p => (
-                    <tr key={p.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50">
-                      <td className="p-3 border-r border-black font-mono text-sm">{p.name}</td>
-                      <td className="p-3 border-r border-black font-mono text-sm">₺{p.price}</td>
+                    <tr key={p.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 flex items-center">
+                      <td className="p-3 border-r border-black text-center w-1/12">
+                         {p.image_url ? (
+                           <img 
+                            src={p.image_url.startsWith('http') ? p.image_url : `${api.defaults.baseURL}${p.image_url}`} 
+                            alt={p.name} 
+                            className="w-10 h-10 object-cover border border-black inline-block"
+                           />
+                         ) : (
+                           <div className="w-10 h-10 border border-black bg-gray-100 flex items-center justify-center text-[8px] font-mono text-gray-400">NO IMG</div>
+                         )}
+                      </td>
+                      <td className="p-3 border-r border-black font-mono text-sm w-5/12">{p.name}</td>
+                      <td className="p-3 border-r border-black font-mono text-sm w-2/12">₺{p.price}</td>
                       <td className="p-3 border-r border-black text-center">
                         <input 
                           type="checkbox" 
@@ -290,6 +320,39 @@ export default function Inventory() {
               onChange={e => setFormData({...formData, description: e.target.value})}
               placeholder="Ürün açıklaması..."
             />
+          </div>
+
+          <div>
+             <label className="block text-xs font-bold mb-1 uppercase">Ürün Fotoğrafı</label>
+             <div className="flex gap-2 mb-2">
+                <input 
+                  type="text" 
+                  placeholder="Fotoğraf URL..."
+                  className="flex-1 border border-black p-2 text-sm focus:bg-gray-50 outline-none"
+                  value={formData.image_url}
+                  onChange={e => setFormData({...formData, image_url: e.target.value})}
+                />
+                <label className="bg-black text-white px-4 py-2 text-xs font-bold uppercase cursor-pointer hover:bg-gray-800 transition-colors flex items-center">
+                  YÜKLE
+                  <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" />
+                </label>
+             </div>
+             {formData.image_url && (
+               <div className="border border-black p-2 bg-gray-50 flex items-center justify-center">
+                  <img 
+                    src={formData.image_url.startsWith('http') ? formData.image_url : `${api.defaults.baseURL}${formData.image_url}`} 
+                    className="max-h-32 object-contain" 
+                    alt="Önizleme"
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setFormData({...formData, image_url: ''})}
+                    className="ml-4 text-xs font-bold text-red-600 underline"
+                  >
+                    KALDIR
+                  </button>
+               </div>
+             )}
           </div>
 
           <div>

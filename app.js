@@ -38,6 +38,7 @@ app.use(cors({
 app.options('*', cors());
 
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // Socket.io Mantığı
 io.on('connection', (socket) => {
@@ -55,14 +56,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// Rota Dosyalarını İçe Aktar
-const testRoutes = require('./routes/testRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const categoryRoutes = require('./routes/categoryRoutes');
-const productRoutes = require('./routes/productRoutes');
-const publicRoutes = require('./routes/publicRoutes');
-const userRoutes = require('./routes/userRoutes');
 const branchRoutes = require('./routes/branchRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 // Temel Rota (Sağlık Kontrolü)
 app.get('/', (req, res) => {
@@ -75,6 +70,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Auth login için
 app.use('/api/auth', publicRoutes); 

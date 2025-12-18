@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Store, Utensils, Boxes, Settings as SettingsIcon, LogOut, Building2, User } from 'lucide-react';
+import { LayoutDashboard, Store, Utensils, Boxes, Settings as SettingsIcon, LogOut, Building2, User, FileText } from 'lucide-react';
 import { useGodMode } from '../context/GodModeContext';
 
 export default function Layout() {
@@ -21,6 +21,7 @@ export default function Layout() {
       case 'branches': return 'ŞUBE YÖNETİMİ';
       case 'settings': return 'SİSTEM AYARLARI';
       case 'users': return 'KULLANICI YÖNETİMİ';
+      case 'reports': return 'İŞLETME RAPORLARI';
       default: return 'PANEL';
     }
   };
@@ -35,6 +36,7 @@ export default function Layout() {
     { path: '/dashboard/pos', label: 'POS / Kasa', icon: Store },
     { path: '/dashboard/tables', label: 'Masalar', icon: Utensils },
     { path: '/dashboard/inventory', label: 'Envanter', icon: Boxes },
+    { path: '/dashboard/reports', label: 'Raporlar', icon: FileText },
     ...(isAdmin ? [
       { path: '/dashboard/branches', label: 'Şubeler', icon: Building2 }, 
       { path: '/dashboard/users', label: 'Kullanıcılar', icon: User }, // Admin Only

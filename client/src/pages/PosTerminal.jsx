@@ -256,13 +256,28 @@ export default function PosTerminal() {
                             <button 
                                 key={p.id}
                                 onClick={() => handleProductClick(p)}
-                                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-black text-left flex flex-col justify-between h-32 group"
+                                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-black text-left flex flex-col overflow-hidden h-44 group"
                             >
-                                <div>
-                                    <div className="font-bold text-gray-800 leading-tight group-hover:underline">{p.name}</div>
-                                    <div className="text-[10px] text-gray-400 mt-1 line-clamp-2">{p.description}</div>
+                                <div className="h-24 bg-gray-50 flex-shrink-0 relative overflow-hidden">
+                                     {p.image_url ? (
+                                         <img 
+                                            src={p.image_url.startsWith('http') ? p.image_url : `${api.defaults.baseURL}${p.image_url}`} 
+                                            alt={p.name}
+                                            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                                         />
+                                     ) : (
+                                         <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                             <Utensils size={32} />
+                                         </div>
+                                     )}
                                 </div>
-                                <div className="font-mono text-lg font-bold text-black mt-2">₺{p.price}</div>
+                                <div className="p-3 flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <div className="font-bold text-gray-800 leading-tight group-hover:underline text-sm line-clamp-1">{p.name}</div>
+                                        <div className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{p.description}</div>
+                                    </div>
+                                    <div className="font-mono text-sm font-bold text-black mt-1">₺{p.price}</div>
+                                </div>
                             </button>
                         ))}
                     </div>

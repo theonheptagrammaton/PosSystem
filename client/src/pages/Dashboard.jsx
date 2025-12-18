@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useGodMode } from '../context/GodModeContext';
-import RevenueChart from '../components/GodMode/RevenueChart';
+import { 
+  DailyRevenueChart, 
+  BranchPerformanceChart, 
+  TopProductsChart, 
+  CategoryShareChart 
+} from '../components/GodMode/AnalyticalCharts';
 import OccupancyGauge from '../components/GodMode/OccupancyGauge';
 import io from 'socket.io-client';
 import api from '../api';
@@ -10,23 +15,30 @@ import { Terminal } from 'lucide-react';
 export default function Dashboard() {
   const { isGodMode } = useGodMode();
   const [orders, setOrders] = useState([]);
-  const [chartData, setChartData] = useState([
-    { time: '09:00', amount: 1200 },
-    { time: '10:00', amount: 2100 },
-    { time: '11:00', amount: 1800 },
-    { time: '12:00', amount: 4500 },
-    { time: '13:00', amount: 3200 },
-  ]);
-  const [selectedOrder, setSelectedOrder] = useState(null); // For View Button
-  const [occupancyRate, setOccupancyRate] = useState(0); // Real Occupancy Rate
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [occupancyRate, setOccupancyRate] = useState(0); 
+  const [selectedOrder, setSelectedOrder] = useState(null); 
   
   const socketRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('user'));
   const tenantId = user?.tenant_id;
 
   useEffect(() => {
-    fetchOrders();
+    fetchInitialData();
   }, []);
+
+  const fetchInitialData = async () => {
+      fetchOrders();
+      try {
+          const [catRes, prodRes] = await Promise.all([
+              api.get('/api/categories'),
+              api.get('/api/products')
+          ]);
+          setCategories(catRes.data);
+          setProducts(prodRes.data);
+      } catch (err) { console.error('Initial data fetch error', err); }
+  };
 
   const fetchOrders = async () => {
       try {
@@ -103,57 +115,119 @@ export default function Dashboard() {
     setSelectedOrder(order);
   };
 
-  // Calculate Revenue per Order (Real-time - each order is a data point)
-  const calculateOrderRevenue = () => {
-    // Filter to today's orders only for relevant chart
+  // 1. Daily Revenue Flow
+  const calculateDailyRevenue = () => {
     const today = new Date().toDateString();
-    const todayOrders = orders.filter(order => {
-        if (!order.created_at) return false;
-        return new Date(order.created_at).toDateString() === today;
-    });
-
-    // Map each order to a chart point
-    const chartArray = todayOrders.map((order, idx) => {
-        const date = new Date(order.created_at);
-        const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-        return {
-            time: timeStr,
-            amount: parseFloat(order.amount.replace('₺', '')) || 0
-        };
-    });
-
-    return chartArray.length > 0 ? chartArray : [{ time: 'Şimdi', amount: 0 }];
+    const todayOrders = orders.filter(o => o.created_at && new Date(o.created_at).toDateString() === today);
+    return todayOrders.map(o => ({
+        time: new Date(o.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+        amount: parseFloat(o.amount.replace('₺', '')) || 0
+    }));
   };
 
-  const realChartData = calculateOrderRevenue();
+  // 2. Branch Performance
+  const calculateBranchPerf = () => {
+    const perfMap = {};
+    orders.forEach(o => {
+        const amount = parseFloat(o.amount.replace('₺', '')) || 0;
+        perfMap[o.branch_name] = (perfMap[o.branch_name] || 0) + amount;
+    });
+    return Object.entries(perfMap).map(([name, total]) => ({ name, total }));
+  };
+
+  // 3. Top Products
+  const calculateTopProducts = () => {
+    const prodMap = {};
+    orders.forEach(o => {
+        if (!Array.isArray(o.details)) return;
+        o.details.forEach(item => {
+            prodMap[item.name] = (prodMap[item.name] || 0) + (item.quantity || 1);
+        });
+    });
+    return Object.entries(prodMap)
+        .map(([name, quantity]) => ({ name, quantity }))
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 5);
+  };
+
+  // 4. Category Distribution
+  const calculateCategoryDist = () => {
+    const distMap = {};
+    orders.forEach(o => {
+        if (!Array.isArray(o.details)) return;
+        o.details.forEach(item => {
+            const product = products.find(p => p.id === item.id);
+            const category = categories.find(c => c.id === product?.category_id);
+            const catName = category?.name || 'Diğer';
+            const amount = (parseFloat(item.price) || 0) * (item.quantity || 1);
+            distMap[catName] = (distMap[catName] || 0) + amount;
+        });
+    });
+    return Object.entries(distMap).map(([name, value]) => ({ name, value }));
+  };
+
+  const dailyRevenueData = calculateDailyRevenue();
+  const branchPerfData = calculateBranchPerf();
+  const topProductsData = calculateTopProducts();
+  const categoryDistData = calculateCategoryDist();
 
   if (isGodMode) {
     return (
       <div className="p-8 h-full bg-black text-white overflow-y-auto relative">
-        <h1 className="text-2xl font-bold uppercase mb-6 tracking-widest border-b border-white pb-2 inline-block">
-          ANALİTİK KONTROL MODU
+        <h1 className="text-2xl font-black uppercase mb-8 tracking-[0.2em] border-b-2 border-white pb-4 inline-block">
+          ANALİTİK KONTROL ÜSSÜ // GOD MODE
         </h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
-          <div className="border border-white p-4">
-             <div className="mb-2 text-xs font-mono text-gray-400">METRİK: SATIŞ AKIŞI // BÖLGE: A</div>
-             <RevenueChart data={realChartData} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
+          {/* DAILY REVENUE */}
+          <div className="border border-white/20 bg-white/5 p-6 backdrop-blur-md">
+             <div className="mb-4 flex justify-between items-center text-[10px] font-mono tracking-widest text-gray-500 uppercase">
+                <span>METRİK: GÜNLÜK GELİR AKIŞI</span>
+                <span className="text-white">CANLI // AKTİF</span>
+             </div>
+             <div className="h-64">
+                <DailyRevenueChart data={dailyRevenueData} />
+             </div>
           </div>
 
-          <div className="border border-white p-4">
-             <div className="mb-2 text-xs font-mono text-gray-400">METRİK: KAPASİTE // GENEL</div>
-             <OccupancyGauge percentage={occupancyRate} />
+          {/* BRANCH PERFORMANCE */}
+          <div className="border border-white/20 bg-white/5 p-6 backdrop-blur-md">
+             <div className="mb-4 flex justify-between items-center text-[10px] font-mono tracking-widest text-gray-500 uppercase">
+                <span>METRİK: ŞUBE PERFORMANSI</span>
+                <span className="text-white">KARŞILAŞTIRMALI</span>
+             </div>
+             <div className="h-64">
+                <BranchPerformanceChart data={branchPerfData} />
+             </div>
           </div>
 
-          <div className="border border-white p-4">
-             <div className="mb-2 text-xs font-mono text-gray-400">METRİK: KAPASİTE // DOLULUK</div>
-             <OccupancyGauge percentage={occupancyRate} />
+          {/* TOP PRODUCTS */}
+          <div className="border border-white/20 bg-white/5 p-6 backdrop-blur-md">
+             <div className="mb-4 flex justify-between items-center text-[10px] font-mono tracking-widest text-gray-500 uppercase">
+                <span>METRİK: EN ÇOK SATANLAR</span>
+                <span className="text-white">İLK 5 ÜRÜN</span>
+             </div>
+             <div className="h-64">
+                <TopProductsChart data={topProductsData} />
+             </div>
           </div>
 
-          <div className="border border-white p-4">
-             <div className="mb-2 text-xs font-mono text-gray-400">METRİK: SATIŞ AKIŞI // PAKET SERVİS</div>
-             <RevenueChart data={realChartData} />
+          {/* CATEGORY DISTRIBUTION */}
+          <div className="border border-white/20 bg-white/5 p-6 backdrop-blur-md">
+             <div className="mb-4 flex justify-between items-center text-[10px] font-mono tracking-widest text-gray-500 uppercase">
+                <span>METRİK: KATEGORİ DAĞILIMI</span>
+                <span className="text-white">CİRO %</span>
+             </div>
+             <div className="h-64">
+                <CategoryShareChart data={categoryDistData} />
+             </div>
           </div>
+        </div>
+
+        {/* Global Stats Overlay */}
+        <div className="fixed top-8 right-8 text-right hidden lg:block">
+            <div className="text-[10px] font-mono text-gray-500 uppercase">SİSTEM KAPASİTESİ</div>
+            <div className="text-4xl font-black">%{occupancyRate}</div>
         </div>
 
         <button 

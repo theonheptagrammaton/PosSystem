@@ -10,6 +10,7 @@ import Settings from './pages/Settings';
 import Branches from './pages/Branches';
 import Users from './pages/Users';
 import PosTerminal from './pages/PosTerminal';
+import Reports from './pages/Reports';
 
 import PublicLayout from './layouts/PublicLayout';
 import MobileMenu from './pages/public/MobileMenu';
@@ -61,6 +62,7 @@ function App() {
           <Route path="branches" element={<Branches />} />
           <Route path="users" element={<Users />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="reports" element={<Reports />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/login" replace />} />
