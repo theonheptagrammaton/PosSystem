@@ -53,7 +53,7 @@ export default function Onboarding() {
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full border-b-2 border-gray px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
+              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
               placeholder="İŞLETME ADINI GİRİNİZ"
               required
             />
@@ -65,7 +65,7 @@ export default function Onboarding() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full border-b-2 border-gray px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
+              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
               placeholder="AD SOYAD GİRİNİZ"
               required
             />
@@ -77,7 +77,7 @@ export default function Onboarding() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full border-b-2 border-gray px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
+              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
               placeholder="5XX XXX XX XX"
               required
             />
