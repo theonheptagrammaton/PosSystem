@@ -41,7 +41,7 @@ export default function Onboarding() {
       <div className="w-full max-w-lg border-2 border-black p-12">
         
         <div className="mb-10">
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mb-2">Başlangıç Kurulumu</h1>
+          <h1 className="text-3xl font-bold uppercase tracking-tighter mb-2">Başlangıç Kurulumu V2</h1>
           <p className="text-sm font-mono text-gray-500">KAYIT_PROTOKOLUNU_TAMAMLA</p>
         </div>
 

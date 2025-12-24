@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import Modal from '../components/Modal';
+import { Pencil, Trash2 } from 'lucide-react';
 
 export default function Inventory() {
   const [categories, setCategories] = useState([]);
@@ -8,8 +9,13 @@ export default function Inventory() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   
+  // Category Edit State
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editCategoryName, setEditCategoryName] = useState('');
+
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [editingProductId, setEditingProductId] = useState(null); // Track if editing
+  const [editingProductId, setEditingProductId] = useState(null); 
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -18,8 +24,8 @@ export default function Inventory() {
     image_url: ''
   });
   
-  // Auth Token automatically handled by api interceptor
-
+  // ... (useEffects and fetch functions remain same, omitted for brevity if using replace_file_content but here I need to be careful not to delete them if I'm replacing a chunk. I will target specific blocks to avoid deleting standard logic)
+  
   // Fetch Categories
   useEffect(() => {
     fetchCategories();
@@ -64,6 +70,41 @@ export default function Inventory() {
     } catch (err) {
       alert('Kategori eklenemedi');
     }
+  };
+
+  const handleUpdateCategory = async (e) => {
+      e.preventDefault();
+      if (!editingCategory || !editCategoryName.trim()) return;
+      
+      try {
+          await api.put(`/api/categories/${editingCategory.id}`, { name: editCategoryName });
+          setIsCategoryModalOpen(false);
+          setEditingCategory(null);
+          fetchCategories();
+      } catch (err) {
+          alert('Kategori güncellenemedi');
+      }
+  };
+
+  const handleDeleteCategory = async (e, id) => {
+      e.stopPropagation(); // Prevent selection
+      if (!confirm('Bu kategoriyi ve içindeki ürünleri silmek istediğinize emin misiniz?')) return;
+      
+      try {
+          await api.delete(`/api/categories/${id}`);
+          // If selected was deleted, clear selection
+          if (selectedCategory?.id === id) setSelectedCategory(null);
+          fetchCategories();
+      } catch (err) {
+          alert('Kategori silinemedi');
+      }
+  };
+
+  const openEditCategoryModal = (e, cat) => {
+      e.stopPropagation();
+      setEditingCategory(cat);
+      setEditCategoryName(cat.name);
+      setIsCategoryModalOpen(true);
   };
 
   const handleAddProduct = async (e) => {
@@ -179,11 +220,25 @@ export default function Inventory() {
              <div 
                key={cat.id}
                onClick={() => setSelectedCategory(cat)}
-               className={`p-3 cursor-pointer border-b border-gray-200 last:border-b-0 hover:bg-gray-100 transition-colors ${
+               className={`p-3 cursor-pointer border-b border-gray-200 last:border-b-0 hover:bg-gray-100 transition-colors flex justify-between items-center group ${
                  selectedCategory?.id === cat.id ? 'bg-black text-white hover:bg-black' : ''
                }`}
              >
                 <div className="font-mono text-sm uppercase">{cat.name}</div>
+                <div className={`flex gap-2 ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                    <button 
+                        onClick={(e) => openEditCategoryModal(e, cat)}
+                        className={`p-1 hover:bg-white/20 rounded ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                    >
+                        <Pencil size={14} />
+                    </button>
+                    <button 
+                        onClick={(e) => handleDeleteCategory(e, cat.id)}
+                        className={`p-1 hover:bg-red-500 hover:text-white rounded ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </div>
              </div>
            ))}
            {categories.length === 0 && (
@@ -379,6 +434,31 @@ export default function Inventory() {
             KAYDET
           </button>
         </form>
+      </Modal>
+
+      {/* Category Edit Modal */}
+      <Modal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        title="KATEGORİ DÜZENLE"
+      >
+          <form onSubmit={handleUpdateCategory} className="flex flex-col gap-4">
+              <div>
+                  <label className="block text-xs font-bold mb-1 uppercase">Kategori Adı</label>
+                  <input
+                      type="text"
+                      className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
+                      value={editCategoryName}
+                      onChange={(e) => setEditCategoryName(e.target.value)}
+                  />
+              </div>
+              <button 
+                  type="submit" 
+                  className="bg-black text-white p-3 font-bold uppercase tracking-widest hover:bg-gray-800"
+              >
+                  GÜNCELLE
+              </button>
+          </form>
       </Modal>
     </div>
   );
