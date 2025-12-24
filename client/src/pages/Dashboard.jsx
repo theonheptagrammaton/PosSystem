@@ -19,6 +19,19 @@ export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [occupancyRate, setOccupancyRate] = useState(0); 
   const [selectedOrder, setSelectedOrder] = useState(null); 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
   
   const socketRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('user'));
@@ -171,27 +184,39 @@ export default function Dashboard() {
   const topProductsData = calculateTopProducts();
   const categoryDistData = calculateCategoryDist();
 
-  if (isGodMode) {
+  const shouldShowGodMode = isGodMode || isMobile;
+
+  if (shouldShowGodMode) {
     return (
       <div className="p-8 h-full bg-black text-white overflow-y-auto relative">
         <div className="flex justify-between items-center border-b-2 border-white pb-4 mb-8">
-            <h1 className="text-2xl font-black uppercase tracking-[0.2em]">
-                ANALİTİK KONTROL ÜSSÜ // GOD MODE
+            <h1 className="text-xl md:text-2xl font-black uppercase tracking-[0.2em]">
+                {isMobile ? 'MOBİL ANALİZ' : 'ANALİTİK KONTROL ÜSSÜ // GOD MODE'}
             </h1>
             
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4 md:gap-8">
+                {isMobile && (
+                    <button 
+                        onClick={handleLogout}
+                        className="px-4 py-2 border-2 border-red-600 text-red-600 font-bold text-xs uppercase hover:bg-red-600 hover:text-white transition-colors"
+                    >
+                        ÇIKIŞ
+                    </button>
+                )}
                 <div className="text-right hidden lg:block">
                     <div className="text-[10px] font-mono text-gray-500 uppercase">SİSTEM KAPASİTESİ</div>
                     <div className="text-3xl font-black">%{occupancyRate}</div>
                 </div>
 
-                <button 
-                    onClick={toggleGodMode}
-                    className="p-2 border-2 border-white hover:bg-white hover:text-black transition-colors"
-                    title="PANELDEN ÇIK"
-                >
-                    <X size={24} />
-                </button>
+                {!isMobile && (
+                    <button 
+                        onClick={toggleGodMode}
+                        className="p-2 border-2 border-white hover:bg-white hover:text-black transition-colors"
+                        title="PANELDEN ÇIK"
+                    >
+                        <X size={24} />
+                    </button>
+                )}
             </div>
         </div>
         

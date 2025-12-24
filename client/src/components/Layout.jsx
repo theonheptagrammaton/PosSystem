@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Store, Utensils, Boxes, Settings as SettingsIcon, LogOut, Building2, User, FileText } from 'lucide-react';
 import { useGodMode } from '../context/GodModeContext';
@@ -9,6 +10,22 @@ export default function Layout() {
   const user = JSON.parse(localStorage.getItem('user'));
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'branch_manager';
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Force redirect to dashboard on mobile if not already there
+      if (mobile && location.pathname !== '/dashboard') {
+        navigate('/dashboard', { replace: true });
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [location.pathname, navigate]);
 
   // Helper to get title based on path
   const getPageTitle = () => {
@@ -44,12 +61,15 @@ export default function Layout() {
     { path: '/dashboard/settings', label: 'Ayarlar', icon: SettingsIcon },
   ];
 
+  // Mobile check for layout elements
+  const showSidebar = !isGodMode && !isMobile;
+  const showHeader = !isMobile;
+
   return (
-    <div className={`min-h-screen flex font-sans overflow-hidden transition-colors duration-300 ${isGodMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+    <div className={`min-h-screen flex font-sans overflow-hidden transition-colors duration-300 ${isGodMode || isMobile ? 'bg-black text-white' : 'bg-white text-black'}`}>
       
       {/* Sidebar */}
-      {/* Sidebar - HIDDEN IN GOD MODE */}
-      {!isGodMode && (
+      {showSidebar && (
       <aside className="w-[250px] border-r flex flex-col h-screen flex-shrink-0 border-black bg-white text-black transition-colors duration-300">
         <div className="h-[64px] border-b border-black flex items-center px-6">
           <span className="font-bold tracking-tighter text-lg">SAAS_POS</span>
@@ -91,6 +111,7 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* Header */}
+        {showHeader && (
         <header className={`h-[64px] border-b flex items-center justify-between px-8 flex-shrink-0 transition-colors duration-300 ${isGodMode ? 'bg-black border-white' : 'bg-white border-black'}`}>
           <h2 className="font-bold tracking-widest text-sm uppercase">{getPageTitle()}</h2>
           
@@ -105,9 +126,10 @@ export default function Layout() {
             )}
           </div>
         </header>
+        )}
 
         {/* Content Area */}
-        <main className={`flex-1 overflow-auto relative transition-colors duration-300 ${isGodMode ? 'bg-black' : 'bg-white'}`}>
+        <main className={`flex-1 overflow-auto relative transition-colors duration-300 ${isGodMode || isMobile ? 'bg-black' : 'bg-white'}`}>
           <div className="absolute inset-0">
             <Outlet />
           </div>
@@ -117,3 +139,4 @@ export default function Layout() {
     </div>
   );
 }
+

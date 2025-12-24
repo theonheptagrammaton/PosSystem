@@ -39,7 +39,7 @@ function App() {
           path="/onboarding" 
           element={
             <ProtectedRoute>
-              <Onboarding />
+              {(() => { console.log("Rendering Onboarding Route"); return <Onboarding />; })()}
             </ProtectedRoute>
           } 
         />

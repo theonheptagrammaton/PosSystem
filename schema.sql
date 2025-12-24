@@ -21,6 +21,8 @@ CREATE TABLE users (
     role user_role NOT NULL,
     is_onboarded BOOLEAN DEFAULT FALSE,
     full_name VARCHAR(100),
+    phone VARCHAR(20),
+    branch_id INTEGER REFERENCES branches(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (tenant_id, username)
 );

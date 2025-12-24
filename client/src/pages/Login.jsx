@@ -29,7 +29,8 @@ export default function Login() {
         // Admin and Managers go to Dashboard
         navigate('/dashboard');
       } else {
-        navigate('/onboarding');
+        // use window.location.href to force a full refresh to the latest onboarding version
+        window.location.href = '/onboarding';
       }
     } catch (err) {
       console.error('Login error:', err);
