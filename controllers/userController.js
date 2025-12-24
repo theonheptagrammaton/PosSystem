@@ -6,7 +6,7 @@ exports.onboardUser = async (req, res) => {
   
   try {
     const { company_name, full_name, phone } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.id || req.user.userId;
     const tenantId = req.user.tenantId || req.user.tenant_id;
 
     if (!company_name || !full_name || !phone) {
@@ -110,7 +110,7 @@ exports.deleteUser = async (req, res) => {
     const { id } = req.params;
 
     // Prevent deleting self (simple check)
-    if (parseInt(id) === req.user.id) {
+    if (parseInt(id) === (req.user.id || req.user.userId)) {
         return res.status(400).json({ error: 'Cannot delete yourself' });
     }
 

@@ -2,11 +2,13 @@ import { useState } from 'react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import { Terminal, Lock } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -32,7 +34,7 @@ export default function Login() {
     } catch (err) {
       console.error('Login error:', err);
       const errorMsg = err.response?.data?.error || 'GİRİŞ BAŞARISIZ: Kullanıcı adı veya şifre hatalı olabilir.';
-      alert(errorMsg);
+      showNotification({ title: 'GİRİŞ HATASI', message: errorMsg, type: 'error' });
     }
   };
 

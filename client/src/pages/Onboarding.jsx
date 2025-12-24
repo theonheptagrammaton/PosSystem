@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 export default function Onboarding() {
   const [companyName, setCompanyName] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   // Onboarding zaten yapılmışsa veya yetkisizse yönlendir
   useEffect(() => {
@@ -45,7 +47,11 @@ export default function Onboarding() {
       
     } catch (error) {
       console.error('Onboarding failed', error);
-      alert('KURULUM HATASI: ' + (error.response?.data?.error || 'Sunucu Hatası'));
+      showNotification({ 
+        title: 'KURULUM HATASI', 
+        message: error.response?.data?.error || 'Sunucu Hatası', 
+        type: 'error' 
+      });
     }
   };
 

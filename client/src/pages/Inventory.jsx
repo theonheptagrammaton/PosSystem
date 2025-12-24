@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import Modal from '../components/Modal';
 import { Pencil, Trash2 } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 export default function Inventory() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const { showNotification } = useNotification();
   
   // Category Edit State
   const [editingCategory, setEditingCategory] = useState(null);
@@ -68,7 +70,7 @@ export default function Inventory() {
       setNewCategoryName('');
       fetchCategories();
     } catch (err) {
-      alert('Kategori eklenemedi');
+      showNotification({ title: 'HATA', message: 'Kategori eklenemedi', type: 'error' });
     }
   };
 
@@ -82,13 +84,18 @@ export default function Inventory() {
           setEditingCategory(null);
           fetchCategories();
       } catch (err) {
-          alert('Kategori güncellenemedi');
+          showNotification({ title: 'HATA', message: 'Kategori güncellenemedi', type: 'error' });
       }
   };
 
   const handleDeleteCategory = async (e, id) => {
       e.stopPropagation(); // Prevent selection
-      if (!confirm('Bu kategoriyi ve içindeki ürünleri silmek istediğinize emin misiniz?')) return;
+      const confirmed = await showNotification({ 
+        title: 'KATEGORİYİ SİL', 
+        message: 'Bu kategoriyi ve içindeki ürünleri silmek istediğinize emin misiniz?', 
+        type: 'confirm' 
+      });
+      if (!confirmed) return;
       
       try {
           await api.delete(`/api/categories/${id}`);
@@ -109,7 +116,10 @@ export default function Inventory() {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
-    if (!selectedCategory) return alert('Önce bir kategori seçmelisiniz');
+    if (!selectedCategory) {
+      showNotification({ title: 'UYARI', message: 'Önce bir kategori seçmelisiniz', type: 'info' });
+      return;
+    }
     
     try {
       if (editingProductId) {
@@ -133,7 +143,11 @@ export default function Inventory() {
       setFormData({ name: '', price: '', description: '', is_available: true, image_url: '' });
       fetchProducts(selectedCategory.id);
     } catch (err) {
-      alert(editingProductId ? 'Ürün güncellenemedi' : 'Ürün eklenemedi');
+      showNotification({ 
+        title: 'HATA', 
+        message: editingProductId ? 'Ürün güncellenemedi' : 'Ürün eklenemedi', 
+        type: 'error' 
+      });
     }
   };
 
@@ -150,7 +164,7 @@ export default function Inventory() {
         });
         setFormData({ ...formData, image_url: res.data.imageUrl });
     } catch (err) {
-        alert('Fotoğraf yüklenemedi');
+        showNotification({ title: 'HATA', message: 'Fotoğraf yüklenemedi', type: 'error' });
         console.error(err);
     }
   };
@@ -177,17 +191,22 @@ export default function Inventory() {
       fetchProducts(selectedCategory.id);
     } catch (err) {
       console.error('Durum değiştirilemedi', err);
-      alert('Durum güncellenemedi');
+      showNotification({ title: 'HATA', message: 'Durum güncellenemedi', type: 'error' });
     }
   };
 
   const handleDeleteProduct = async (id) => {
-    if (!confirm('Emin misiniz?')) return;
+    const confirmed = await showNotification({ 
+      title: 'ÜRÜNÜ SİL', 
+      message: 'Bu ürünü silmek istediğinize emin misiniz?', 
+      type: 'confirm' 
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/api/products/${id}`);
       fetchProducts(selectedCategory.id);
     } catch (err) {
-      alert('Ürün silinemedi');
+      showNotification({ title: 'HATA', message: 'Ürün silinemedi', type: 'error' });
     }
   };
 

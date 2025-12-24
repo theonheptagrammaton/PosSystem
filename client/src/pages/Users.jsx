@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import Modal from '../components/Modal';
 import { User, Plus, Trash2, Key, Shield } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -14,6 +15,7 @@ export default function Users() {
     branch_id: '',
     full_name: '' 
   });
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     fetchUsers();
@@ -55,17 +57,26 @@ export default function Users() {
       });
       fetchUsers();
     } catch (err) {
-      alert('Kullanıcı oluşturulamadı: ' + (err.response?.data?.error || 'Hata'));
+      showNotification({ 
+        title: 'HATA', 
+        message: 'Kullanıcı oluşturulamadı: ' + (err.response?.data?.error || 'Hata'),
+        type: 'error'
+      });
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Kullanıcıyı silmek istiyor musunuz?')) return;
+    const confirmed = await showNotification({ 
+      title: 'KULLANICIYI SİL', 
+      message: 'Kullanıcıyı silmek istiyor musunuz?', 
+      type: 'confirm' 
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/api/users/${id}`);
       fetchUsers();
     } catch (err) {
-      alert('Silme işlemi başarısız');
+      showNotification({ title: 'HATA', message: 'Silme işlemi başarısız', type: 'error' });
     }
   };
 

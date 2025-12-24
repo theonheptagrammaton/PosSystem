@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import Modal from '../components/Modal';
 import { Building2, Plus, Pencil, Trash2, MapPin, Phone } from 'lucide-react';
+import { useNotification } from '../context/NotificationContext';
 
 export default function Branches() {
   const [branches, setBranches] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', address: '', phone: '', table_count: 10 });
   const [editingId, setEditingId] = useState(null);
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     fetchBranches();
@@ -35,7 +37,7 @@ export default function Branches() {
       setEditingId(null);
       fetchBranches();
     } catch (err) {
-      alert('İşlem başarısız');
+      showNotification({ title: 'HATA', message: 'İşlem başarısız', type: 'error' });
     }
   };
 
@@ -46,12 +48,17 @@ export default function Branches() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Bu şubeyi silmek istediğinize emin misiniz?')) return;
+    const confirmed = await showNotification({ 
+      title: 'ŞUBEYİ SİL', 
+      message: 'Bu şubeyi silmek istediğinize emin misiniz?', 
+      type: 'confirm' 
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/api/branches/${id}`);
       fetchBranches();
     } catch (err) {
-      alert('Silme işlemi başarısız');
+      showNotification({ title: 'HATA', message: 'Silme işlemi başarısız', type: 'error' });
     }
   };
 

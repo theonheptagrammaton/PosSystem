@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { ShoppingCart, ArrowLeft, Trash2, Utensils, CheckCircle, RefreshCcw } from 'lucide-react';
 import io from 'socket.io-client';
+import { useNotification } from '../context/NotificationContext';
 
 export default function PosTerminal() {
   const { branchId } = useParams();
   const navigate = useNavigate();
   const socketRef = useRef(null);
+  const { showNotification } = useNotification();
 
   // --- State ---
   const [branch, setBranch] = useState(null);
@@ -64,7 +66,10 @@ export default function PosTerminal() {
     try {
       const res = await api.get('/api/branches');
       const b = res.data.find(item => item.id === parseInt(branchId));
-      if (!b) return alert('Şube bulunamadı veya yetki yok.');
+      if (!b) {
+        showNotification({ title: 'HATA', message: 'Şube bulunamadı veya yetki yok.', type: 'error' });
+        return;
+      }
       
       setBranch(b);
       // Generate Tables based on count
@@ -121,8 +126,11 @@ export default function PosTerminal() {
       setSelectedTable(id);
   };
 
-  const handleProductClick = async (product) => {
-      if (!selectedTable) return alert('Lütfen önce bir masa seçin!');
+    const handleProductClick = async (product) => {
+      if (!selectedTable) {
+        showNotification({ title: 'UYARI', message: 'Lütfen önce bir masa seçin!', type: 'info' });
+        return;
+      }
       
       // Immediate Persistence: Add item as a new order row
       try {
@@ -143,7 +151,7 @@ export default function PosTerminal() {
           // Refresh to show in list
           fetchTableOrders(selectedTable);
       } catch (err) {
-          alert('Ürün eklenirken hata oluştu.');
+          showNotification({ title: 'HATA', message: 'Ürün eklenirken hata oluştu.', type: 'error' });
       }
   };
 
@@ -154,7 +162,7 @@ export default function PosTerminal() {
           // Refresh happens via socket, but valid to optimistic update or fetch
           fetchTableOrders(selectedTable);
       } catch (err) {
-          alert('Ürün silinirken hata oluştu.');
+          showNotification({ title: 'HATA', message: 'Ürün silinirken hata oluştu.', type: 'error' });
       }
   };
 
@@ -173,16 +181,30 @@ export default function PosTerminal() {
 
   const handlePayment = async () => {
       if (!selectedTable) return;
-      if (tableOrders.length === 0) return alert('Bu masada açık sipariş yok.');
-      if (!confirm(`MASA-${selectedTable} ödemesi alındı mı? Tutar: ₺${tableTotal}`)) return;
+      if (tableOrders.length === 0) {
+        showNotification({ title: 'BİLGİ', message: 'Bu masada açık sipariş yok.', type: 'info' });
+        return;
+      }
+      
+      const confirmed = await showNotification({
+        title: 'ÖDEME ONAYI',
+        message: `MASA-${selectedTable} ödemesi alındı mı? Tutar: ₺${tableTotal.toFixed(2)}`,
+        type: 'confirm'
+      });
+      
+      if (!confirmed) return;
 
       try {
           await api.post(`/api/orders/table/${branch.tenant_id}/${branch.id}/MASA-${selectedTable}/pay`);
-          alert('Ödeme Alındı, Masa Temizlendi.');
+          showNotification({ title: 'BAŞARILI', message: 'Ödeme Alındı, Masa Temizlendi.', type: 'info' });
           fetchTableOrders(selectedTable);
       } catch (err) {
           console.error('Ödeme hatası:', err);
-          alert('Ödeme işlemi başarısız: ' + (err.response?.data?.error || err.message));
+          showNotification({ 
+            title: 'HATA', 
+            message: 'Ödeme işlemi başarısız: ' + (err.response?.data?.error || err.message),
+            type: 'error'
+          });
       }
   };
 
