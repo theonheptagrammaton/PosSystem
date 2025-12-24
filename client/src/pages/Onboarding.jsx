@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-react';
 export default function Onboarding() {
   const [companyName, setCompanyName] = useState('');
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const navigate = useNavigate();
 
   const handleOnboard = async (e) => {
@@ -14,7 +15,8 @@ export default function Onboarding() {
     try {
       await api.put('/api/users/onboard', {
         company_name: companyName,
-        full_name: fullName
+        full_name: fullName,
+        phone: phone
       });
 
       // LocalStorage'daki kullanıcıyı güncelle
@@ -65,6 +67,18 @@ export default function Onboarding() {
               onChange={(e) => setFullName(e.target.value)}
               className="w-full border-b-2 border-gray px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
               placeholder="AD SOYAD GİRİNİZ"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest block">Telefon Numarası</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border-b-2 border-gray px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
+              placeholder="5XX XXX XX XX"
               required
             />
           </div>

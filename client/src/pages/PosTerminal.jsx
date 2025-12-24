@@ -256,7 +256,7 @@ export default function PosTerminal() {
                             <button 
                                 key={p.id}
                                 onClick={() => handleProductClick(p)}
-                                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-black text-left flex flex-col overflow-hidden h-44 group"
+                                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-black text-left flex flex-col overflow-hidden h-56 group"
                             >
                                 <div className="h-24 bg-gray-50 flex-shrink-0 relative overflow-hidden">
                                      {p.image_url ? (

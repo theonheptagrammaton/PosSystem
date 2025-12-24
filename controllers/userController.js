@@ -5,12 +5,12 @@ exports.onboardUser = async (req, res) => {
   const client = await pool.connect();
   
   try {
-    const { company_name, full_name } = req.body;
+    const { company_name, full_name, phone } = req.body;
     const userId = req.user.id;
     const tenantId = req.user.tenantId || req.user.tenant_id;
 
-    if (!company_name || !full_name) {
-      return res.status(400).json({ error: 'Company Name and Full Name are required' });
+    if (!company_name || !full_name || !phone) {
+      return res.status(400).json({ error: 'Company Name, Full Name and Phone are required' });
     }
 
     await client.query('BEGIN');
@@ -23,8 +23,8 @@ exports.onboardUser = async (req, res) => {
 
     // Update User Onboarding Status
     await client.query(
-      'UPDATE users SET full_name = $1, is_onboarded = TRUE WHERE id = $2',
-      [full_name, userId]
+      'UPDATE users SET full_name = $1, phone = $2, is_onboarded = TRUE WHERE id = $3',
+      [full_name, phone, userId]
     );
 
     await client.query('COMMIT');

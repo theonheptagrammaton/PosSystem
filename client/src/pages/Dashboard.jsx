@@ -174,17 +174,25 @@ export default function Dashboard() {
   if (isGodMode) {
     return (
       <div className="p-8 h-full bg-black text-white overflow-y-auto relative">
-        <div className="flex justify-between items-start border-b-2 border-white pb-4 mb-8">
+        <div className="flex justify-between items-center border-b-2 border-white pb-4 mb-8">
             <h1 className="text-2xl font-black uppercase tracking-[0.2em]">
                 ANALİTİK KONTROL ÜSSÜ // GOD MODE
             </h1>
-            <button 
-                onClick={toggleGodMode}
-                className="p-2 border-2 border-white hover:bg-white hover:text-black transition-colors"
-                title="PANELDEN ÇIK"
-            >
-                <X size={24} />
-            </button>
+            
+            <div className="flex items-center gap-8">
+                <div className="text-right hidden lg:block">
+                    <div className="text-[10px] font-mono text-gray-500 uppercase">SİSTEM KAPASİTESİ</div>
+                    <div className="text-3xl font-black">%{occupancyRate}</div>
+                </div>
+
+                <button 
+                    onClick={toggleGodMode}
+                    className="p-2 border-2 border-white hover:bg-white hover:text-black transition-colors"
+                    title="PANELDEN ÇIK"
+                >
+                    <X size={24} />
+                </button>
+            </div>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
@@ -234,10 +242,7 @@ export default function Dashboard() {
         </div>
 
         {/* Global Stats Overlay */}
-        <div className="fixed top-8 right-8 text-right hidden lg:block">
-            <div className="text-[10px] font-mono text-gray-500 uppercase">SİSTEM KAPASİTESİ</div>
-            <div className="text-4xl font-black">%{occupancyRate}</div>
-        </div>
+
 
         <button 
           onClick={handleSimulateOrder}
