@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -8,6 +8,19 @@ export default function Onboarding() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const navigate = useNavigate();
+
+  // Onboarding zaten yapılmışsa veya yetkisizse yönlendir
+  useEffect(() => {
+    const userString = localStorage.getItem('user');
+    if (userString) {
+      const user = JSON.parse(userString);
+      if (user.role === 'cashier') {
+        navigate(`/pos-terminal/${user.branch_id}`, { replace: true });
+      } else if (user.is_onboarded) {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [navigate]);
 
   const handleOnboard = async (e) => {
     e.preventDefault();
@@ -36,12 +49,16 @@ export default function Onboarding() {
     }
   };
 
+  useEffect(() => {
+    console.log('Onboarding component mounted. Phone field should be visible.');
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-black flex items-center justify-center font-sans">
       <div className="w-full max-w-lg border-2 border-black p-12">
         
         <div className="mb-10">
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mb-2">Başlangıç Kurulumu V2</h1>
+          <h1 className="text-3xl font-bold uppercase tracking-tighter mb-2">Başlangıç Kurulumu</h1>
           <p className="text-sm font-mono text-gray-500">KAYIT_PROTOKOLUNU_TAMAMLA</p>
         </div>
 
