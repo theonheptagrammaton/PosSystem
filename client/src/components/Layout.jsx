@@ -17,8 +17,9 @@ export default function Layout() {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Force redirect to dashboard on mobile if not already there
-      if (mobile && location.pathname !== '/dashboard') {
+      // Force redirect to dashboard on mobile only if on an unauthorized page
+      const allowedMobilePaths = ['/dashboard', '/dashboard/reports'];
+      if (mobile && !allowedMobilePaths.includes(location.pathname)) {
         navigate('/dashboard', { replace: true });
       }
     };
@@ -129,11 +130,39 @@ export default function Layout() {
         )}
 
         {/* Content Area */}
-        <main className={`flex-1 overflow-auto relative transition-colors duration-300 ${isGodMode || isMobile ? 'bg-black' : 'bg-white'}`}>
+        <main className={`flex-1 overflow-auto relative transition-colors duration-300 ${isGodMode || isMobile ? 'bg-black' : 'bg-white'} ${isMobile ? 'pb-20' : ''}`}>
           <div className="absolute inset-0">
             <Outlet />
           </div>
         </main>
+
+        {/* Mobile Navigation */}
+        {isMobile && (
+          <nav className="fixed bottom-0 left-0 right-0 h-16 bg-black border-t border-white/20 flex items-center justify-around px-4 z-[100]">
+            <NavLink 
+              to="/dashboard" 
+              end
+              className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-white' : 'text-gray-500'}`}
+            >
+              <LayoutDashboard size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">ANASAYFA</span>
+            </NavLink>
+            <NavLink 
+              to="/dashboard/reports" 
+              className={({ isActive }) => `flex flex-col items-center gap-1 ${isActive ? 'text-white' : 'text-gray-500'}`}
+            >
+              <FileText size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">RAPORLAR</span>
+            </NavLink>
+            <button 
+              onClick={handleLogout}
+              className="flex flex-col items-center gap-1 text-red-600"
+            >
+              <LogOut size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">ÇIKIŞ</span>
+            </button>
+          </nav>
+        )}
       </div>
 
     </div>

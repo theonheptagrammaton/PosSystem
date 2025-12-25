@@ -103,7 +103,7 @@ ${data.categories.map(c => `- ${c.category_name}: ₺${parseFloat(c.total_sales)
     };
 
     return (
-        <div className="p-8 h-full bg-white text-black overflow-y-auto">
+        <div className="p-4 md:p-8 h-full bg-white text-black overflow-y-auto pb-24 md:pb-8">
             {/* Header / Toolbar */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-black pb-6">
                 <div>

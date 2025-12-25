@@ -10,7 +10,7 @@ import OccupancyGauge from '../components/GodMode/OccupancyGauge';
 import io from 'socket.io-client';
 import api from '../api';
 import Modal from '../components/Modal'; // Assuming Modal exists, verified in file list
-import { Terminal, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export default function Dashboard() {
   const { isGodMode, toggleGodMode } = useGodMode();
@@ -115,14 +115,7 @@ export default function Dashboard() {
     };
   }, [tenantId]);
 
-  const handleSimulateOrder = async () => {
-    try {
-      await api.post('/api/test/simulate-order', { tenantId });
-    } catch (error) {
-      console.error('Simulasyon hatası', error);
-      alert('SİMULASYON BAŞARISIZ');
-    }
-  };
+
 
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
@@ -269,13 +262,7 @@ export default function Dashboard() {
         {/* Global Stats Overlay */}
 
 
-        <button 
-          onClick={handleSimulateOrder}
-          className="fixed bottom-8 right-8 bg-white text-black border-2 border-white px-6 py-4 font-bold uppercase tracking-widest hover:bg-black hover:text-white hover:border-white transition-colors z-50 flex items-center gap-2"
-        >
-          <Terminal size={20} />
-          <span>TEST: SİPARİŞ SİMULE ET</span>
-        </button>
+
       </div>
     );
   }
@@ -332,14 +319,7 @@ export default function Dashboard() {
         </table>
       </div>
 
-       {/* Simulation Button */}
-       <button 
-          onClick={handleSimulateOrder}
-          className="fixed bottom-8 right-8 bg-black text-white border-2 border-black px-6 py-4 font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-colors z-50 flex items-center gap-2"
-        >
-          <Terminal size={20} />
-          <span>TEST: SİPARİŞ SİMULE ET</span>
-        </button>
+
 
         {/* View Modal */}
         <Modal 

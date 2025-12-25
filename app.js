@@ -59,7 +59,7 @@ io.on('connection', (socket) => {
 const branchRoutes = require('./routes/branchRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 // --- EKSİK OLAN SATIRLAR BURADAN BAŞLIYOR ---
-const testRoutes = require('./routes/testRoutes'); // Dosya adın test.js ise './routes/test' yap
+
 const orderRoutes = require('./routes/orderRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -73,7 +73,7 @@ app.get('/', (req, res) => {
 });
 
 // Rota Tanımlamaları
-app.use('/api/test', testRoutes);
+
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
