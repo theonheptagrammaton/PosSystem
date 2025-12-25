@@ -73,7 +73,7 @@ export default function Layout() {
       {showSidebar && (
       <aside className="w-[250px] border-r flex flex-col h-screen flex-shrink-0 border-black bg-white text-black transition-colors duration-300">
         <div className="h-[64px] border-b border-black flex items-center px-6">
-          <span className="font-bold tracking-tighter text-lg">SAAS_POS</span>
+          <span className="font-bold tracking-tighter text-lg">PULSE</span>
         </div>
 
         <nav className="flex-1 py-6 flex flex-col gap-1 px-4">
