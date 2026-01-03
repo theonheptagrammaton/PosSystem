@@ -8,13 +8,16 @@ import {
     CreditCard, 
     Calendar,
     Filter,
-    FileText
+    FileText,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 
 export default function Reports() {
     const [branches, setBranches] = useState([]);
     const [selectedBranch, setSelectedBranch] = useState('all');
     const [range, setRange] = useState('daily');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [data, setData] = useState({
         summary: { total_orders: 0, total_revenue: 0, avg_order_value: 0 },
         products: [],
@@ -54,7 +57,7 @@ export default function Reports() {
                 socketRef.current = null;
             }
         };
-    }, [range, selectedBranch, tenantId]);
+    }, [range, selectedBranch, date, tenantId]);
 
     const fetchBranches = async () => {
         try {
@@ -66,7 +69,7 @@ export default function Reports() {
     const fetchReportData = async () => {
         setLoading(true);
         try {
-            const res = await api.get(`/api/reports?range=${range}&branchId=${selectedBranch}`);
+            const res = await api.get(`/api/reports?range=${range}&branchId=${selectedBranch}&date=${date}`);
             setData(res.data);
         } catch (err) {
             console.error('Report fetch error', err);
@@ -78,7 +81,7 @@ export default function Reports() {
     const handleZReport = () => {
         const today = new Date().toLocaleDateString('tr-TR');
         const content = `--- GÜN SONU (Z) RAPORU ---
-Tarih: ${today}
+Tarih: ${range === 'daily' ? date : today}
 Dönem: ${range.toUpperCase()}
 Filtre: ${selectedBranch === 'all' ? 'Tüm Şubeler' : branches.find(b=>b.id == selectedBranch)?.name}
 
@@ -118,11 +121,40 @@ ${data.categories.map(c => `- ${c.category_name}: ₺${parseFloat(c.total_sales)
                         onChange={(e) => setRange(e.target.value)}
                         className="border border-black px-4 py-2 text-xs font-bold uppercase outline-none focus:bg-black focus:text-white transition-colors cursor-pointer"
                     >
-                        <option value="daily">Bugün</option>
+                        <option value="daily">Bugün / Günlük</option>
                         <option value="weekly">Bu Hafta</option>
                         <option value="monthly">Bu Ay</option>
                         <option value="all">Tüm Zamanlar</option>
                     </select>
+
+                    {range === 'daily' && (
+                        <div className="flex items-center border border-black h-[34px]">
+                            <button 
+                                onClick={() => {
+                                    const d = new Date(date);
+                                    d.setDate(d.getDate() - 1);
+                                    setDate(d.toISOString().split('T')[0]);
+                                }}
+                                className="px-2 hover:bg-gray-200 h-full flex items-center"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <span className="px-2 font-mono text-xs font-bold border-l border-r border-black h-full flex items-center bg-gray-50">
+                                {date}
+                            </span>
+                            <button 
+                                onClick={() => {
+                                    const d = new Date(date);
+                                    d.setDate(d.getDate() + 1);
+                                    // Prevent going to future if needed, but usually allowed for checking empty days
+                                    setDate(d.toISOString().split('T')[0]);
+                                }}
+                                className="px-2 hover:bg-gray-200 h-full flex items-center"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    )}
 
                     {/* Branch Selector */}
                     <select 

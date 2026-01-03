@@ -124,7 +124,7 @@ export default function Dashboard() {
   // 1. Daily Revenue Flow
   const calculateDailyRevenue = () => {
     const today = new Date().toDateString();
-    const todayOrders = orders.filter(o => o.created_at && new Date(o.created_at).toDateString() === today);
+    const todayOrders = orders.filter(o => o.status === 'TAMAMLANDI' && o.created_at && new Date(o.created_at).toDateString() === today);
     return todayOrders.map(o => ({
         time: new Date(o.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
         amount: parseFloat(o.amount.replace('₺', '')) || 0
@@ -134,7 +134,8 @@ export default function Dashboard() {
   // 2. Branch Performance
   const calculateBranchPerf = () => {
     const perfMap = {};
-    orders.forEach(o => {
+    const validOrders = orders.filter(o => o.status === 'TAMAMLANDI');
+    validOrders.forEach(o => {
         const amount = parseFloat(o.amount.replace('₺', '')) || 0;
         perfMap[o.branch_name] = (perfMap[o.branch_name] || 0) + amount;
     });
@@ -144,7 +145,8 @@ export default function Dashboard() {
   // 3. Top Products
   const calculateTopProducts = () => {
     const prodMap = {};
-    orders.forEach(o => {
+    const validOrders = orders.filter(o => o.status === 'TAMAMLANDI');
+    validOrders.forEach(o => {
         if (!Array.isArray(o.details)) return;
         o.details.forEach(item => {
             prodMap[item.name] = (prodMap[item.name] || 0) + (item.quantity || 1);
@@ -159,7 +161,8 @@ export default function Dashboard() {
   // 4. Category Distribution
   const calculateCategoryDist = () => {
     const distMap = {};
-    orders.forEach(o => {
+    const validOrders = orders.filter(o => o.status === 'TAMAMLANDI');
+    validOrders.forEach(o => {
         if (!Array.isArray(o.details)) return;
         o.details.forEach(item => {
             const product = products.find(p => p.id === item.id);
@@ -277,6 +280,7 @@ export default function Dashboard() {
           <thead>
             <tr className="border-b border-black bg-gray-100">
               <th className="p-4 border-r border-black font-bold uppercase text-sm">Sipariş ID</th>
+              <th className="p-4 border-r border-black font-bold uppercase text-sm">Tarih</th>
               <th className="p-4 border-r border-black font-bold uppercase text-sm">Bayi / Masa</th>
               <th className="p-4 border-r border-black font-bold uppercase text-sm">Durum</th>
               <th className="p-4 font-bold uppercase text-sm">Tutar</th>
@@ -291,6 +295,10 @@ export default function Dashboard() {
             ) : orders.map((row, idx) => (
               <tr key={idx} className="border-b border-black last:border-b-0 hover:bg-gray-50 transition-colors">
                 <td className="p-4 border-r border-black font-mono">{row.id}</td>
+                <td className="p-4 border-r border-black font-mono text-xs">
+                    {new Date(row.created_at).toLocaleDateString('tr-TR')} <br/>
+                    {new Date(row.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
+                </td>
                 <td className="p-4 border-r border-black text-sm">
                     <div className="font-bold">{row.branch_name || '-'}</div>
                     <div className="text-xs text-gray-500">{row.table_no || '-'}</div>

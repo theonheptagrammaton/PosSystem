@@ -17,7 +17,14 @@ const getReportData = async (req, res) => {
 
         // 1. Date Filtering (Robust casting)
         if (range === 'daily') {
-            filterSql += ` AND (o.created_at AT TIME ZONE '${TZ}')::date = (now() AT TIME ZONE '${TZ}')::date`;
+            const { date } = req.query;
+            if (date) {
+                // date format YYYY-MM-DD
+                queryParams.push(date);
+                filterSql += ` AND (o.created_at AT TIME ZONE '${TZ}')::date = $${queryParams.length}::date`;
+            } else {
+                filterSql += ` AND (o.created_at AT TIME ZONE '${TZ}')::date = (now() AT TIME ZONE '${TZ}')::date`;
+            }
         } else if (range === 'weekly') {
             filterSql += ` AND (o.created_at AT TIME ZONE '${TZ}')::date >= (now() AT TIME ZONE '${TZ}')::date - INTERVAL '7 days'`;
         } else if (range === 'monthly') {
