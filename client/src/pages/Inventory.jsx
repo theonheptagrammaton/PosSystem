@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import Modal from '../components/Modal';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
 
 export default function Inventory() {
@@ -210,6 +210,63 @@ export default function Inventory() {
     }
   };
 
+  const handleMoveCategory = async (e, index, direction) => {
+    e.stopPropagation();
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === categories.length - 1) return;
+
+    const newCats = [...categories];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    [newCats[index], newCats[targetIndex]] = [newCats[targetIndex], newCats[index]];
+    setCategories(newCats);
+
+    const updates = [];
+    newCats.forEach((cat, idx) => {
+        if (cat.rank !== idx) {
+            updates.push({ id: cat.id, rank: idx, name: cat.name });
+        }
+    });
+
+    try {
+        await Promise.all(updates.map(u => api.put(`/api/categories/${u.id}`, { name: u.name, rank: u.rank })));
+        const updatedCats = newCats.map((c, i) => ({ ...c, rank: i }));
+        setCategories(updatedCats);
+    } catch (err) {
+        console.error('Sıralama hatası:', err);
+        showNotification({ title: 'HATA', message: 'Sıralama kaydedilemedi', type: 'error' });
+        fetchCategories();
+    }
+  };
+
+  const handleMoveProduct = async (index, direction) => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === products.length - 1) return;
+
+    const newProds = [...products];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    [newProds[index], newProds[targetIndex]] = [newProds[targetIndex], newProds[index]];
+    setProducts(newProds);
+
+    const updates = [];
+    newProds.forEach((prod, idx) => {
+        if (prod.rank !== idx) {
+            updates.push({ id: prod.id, rank: idx });
+        }
+    });
+
+    try {
+        await Promise.all(updates.map(u => api.put(`/api/products/${u.id}`, { rank: u.rank })));
+        const updatedProds = newProds.map((p, i) => ({ ...p, rank: i }));
+        setProducts(updatedProds);
+    } catch (err) {
+        console.error('Sıralama hatası:', err);
+        showNotification({ title: 'HATA', message: 'Sıralama kaydedilemedi', type: 'error' });
+        fetchProducts(selectedCategory.id);
+    }
+  };
+
   return (
     <div className="flex h-full p-8 gap-8">
       {/* Sidebar: Categories */}
@@ -244,7 +301,23 @@ export default function Inventory() {
                }`}
              >
                 <div className="font-mono text-sm uppercase">{cat.name}</div>
-                <div className={`flex gap-2 ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                <div className={`flex gap-1 ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                    <div className="flex flex-col mr-1">
+                        <button 
+                            onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'up')}
+                            disabled={categories.indexOf(cat) === 0}
+                            className={`p-0.5 hover:bg-white/20 rounded disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                        >
+                            <ArrowUp size={10} />
+                        </button>
+                        <button 
+                            onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'down')}
+                            disabled={categories.indexOf(cat) === categories.length - 1}
+                            className={`p-0.5 hover:bg-white/20 rounded disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                        >
+                            <ArrowDown size={10} />
+                        </button>
+                    </div>
                     <button 
                         onClick={(e) => openEditCategoryModal(e, cat)}
                         className={`p-1 hover:bg-white/20 rounded ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
@@ -295,7 +368,7 @@ export default function Inventory() {
                     <th className="p-3 border-b border-r border-black font-bold text-xs uppercase">Ürün Adı / Açıklama</th>
                     <th className="p-3 border-b border-r border-black font-bold text-xs w-24 text-right">Fiyat</th>
                     <th className="p-3 border-b border-r border-black font-bold text-xs w-20 text-center">Aktif</th>
-                    <th className="p-3 border-b border-black font-bold text-xs w-32 text-center">İşlem</th>
+                    <th className="p-3 border-b border-black font-bold text-xs w-40 text-center">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -325,20 +398,38 @@ export default function Inventory() {
                           className="accent-black cursor-pointer w-4 h-4" 
                         />
                       </td>
-                      <td className="p-3 text-center space-x-2">
-                        <button 
-                          onClick={() => handleEditProduct(p)}
-                          className="text-xs underline hover:no-underline font-bold"
-                        >
-                          DÜZENLE
-                        </button> 
-                        <span className="text-gray-300">|</span>
-                        <button 
-                          onClick={() => handleDeleteProduct(p.id)}
-                          className="text-xs underline hover:no-underline text-gray-500 hover:text-black font-bold"
-                        >
-                          SİL
-                        </button>
+                      <td className="p-3 text-center flex items-center justify-center gap-2">
+                        <div className="flex flex-col gap-0.5 border border-gray-200 rounded p-0.5">
+                            <button 
+                                onClick={() => handleMoveProduct(products.indexOf(p), 'up')}
+                                disabled={products.indexOf(p) === 0}
+                                className="p-0.5 hover:bg-gray-200 rounded disabled:opacity-30 text-black"
+                            >
+                                <ArrowUp size={12} />
+                            </button>
+                            <button 
+                                onClick={() => handleMoveProduct(products.indexOf(p), 'down')}
+                                disabled={products.indexOf(p) === products.length - 1}
+                                className="p-0.5 hover:bg-gray-200 rounded disabled:opacity-30 text-black"
+                            >
+                                <ArrowDown size={12} />
+                            </button>
+                        </div>
+                        <div className="flex gap-2">
+                            <button 
+                            onClick={() => handleEditProduct(p)}
+                            className="text-xs underline hover:no-underline font-bold"
+                            >
+                            DÜZENLE
+                            </button> 
+                            <span className="text-gray-300">|</span>
+                            <button 
+                            onClick={() => handleDeleteProduct(p.id)}
+                            className="text-xs underline hover:no-underline text-gray-500 hover:text-black font-bold"
+                            >
+                            SİL
+                            </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

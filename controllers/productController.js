@@ -14,7 +14,7 @@ const getAllProducts = async (req, res) => {
       params.push(category_id);
     }
 
-    query += ' ORDER BY id ASC';
+    query += ' ORDER BY rank ASC, id ASC';
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -71,6 +71,7 @@ const updateProduct = async (req, res) => {
     if (price !== undefined) { fields.push(`price = $${idx++}`); values.push(price); }
     if (is_available !== undefined) { fields.push(`is_available = $${idx++}`); values.push(is_available); }
     if (image_url !== undefined) { fields.push(`image_url = $${idx++}`); values.push(image_url); }
+    if (req.body.rank !== undefined) { fields.push(`rank = $${idx++}`); values.push(req.body.rank); }
 
     if (fields.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
