@@ -11,6 +11,7 @@ import Branches from './pages/Branches';
 import Users from './pages/Users';
 import PosTerminal from './pages/PosTerminal';
 import Reports from './pages/Reports';
+import SuperAdmin from './pages/SuperAdmin';
 
 import PublicLayout from './layouts/PublicLayout';
 import MobileMenu from './pages/public/MobileMenu';
@@ -19,6 +20,15 @@ import MobileMenu from './pages/public/MobileMenu';
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+// Super Admin Route Wrapper
+const SuperAdminRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user?.role !== 'SUPER_ADMIN') {
     return <Navigate to="/login" replace />;
   }
   return children;
@@ -45,6 +55,16 @@ function App() {
         />
         
         <Route path="/pos-terminal/:branchId" element={<PosTerminal />} />
+        
+        {/* Super Admin Route */}
+        <Route 
+          path="/super-admin" 
+          element={
+            <SuperAdminRoute>
+              <SuperAdmin />
+            </SuperAdminRoute>
+          } 
+        />
 
         {/* Dashboard Layout Routes */}
         <Route 
@@ -55,7 +75,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} /> {/* Specific path for dashboard */}
           <Route path="pos" element={<Pos />} />
           <Route path="tables" element={<Tables />} />
           <Route path="inventory" element={<Inventory />} />
@@ -65,6 +85,7 @@ function App() {
           <Route path="reports" element={<Reports />} />
         </Route>
 
+        {/* Default redirect for root path */}
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
