@@ -255,7 +255,6 @@ const removeItem = async (req, res) => {
         console.error('Error removing item:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
-    }
 };
 
 // --- Get Pending Approval Orders ---
