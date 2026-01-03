@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { ShoppingCart, ArrowLeft, Trash2, Utensils, CheckCircle, RefreshCcw } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Trash2, Utensils, CheckCircle, RefreshCcw, Bell } from 'lucide-react';
+import notificationSound from '../assets/zil.mp3';
 import io from 'socket.io-client';
 import { useNotification } from '../context/NotificationContext';
 
@@ -25,6 +26,10 @@ export default function PosTerminal() {
   const [tableOrders, setTableOrders] = useState([]); 
   const [tableTotal, setTableTotal] = useState(0);
 
+  // Pending Orders
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [viewingPendingOrder, setViewingPendingOrder] = useState(null); // Pending order being reviewed in Modal
+
   // --- Initialization ---
   useEffect(() => {
     fetchBranchAndTables();
@@ -45,13 +50,21 @@ export default function PosTerminal() {
             query: { tenantId: branch.tenant_id }
          });
          
-         socketRef.current.on('new_order', (data) => {
-             // If update is for THIS table, refresh
-             if (data.table_no === `MASA-${selectedTable}`) {
-                 fetchTableOrders(selectedTable);
+          socketRef.current.on('new_order', (data) => {
+             // If this is a pending order, play sound and refresh pending list
+             if (data.status === 'WAITING_APPROVAL') {
+                 const audio = new Audio(notificationSound);
+                 audio.play().catch(e => console.error('Audio play error', e));
+                 fetchPendingOrders();
+             } else {
+                 // Normal active order (or approval event)
+                 if (data.table_no === `MASA-${selectedTable}`) {
+                     fetchTableOrders(selectedTable);
+                 }
+                 fetchBranchStatus(branch.tenant_id, branch.id);
+                 // If it was an approval, we also refresh pending to remove it
+                 if (data.is_approval) fetchPendingOrders();
              }
-             // Refresh status map whenever any order comes in
-             fetchBranchStatus(branch.tenant_id, branch.id);
          });
          
          socketRef.current.on('table_closed', () => {
@@ -75,7 +88,9 @@ export default function PosTerminal() {
       // Generate Tables based on count
       const tableList = Array.from({ length: b.table_count || 10 }, (_, i) => i + 1);
       setTables(tableList);
-      fetchBranchStatus(b.tenant_id, b.id); // Pass tenant_id and branchId directly because setBranch is async
+      setTables(tableList);
+      fetchBranchStatus(b.tenant_id, b.id); 
+      fetchPendingOrders(b.tenant_id, b.id);
     } catch (err) {
       console.error(err);
     }
@@ -121,6 +136,27 @@ export default function PosTerminal() {
       }
   };
 
+  const fetchPendingOrders = async (tIdOverride = null, bIdOverride = null) => {
+      const tId = tIdOverride || branch?.tenant_id;
+      const bId = bIdOverride || branch?.id;
+      if (!tId || !bId) return;
+      try {
+          const res = await api.get(`/api/orders/pending/${tId}/${bId}`);
+          setPendingOrders(res.data);
+      } catch (err) { console.error('Error fetching pending orders', err); }
+  };
+
+  const handleApproveOrder = async (order) => {
+      try {
+          await api.post(`/api/orders/approve/${order.id}`);
+          setViewingPendingOrder(null);
+          showNotification({ title: 'BAŞARILI', message: 'Sipariş onaylandı ve masaya eklendi.', type: 'info' });
+          fetchPendingOrders();
+      } catch (err) {
+          showNotification({ title: 'HATA', message: 'Onaylama başarısız', type: 'error' });
+      }
+  };
+
   // --- Actions ---
   const handleTableSelect = (id) => {
       setSelectedTable(id);
@@ -144,7 +180,8 @@ export default function PosTerminal() {
                 name: product.name,
                 price: product.price,
                 quantity: 1
-            }]
+            }],
+            status: 'PENDING' // Explicitly set as Active/Approved for POS
           };
           
           await api.post('/api/orders', payload);
@@ -227,6 +264,28 @@ export default function PosTerminal() {
                 <div className="p-4 bg-gray-50 border-b border-gray-200 font-bold uppercase text-sm tracking-wider flex items-center gap-2">
                     <Utensils size={16}/> Masalar
                 </div>
+
+                {/* Pending Orders Section */}
+                {pendingOrders.length > 0 && (
+                    <div className="p-4 bg-yellow-50 border-b border-yellow-200">
+                        <div className="flex items-center gap-2 text-yellow-800 font-bold text-xs uppercase mb-2 animate-pulse">
+                            <Bell size={14} /> Bekleyen Siparişler ({pendingOrders.length})
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {pendingOrders.map(order => (
+                                <button 
+                                    key={order.id}
+                                    onClick={() => setViewingPendingOrder(order)}
+                                    className="bg-yellow-100 hover:bg-yellow-200 text-yellow-900 border border-yellow-300 rounded p-2 text-center"
+                                >
+                                    <div className="font-bold text-sm">{order.table_no}</div>
+                                    <div className="text-[10px]">₺{order.total_amount}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 content-start">
                     {tables.map(tId => {
                         const isBusy = busyTables.includes(tId);
@@ -378,6 +437,48 @@ export default function PosTerminal() {
                 </div>
             </div>
         </div>
+        
+        {/* Pending Order Modal */}
+        {viewingPendingOrder && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+                    <div className="bg-yellow-400 p-4 flex justify-between items-center">
+                        <h3 className="font-black text-black uppercase">SİPARİŞ ONAYI</h3>
+                        <button onClick={() => setViewingPendingOrder(null)} className="p-1 hover:bg-white/20 rounded"><ArrowLeft/></button>
+                    </div>
+                    <div className="p-6">
+                        <div className="mb-4 text-center">
+                            <div className="text-sm text-gray-500 font-bold uppercase">SİPARİŞ KAYNAĞI</div>
+                            <div className="text-3xl font-black">{viewingPendingOrder.table_no}</div>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 max-h-60 overflow-y-auto">
+                            {viewingPendingOrder.items.map((item, i) => (
+                                <div key={i} className="flex justify-between border-b border-gray-200 pb-2 last:border-0 mb-2 last:mb-0">
+                                    <div>
+                                        <div className="font-bold">{item.name}</div>
+                                        <div className="text-xs text-gray-400">₺{item.price}</div>
+                                    </div>
+                                    <div className="font-mono font-bold">x{item.quantity}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center justify-between mb-6 font-bold text-lg">
+                            <span>TOPLAM TUTAR</span>
+                            <span>₺{viewingPendingOrder.total_amount}</span>
+                        </div>
+
+                        <button 
+                            onClick={() => handleApproveOrder(viewingPendingOrder)}
+                            className="w-full bg-black text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-green-600 transition-colors"
+                        >
+                            SİPARİŞİ ONAYLA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
   );
 }

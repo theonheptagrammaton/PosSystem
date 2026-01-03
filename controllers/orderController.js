@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 
 // --- Create Order (Append Item) ---
 const createOrder = async (req, res) => {
-  const { tenant_id, branch_id, table_no, total_amount, items } = req.body;
+  const { tenant_id, branch_id, table_no, total_amount, items, status } = req.body;
   const io = req.app.get('io');
 
   if (!tenant_id || !total_amount) {
@@ -11,12 +11,16 @@ const createOrder = async (req, res) => {
 
   try {
     // 1. Save to Database
+    // Default status is now WAITING_APPROVAL if not specified (e.g. from QR Menu)
+    // POS should send 'PENDING' for immediate active status
+    const initialStatus = status || 'WAITING_APPROVAL';
+
     const query = `
       INSERT INTO orders (tenant_id, branch_id, table_no, total_amount, items, status)
-      VALUES ($1, $2, $3, $4, $5, 'PENDING')
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `;
-    const values = [tenant_id, branch_id, table_no, total_amount, JSON.stringify(items)];
+    const values = [tenant_id, branch_id, table_no, total_amount, JSON.stringify(items), initialStatus];
     const result = await pool.query(query, values);
     const newOrder = result.rows[0];
 
@@ -28,9 +32,10 @@ const createOrder = async (req, res) => {
         amount: newOrder.total_amount,
         items: newOrder.items,
         timestamp: newOrder.created_at,
-        branch_id: branch_id
+        branch_id: branch_id,
+        status: newOrder.status // Emit status so client knows to play sound or just refresh
       });
-      console.log(`Order ${newOrder.id} emitted to room ${tenant_id}`);
+      console.log(`Order ${newOrder.id} emitted to room ${tenant_id} with status ${newOrder.status}`);
     } else {
       console.warn('Socket.io instance not found');
     }
@@ -250,6 +255,58 @@ const removeItem = async (req, res) => {
         console.error('Error removing item:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
+    }
+};
+
+// --- Get Pending Approval Orders ---
+const getPendingOrders = async (req, res) => {
+    const { tenantId, branchId } = req.params;
+    try {
+        const query = `
+            SELECT * FROM orders 
+            WHERE tenant_id = $1 AND branch_id = $2 AND status = 'WAITING_APPROVAL'
+            ORDER BY created_at ASC
+        `;
+        const result = await pool.query(query, [tenantId, branchId]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching pending orders:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// --- Approve Order ---
+const approveOrder = async (req, res) => {
+    const { orderId } = req.params;
+    const io = req.app.get('io');
+    
+    try {
+        const result = await pool.query(
+            "UPDATE orders SET status = 'PENDING' WHERE id = $1 RETURNING *",
+            [orderId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        
+        const updatedOrder = result.rows[0];
+
+        if (io) {
+            io.to(String(updatedOrder.tenant_id)).emit('new_order', {
+                id: updatedOrder.id,
+                table_no: updatedOrder.table_no,
+                branch_id: updatedOrder.branch_id,
+                status: 'PENDING', // Now Active
+                is_approval: true 
+            });
+        }
+
+        res.json(updatedOrder);
+    } catch (error) {
+        console.error('Error approving order:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 };
 
 module.exports = {
@@ -258,5 +315,8 @@ module.exports = {
   closeTable,
   getBranchStatus,
   getAllOrders,
-  removeItem
+  removeItem,
+  getPendingOrders,
+  approveOrder
 };
+

@@ -11,6 +11,8 @@ router.get('/table/:tenantId/:branchId/:tableNo', orderController.getTableOrders
 router.post('/table/:tenantId/:branchId/:tableNo/pay', orderController.closeTable);
 router.delete('/table/:tenantId/:branchId/:tableNo/item/:productId', orderController.removeItem);
 router.get('/status/:tenantId/:branchId', orderController.getBranchStatus);
+router.get('/pending/:tenantId/:branchId', orderController.getPendingOrders);
+router.post('/approve/:orderId', orderController.approveOrder);
 
 // Authenticated History Route (Dashboard)
 router.get('/', authenticateToken, orderController.getAllOrders);
