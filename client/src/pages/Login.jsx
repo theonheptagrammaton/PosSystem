@@ -22,7 +22,9 @@ export default function Login() {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      if (user.role === 'cashier') {
+      if (user.role === 'SUPER_ADMIN') {
+        navigate('/super-admin');
+      } else if (user.role === 'cashier') {
         // Cashier goes straight to POS
         navigate(`/pos-terminal/${user.branch_id}`);
       } else if (user.is_onboarded) {

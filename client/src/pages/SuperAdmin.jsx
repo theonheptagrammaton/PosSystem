@@ -10,9 +10,10 @@ import {
     Plus, 
     LogOut,
     TrendingUp,
-    Activity
+    Activity,
+    Shield
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function SuperAdmin() {
     const navigate = useNavigate();
@@ -24,6 +25,8 @@ export default function SuperAdmin() {
     // New Tenant Form
     const [newCompany, setNewCompany] = useState('');
     const [newDomain, setNewDomain] = useState('');
+    const [adminUser, setAdminUser] = useState('');
+    const [adminPass, setAdminPass] = useState('');
 
     useEffect(() => {
         fetchStats();
@@ -49,14 +52,21 @@ export default function SuperAdmin() {
     const handleCreateTenant = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/api/admin/tenants', { company_name: newCompany, domain: newDomain });
-            alert('Şirket oluşturuldu');
+            await api.post('/api/admin/tenants', { 
+                company_name: newCompany, 
+                domain: newDomain,
+                admin_username: adminUser,
+                admin_password: adminPass
+            });
+            alert('Şirket ve Yönetici Kullanıcısı oluşturuldu');
             setNewCompany('');
             setNewDomain('');
+            setAdminUser('');
+            setAdminPass('');
             fetchTenants(); // Refresh list
             fetchStats(); // Refresh stats
         } catch (err) {
-            alert('Hata oluştu: ' + err.message);
+            alert('Hata oluştu: ' + (err.response?.data?.error || err.message));
         }
     };
 
@@ -165,30 +175,97 @@ export default function SuperAdmin() {
                         </div>
 
                         {/* Charts Area */}
+                        <div className="grid grid-cols-2 gap-6 h-80">
+                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                                <h3 className="font-bold text-sm text-zinc-400 mb-4 flex items-center gap-2">
+                                    <DollarSign size={16}/> GELİR TRENDİ (SON 30 GÜN)
+                                </h3>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={stats.chart_data || []}>
+                                        <defs>
+                                            <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                                        <XAxis dataKey="date" stroke="#666" fontSize={10} tickFormatter={d => d.slice(5)} />
+                                        <YAxis stroke="#666" fontSize={10}/>
+                                        <Tooltip 
+                                            contentStyle={{backgroundColor: '#000', border: '1px solid #333'}}
+                                        />
+                                        <Area type="monotone" dataKey="revenue" stroke="#82ca9d" fillOpacity={1} fill="url(#colorRev)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                                <h3 className="font-bold text-sm text-zinc-400 mb-4 flex items-center gap-2">
+                                    <Activity size={16}/> SİPARİŞ HACMİ
+                                </h3>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={stats.chart_data || []}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                                        <XAxis dataKey="date" stroke="#666" fontSize={10} tickFormatter={d => d.slice(5)} />
+                                        <YAxis stroke="#666" fontSize={10}/>
+                                        <Tooltip 
+                                            contentStyle={{backgroundColor: '#000', border: '1px solid #333'}}
+                                            cursor={{fill: 'rgba(255,255,255,0.1)'}}
+                                        />
+                                        <Bar dataKey="orders" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
                         
                     </div>
                 )}
 
                 {activeTab === 'tenants' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <header className="flex justify-between items-end">
+                        <header className="flex justify-between items-end bg-zinc-900 p-6 rounded-xl border border-zinc-800">
                             <div>
                                 <h1 className="text-3xl font-black mb-2">Şirket Yönetimi</h1>
                                 <p className="text-zinc-500">Sisteme kayıtlı işletmeleri yönet.</p>
                             </div>
                             
                             {/* Create Tenant Form (Inline for speed) */}
-                            <form onSubmit={handleCreateTenant} className="flex gap-2">
-                                <input 
-                                    type="text" 
-                                    placeholder="Şirket Adı" 
-                                    className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg text-sm focus:border-purple-500 outline-none w-64"
-                                    value={newCompany}
-                                    onChange={e => setNewCompany(e.target.value)}
-                                    required
-                                />
-                                <button className="bg-white text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-zinc-200 transition-colors flex items-center gap-2">
-                                    <Plus size={16} /> EKLE
+                            <form onSubmit={handleCreateTenant} className="flex gap-2 items-end">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase font-bold text-zinc-500 px-1">Şirket Adı</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Cafe/Restoran Adı" 
+                                        className="bg-zinc-950 border border-zinc-700 px-3 py-2 rounded text-sm focus:border-purple-500 outline-none w-48"
+                                        value={newCompany}
+                                        onChange={e => setNewCompany(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase font-bold text-zinc-500 px-1">Yönetici K.Adı</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="admin" 
+                                        className="bg-zinc-950 border border-zinc-700 px-3 py-2 rounded text-sm focus:border-purple-500 outline-none w-32"
+                                        value={adminUser}
+                                        onChange={e => setAdminUser(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase font-bold text-zinc-500 px-1">Yönetici Şifre</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="123456" 
+                                        className="bg-zinc-950 border border-zinc-700 px-3 py-2 rounded text-sm focus:border-purple-500 outline-none w-32"
+                                        value={adminPass}
+                                        onChange={e => setAdminPass(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <button className="bg-white text-black px-4 py-2 rounded font-bold text-sm hover:bg-zinc-200 transition-colors flex items-center gap-2 h-10">
+                                    <Plus size={16} /> OLUŞTUR
                                 </button>
                             </form>
                         </header>

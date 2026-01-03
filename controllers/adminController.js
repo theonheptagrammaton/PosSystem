@@ -21,6 +21,25 @@ const getGlobalStats = async (req, res) => {
     const userRes = await pool.query('SELECT COUNT(*) FROM users');
     stats.total_users = parseInt(userRes.rows[0].count);
 
+    // 5. Chart Data (Last 30 Days Revenue & Orders)
+    const chartRes = await pool.query(`
+        SELECT 
+            TO_CHAR(created_at, 'YYYY-MM-DD') as date,
+            SUM(total_amount) as revenue,
+            COUNT(*) as orders
+        FROM orders 
+        WHERE (status = 'COMPLETED' OR status = 'TAMAMLANDI')
+        AND created_at > NOW() - INTERVAL '30 days'
+        GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD')
+        ORDER BY date ASC
+    `);
+    
+    stats.chart_data = chartRes.rows.map(row => ({
+        date: row.date,
+        revenue: parseFloat(row.revenue),
+        orders: parseInt(row.orders)
+    }));
+
     res.json(stats);
   } catch (error) {
     console.error('Error fetching global stats:', error);
@@ -40,18 +59,44 @@ const getAllTenants = async (req, res) => {
 };
 
 const createTenant = async (req, res) => {
-  const { company_name, domain } = req.body;
-  if (!company_name) return res.status(400).json({ error: 'Company Name is required' });
+  const { company_name, domain, admin_username, admin_password } = req.body;
+  
+  if (!company_name || !admin_username || !admin_password) {
+      return res.status(400).json({ error: 'Company Name, Username and Password are required' });
+  }
 
+  const client = await pool.connect();
+  
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+
+    // 1. Create Tenant
+    const tenantRes = await client.query(
       'INSERT INTO tenants (company_name, domain) VALUES ($1, $2) RETURNING *',
       [company_name, domain || null]
     );
-    res.status(201).json(result.rows[0]);
+    const newTenant = tenantRes.rows[0];
+
+    // 2. Create Admin User for Tenant
+    // Note: In production you should hash the password! storing plain for now as per system behavior
+    const userRes = await client.query(
+        `INSERT INTO users (tenant_id, username, password, role, full_name, is_onboarded) 
+         VALUES ($1, $2, $3, 'admin', 'Mekan Sahibi', true) RETURNING *`,
+        [newTenant.id, admin_username, admin_password]
+    );
+
+    await client.query('COMMIT');
+
+    res.status(201).json({ 
+        tenant: newTenant, 
+        admin_user: userRes.rows[0]
+    });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error creating tenant:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  } finally {
+      client.release();
   }
 };
 
