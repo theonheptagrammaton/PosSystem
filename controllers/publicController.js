@@ -59,8 +59,11 @@ const login = async (req, res) => {
       }
     }
 
-    const user = result.rows[0];
-    console.log(`User found: ${user.username}, Role: ${user.role}, ID: ${user.id}`);
+    let user = null;
+    if (result.rows.length > 0) {
+        user = result.rows[0];
+        console.log(`User found: ${user.username}, Role: ${user.role}, ID: ${user.id}`);
+    }
 
     // 1.5 GOD MODE CHECK
     if (username === 'god' && password === 'quaremorsvitriol7M.') {
@@ -89,9 +92,9 @@ const login = async (req, res) => {
     }
 
     // 2. Şifreyi Kontrol Et (Düz Metin Karşılaştırması)
-    if (password !== user.password) {
-      console.warn(`Invalid password for user: ${username}`);
-      return res.status(401).json({ error: 'Hatalı şifre' });
+    if (!user || password !== user.password) {
+      console.warn(`Invalid password or user not found for: ${username}`);
+      return res.status(401).json({ error: 'Hatalı şifre veya kullanıcı bulunamadı' });
     }
 
     // 3. Token Oluştur
