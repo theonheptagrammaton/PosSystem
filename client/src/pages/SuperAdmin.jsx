@@ -92,11 +92,11 @@ export default function SuperAdmin() {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-purple-500 selection:text-white">
+        <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] font-sans selection:bg-[#a855f7] selection:text-white">
             {/* Sidebar */}
-            <aside className="fixed left-0 top-0 h-full w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col z-50">
-                <div className="h-16 flex items-center px-6 border-b border-zinc-800">
-                    <div className="font-black text-xl tracking-tighter bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+            <aside className="fixed left-0 top-0 h-full w-64 bg-[#18181b] border-r border-[#27272a] flex flex-col z-50">
+                <div className="h-16 flex items-center px-6 border-b border-[#27272a]">
+                    <div className="font-black text-xl tracking-tighter bg-gradient-to-r from-[#c084fc] to-pink-600 bg-clip-text text-transparent">
                         GOD MODE
                     </div>
                 </div>
@@ -104,26 +104,26 @@ export default function SuperAdmin() {
                 <nav className="flex-1 p-4 space-y-2">
                     <button 
                         onClick={() => setActiveTab('dashboard')}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all
-                        ${activeTab === 'dashboard' ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-[8px] text-sm font-bold transition-all
+                        ${activeTab === 'dashboard' ? 'bg-[#f4f4f5] text-[#09090b]' : 'text-[#a1a1aa] hover:bg-[#27272a] hover:text-white'}`}
                     >
                         <LayoutDashboard size={18} />
                         GENEL BAKIŞ
                     </button>
                     <button 
                         onClick={() => setActiveTab('tenants')}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all
-                        ${activeTab === 'tenants' ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-[8px] text-sm font-bold transition-all
+                        ${activeTab === 'tenants' ? 'bg-[#f4f4f5] text-[#09090b]' : 'text-[#a1a1aa] hover:bg-[#27272a] hover:text-white'}`}
                     >
                         <Building2 size={18} />
                         ŞİRKET YÖNETİMİ
                     </button>
                 </nav>
 
-                <div className="p-4 border-t border-zinc-800">
+                <div className="p-4 border-t border-[#27272a]">
                     <button 
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2 text-red-500 hover:bg-red-500/10 px-4 py-2 rounded-lg text-xs font-bold transition-colors"
+                        className="w-full flex items-center gap-2 text-[#ef4444] hover:bg-[#ef4444]/10 px-4 py-2 rounded-[8px] text-xs font-bold transition-colors"
                     >
                         <LogOut size={16} /> ÇIKIŞ YAP
                     </button>
@@ -135,49 +135,49 @@ export default function SuperAdmin() {
                 {activeTab === 'dashboard' && stats && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <header>
-                            <h1 className="text-3xl font-black mb-2">Sistem Özeti</h1>
-                            <p className="text-zinc-500">Küresel veri analizi ve metrikler.</p>
+                            <h1 className="text-3xl font-black mb-2 text-white">Sistem Özeti</h1>
+                            <p className="text-[#71717a]">Küresel veri analizi ve metrikler.</p>
                         </header>
 
                         {/* Top Stats Grid */}
                         <div className="grid grid-cols-4 gap-6">
-                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 relative overflow-hidden group">
+                            <div className="bg-[#18181b] p-6 rounded-[12px] border border-[#27272a] relative overflow-hidden group">
                                 <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Building2 size={64} />
+                                    <Building2 size={64} color="white"/>
                                 </div>
-                                <div className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-2">Toplam Şirket</div>
-                                <div className="text-4xl font-black">{stats.total_tenants}</div>
+                                <div className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-2">Toplam Şirket</div>
+                                <div className="text-4xl font-black text-white">{stats.total_tenants}</div>
                             </div>
 
-                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 relative overflow-hidden group">
+                            <div className="bg-[#18181b] p-6 rounded-[12px] border border-[#27272a] relative overflow-hidden group">
                                 <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <DollarSign size={64} className="text-green-500" />
+                                    <DollarSign size={64} className="text-[#22c55e]" />
                                 </div>
-                                <div className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-2">Toplam Ciro</div>
-                                <div className="text-4xl font-black text-green-400">₺{stats.total_revenue.toLocaleString()}</div>
+                                <div className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-2">Toplam Ciro</div>
+                                <div className="text-4xl font-black text-[#4ade80]">₺{stats.total_revenue.toLocaleString()}</div>
                             </div>
                             
-                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 relative overflow-hidden group">
+                            <div className="bg-[#18181b] p-6 rounded-[12px] border border-[#27272a] relative overflow-hidden group">
                                 <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Activity size={64} className="text-blue-500" />
+                                    <Activity size={64} className="text-[#3b82f6]" />
                                 </div>
-                                <div className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-2">Toplam Sipariş</div>
-                                <div className="text-4xl font-black text-blue-400">{stats.total_orders.toLocaleString()}</div>
+                                <div className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-2">Toplam Sipariş</div>
+                                <div className="text-4xl font-black text-[#60a5fa]">{stats.total_orders.toLocaleString()}</div>
                             </div>
 
-                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 relative overflow-hidden group">
+                            <div className="bg-[#18181b] p-6 rounded-[12px] border border-[#27272a] relative overflow-hidden group">
                                 <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Users size={64} className="text-purple-500" />
+                                    <Users size={64} className="text-[#a855f7]" />
                                 </div>
-                                <div className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-2">Toplam Kullanıcı</div>
-                                <div className="text-4xl font-black text-purple-400">{stats.total_users}</div>
+                                <div className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-2">Toplam Kullanıcı</div>
+                                <div className="text-4xl font-black text-[#c084fc]">{stats.total_users}</div>
                             </div>
                         </div>
 
                         {/* Charts Area */}
                         <div className="grid grid-cols-2 gap-6 h-80">
-                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-                                <h3 className="font-bold text-sm text-zinc-400 mb-4 flex items-center gap-2">
+                            <div className="bg-[#18181b] p-6 rounded-[12px] border border-[#27272a]">
+                                <h3 className="font-bold text-sm text-[#a1a1aa] mb-4 flex items-center gap-2">
                                     <DollarSign size={16}/> GELİR TRENDİ (SON 30 GÜN)
                                 </h3>
                                 <ResponsiveContainer width="100%" height="100%">
@@ -199,8 +199,8 @@ export default function SuperAdmin() {
                                 </ResponsiveContainer>
                             </div>
 
-                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-                                <h3 className="font-bold text-sm text-zinc-400 mb-4 flex items-center gap-2">
+                            <div className="bg-[#18181b] p-6 rounded-[12px] border border-[#27272a]">
+                                <h3 className="font-bold text-sm text-[#a1a1aa] mb-4 flex items-center gap-2">
                                     <Activity size={16}/> SİPARİŞ HACMİ
                                 </h3>
                                 <ResponsiveContainer width="100%" height="100%">
@@ -223,56 +223,56 @@ export default function SuperAdmin() {
 
                 {activeTab === 'tenants' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <header className="flex justify-between items-end bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                        <header className="flex justify-between items-end bg-[#18181b] p-6 rounded-[12px] border border-[#27272a]">
                             <div>
-                                <h1 className="text-3xl font-black mb-2">Şirket Yönetimi</h1>
-                                <p className="text-zinc-500">Sisteme kayıtlı işletmeleri yönet.</p>
+                                <h1 className="text-3xl font-black mb-2 text-white">Şirket Yönetimi</h1>
+                                <p className="text-[#71717a]">Sisteme kayıtlı işletmeleri yönet.</p>
                             </div>
                             
                             {/* Create Tenant Form (Inline for speed) */}
                             <form onSubmit={handleCreateTenant} className="flex gap-2 items-end">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-zinc-500 px-1">Şirket Adı</label>
+                                    <label className="text-[10px] uppercase font-bold text-[#71717a] px-1">Şirket Adı</label>
                                     <input 
                                         type="text" 
                                         placeholder="Cafe/Restoran Adı" 
-                                        className="bg-zinc-950 border border-zinc-700 px-3 py-2 rounded text-sm focus:border-purple-500 outline-none w-48"
+                                        className="bg-[#09090b] border border-[#3f3f46] text-white px-3 py-2 rounded-[6px] text-sm focus:border-[#a855f7] outline-none w-48"
                                         value={newCompany}
                                         onChange={e => setNewCompany(e.target.value)}
                                         required
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-zinc-500 px-1">Yönetici K.Adı</label>
+                                    <label className="text-[10px] uppercase font-bold text-[#71717a] px-1">Yönetici K.Adı</label>
                                     <input 
                                         type="text" 
                                         placeholder="admin" 
-                                        className="bg-zinc-950 border border-zinc-700 px-3 py-2 rounded text-sm focus:border-purple-500 outline-none w-32"
+                                        className="bg-[#09090b] border border-[#3f3f46] text-white px-3 py-2 rounded-[6px] text-sm focus:border-[#a855f7] outline-none w-32"
                                         value={adminUser}
                                         onChange={e => setAdminUser(e.target.value)}
                                         required
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-zinc-500 px-1">Yönetici Şifre</label>
+                                    <label className="text-[10px] uppercase font-bold text-[#71717a] px-1">Yönetici Şifre</label>
                                     <input 
                                         type="text" 
                                         placeholder="123456" 
-                                        className="bg-zinc-950 border border-zinc-700 px-3 py-2 rounded text-sm focus:border-purple-500 outline-none w-32"
+                                        className="bg-[#09090b] border border-[#3f3f46] text-white px-3 py-2 rounded-[6px] text-sm focus:border-[#a855f7] outline-none w-32"
                                         value={adminPass}
                                         onChange={e => setAdminPass(e.target.value)}
                                         required
                                     />
                                 </div>
-                                <button className="bg-white text-black px-4 py-2 rounded font-bold text-sm hover:bg-zinc-200 transition-colors flex items-center gap-2 h-10">
+                                <button className="bg-white text-black px-4 py-2 rounded-[6px] font-bold text-sm hover:bg-gray-200 transition-colors flex items-center gap-2 h-10">
                                     <Plus size={16} /> OLUŞTUR
                                 </button>
                             </form>
                         </header>
 
-                        <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-                            <table className="w-full text-left text-sm text-zinc-400">
-                                <thead className="bg-zinc-950 text-zinc-500 uppercase font-bold text-xs">
+                        <div className="bg-[#18181b] rounded-[12px] border border-[#27272a] overflow-hidden">
+                            <table className="w-full text-left text-sm text-[#a1a1aa]">
+                                <thead className="bg-[#09090b] text-[#71717a] uppercase font-bold text-xs">
                                     <tr>
                                         <th className="p-4">ID</th>
                                         <th className="p-4">Şirket Adı</th>
@@ -281,17 +281,17 @@ export default function SuperAdmin() {
                                         <th className="p-4 text-right">İşlem</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-zinc-800">
+                                <tbody className="divide-y divide-[#27272a]">
                                     {tenants.map(t => (
-                                        <tr key={t.id} className="hover:bg-zinc-800/50 transition-colors">
-                                            <td className="p-4 font-mono text-zinc-600">#{t.id}</td>
+                                        <tr key={t.id} className="hover:bg-[#27272a]/50 transition-colors">
+                                            <td className="p-4 font-mono text-[#52525b]">#{t.id}</td>
                                             <td className="p-4 font-bold text-white">{t.company_name}</td>
                                             <td className="p-4 font-mono">{t.domain || '-'}</td>
                                             <td className="p-4">{new Date(t.created_at).toLocaleDateString('tr-TR')}</td>
                                             <td className="p-4 text-right">
                                                 <button 
                                                     onClick={() => handleDeleteTenant(t.id)}
-                                                    className="text-zinc-600 hover:text-red-500 transition-colors"
+                                                    className="text-[#71717a] hover:text-[#ef4444] transition-colors"
                                                     title="Şirketi ve tüm verilerini sil"
                                                 >
                                                     <Trash2 size={18} />
