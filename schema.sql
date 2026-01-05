@@ -37,3 +37,9 @@ CREATE TABLE branches (
     table_count INTEGER DEFAULT 10,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Performance Indexes (Added for Speed Optimization)
+CREATE INDEX idx_users_tenant ON users(tenant_id);
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_branches_tenant ON branches(tenant_id);
+CREATE INDEX idx_users_tenant_username ON users(tenant_id, username);

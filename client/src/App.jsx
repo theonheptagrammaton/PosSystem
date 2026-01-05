@@ -1,20 +1,23 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import Onboarding from './pages/Onboarding';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Pos from './pages/Pos';
-import Tables from './pages/Tables';
-import Inventory from './pages/Inventory';
-import Settings from './pages/Settings';
-import Branches from './pages/Branches';
-import Users from './pages/Users';
-import PosTerminal from './pages/PosTerminal';
-import Reports from './pages/Reports';
-import SuperAdmin from './pages/SuperAdmin';
+import { Suspense, lazy } from 'react';
+import Loading from './components/Loading';
 
-import PublicLayout from './layouts/PublicLayout';
-import MobileMenu from './pages/public/MobileMenu';
+// Lazy Load Components for Performance
+const Login = lazy(() => import('./pages/Login'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const Layout = lazy(() => import('./components/Layout'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Pos = lazy(() => import('./pages/Pos'));
+const Tables = lazy(() => import('./pages/Tables'));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Branches = lazy(() => import('./pages/Branches'));
+const Users = lazy(() => import('./pages/Users'));
+const PosTerminal = lazy(() => import('./pages/PosTerminal'));
+const Reports = lazy(() => import('./pages/Reports'));
+const SuperAdmin = lazy(() => import('./pages/SuperAdmin'));
+const PublicLayout = lazy(() => import('./layouts/PublicLayout'));
+const MobileMenu = lazy(() => import('./pages/public/MobileMenu'));
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -37,57 +40,59 @@ const SuperAdminRoute = ({ children }) => {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        
-        {/* Public Menu Routes */}
-        <Route path="/menu/:tenantId/:branchId/:tableId" element={<PublicLayout />}>
-           <Route index element={<MobileMenu />} />
-        </Route>
-
-        <Route 
-          path="/onboarding" 
-          element={
-            <ProtectedRoute>
-              {(() => { console.log("Rendering Onboarding Route"); return <Onboarding />; })()}
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route path="/pos-terminal/:branchId" element={<PosTerminal />} />
-        
-        {/* Super Admin Route */}
-        <Route 
-          path="/super-admin" 
-          element={
-            <SuperAdminRoute>
-              <SuperAdmin />
-            </SuperAdminRoute>
-          } 
-        />
-
-        {/* Dashboard Layout Routes */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/dashboard" element={<Dashboard />} /> {/* Specific path for dashboard */}
-          <Route path="pos" element={<Pos />} />
-          <Route path="tables" element={<Tables />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="branches" element={<Branches />} />
-          <Route path="users" element={<Users />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="reports" element={<Reports />} />
-        </Route>
-
-        {/* Default redirect for root path */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          
+          {/* Public Menu Routes */}
+          <Route path="/menu/:tenantId/:branchId/:tableId" element={<PublicLayout />}>
+             <Route index element={<MobileMenu />} />
+          </Route>
+  
+          <Route 
+            path="/onboarding" 
+            element={
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route path="/pos-terminal/:branchId" element={<PosTerminal />} />
+          
+          {/* Super Admin Route */}
+          <Route 
+            path="/super-admin" 
+            element={
+              <SuperAdminRoute>
+                <SuperAdmin />
+              </SuperAdminRoute>
+            } 
+          />
+  
+          {/* Dashboard Layout Routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} /> {/* Specific path for dashboard */}
+            <Route path="pos" element={<Pos />} />
+            <Route path="tables" element={<Tables />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="branches" element={<Branches />} />
+            <Route path="users" element={<Users />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="reports" element={<Reports />} />
+          </Route>
+  
+          {/* Default redirect for root path */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
