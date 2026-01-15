@@ -19,6 +19,7 @@ export default function SuperAdmin() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('dashboard');
     const [stats, setStats] = useState(null);
+    const [analytics, setAnalytics] = useState(null);
     const [tenants, setTenants] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -31,6 +32,7 @@ export default function SuperAdmin() {
     useEffect(() => {
         fetchStats();
         fetchTenants();
+        fetchAnalytics();
     }, []);
 
     const fetchStats = async () => {
@@ -38,6 +40,13 @@ export default function SuperAdmin() {
             const res = await api.get('/api/admin/stats');
             setStats(res.data);
         } catch (err) { console.error(err); }
+    };
+
+    const fetchAnalytics = async () => {
+        try {
+            const res = await api.get('/api/admin/analytics');
+            setAnalytics(res.data);
+        } catch (err) { console.error('Analytics error:', err); }
     };
 
     const fetchTenants = async () => {
@@ -174,47 +183,79 @@ export default function SuperAdmin() {
                             </div>
                         </div>
 
-                        {/* Charts Area */}
-                        <div className="grid grid-cols-2 gap-6 h-80">
-                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                        {/* Analytics & Tactics Section */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-auto lg:h-96">
+                            {/* Sales Trend Chart */}
+                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 flex flex-col">
                                 <h3 className="font-bold text-sm text-zinc-400 mb-4 flex items-center gap-2">
-                                    <DollarSign size={16}/> GELİR TRENDİ (SON 30 GÜN)
+                                    <TrendingUp size={16}/> SAATLİK SATIŞ YOĞUNLUĞU 
+                                    <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-500">SON 30 GÜN ORTALAMASI</span>
                                 </h3>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={stats.chart_data || []}>
-                                        <defs>
-                                            <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                                        <XAxis dataKey="date" stroke="#666" fontSize={10} tickFormatter={d => d.slice(5)} />
-                                        <YAxis stroke="#666" fontSize={10}/>
-                                        <Tooltip 
-                                            contentStyle={{backgroundColor: '#000', border: '1px solid #333'}}
-                                        />
-                                        <Area type="monotone" dataKey="revenue" stroke="#82ca9d" fillOpacity={1} fill="url(#colorRev)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
+                                <div className="flex-1 min-h-[250px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={analytics?.hourly_data || []}>
+                                            <defs>
+                                                <linearGradient id="colorHour" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#f472b6" stopOpacity={0.3}/>
+                                                    <stop offset="95%" stopColor="#f472b6" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                                            <XAxis 
+                                                dataKey="hour" 
+                                                stroke="#666" 
+                                                fontSize={10} 
+                                                tickFormatter={h => `${h}:00`}
+                                            />
+                                            <YAxis stroke="#666" fontSize={10}/>
+                                            <Tooltip 
+                                                contentStyle={{backgroundColor: '#000', border: '1px solid #333'}}
+                                                formatter={(val) => [`₺${val}`, 'Ciro']}
+                                                labelFormatter={(h) => `Saat ${h}:00`}
+                                            />
+                                            <Area type="monotone" dataKey="revenue" stroke="#f472b6" fillOpacity={1} fill="url(#colorHour)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
 
-                            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-                                <h3 className="font-bold text-sm text-zinc-400 mb-4 flex items-center gap-2">
-                                    <Activity size={16}/> SİPARİŞ HACMİ
-                                </h3>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={stats.chart_data || []}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                                        <XAxis dataKey="date" stroke="#666" fontSize={10} tickFormatter={d => d.slice(5)} />
-                                        <YAxis stroke="#666" fontSize={10}/>
-                                        <Tooltip 
-                                            contentStyle={{backgroundColor: '#000', border: '1px solid #333'}}
-                                            cursor={{fill: 'rgba(255,255,255,0.1)'}}
-                                        />
-                                        <Bar dataKey="orders" fill="#8884d8" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                            {/* Profit Tactics (AI Insights) */}
+                            <div className="bg-zinc-900 p-0 rounded-xl border border-zinc-800 flex flex-col overflow-hidden">
+                                <div className="p-6 border-b border-zinc-800 bg-gradient-to-r from-indigo-900/20 to-purple-900/20">
+                                    <h3 className="font-black text-lg text-white mb-1 flex items-center gap-2">
+                                        <div className="p-1.5 bg-white text-black rounded-lg">
+                                            <TrendingUp size={16} />
+                                        </div>
+                                        KÂR ARTIRMA TAKTİKLERİ
+                                    </h3>
+                                    <p className="text-xs text-zinc-400">Yapay Zeka destekli satış artırma önerileri.</p>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                                    {analytics?.tactics?.length > 0 ? (
+                                        analytics.tactics.map((tactic, idx) => (
+                                            <div key={idx} className="flex gap-4 p-4 rounded-xl bg-zinc-950/50 border border-zinc-800 hover:border-purple-500/50 transition-colors group">
+                                                <div className="shrink-0 mt-1">
+                                                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                                                        {tactic.icon === 'TrendingUp' && <TrendingUp size={20} />}
+                                                        {tactic.icon === 'Clock' && <Activity size={20} />}
+                                                        {tactic.icon === 'Star' && <DollarSign size={20} />}
+                                                        {tactic.icon === 'AlertTriangle' && <LogOut size={20} className="rotate-180" />} 
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-white text-sm mb-1">{tactic.title}</h4>
+                                                    <p className="text-zinc-400 text-xs leading-relaxed">{tactic.message}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-2">
+                                            <Activity size={32} className="opacity-20" />
+                                            <p className="text-xs">Yeterli veri toplanıyor...</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         

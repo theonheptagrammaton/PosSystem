@@ -14,10 +14,12 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Branches = lazy(() => import('./pages/Branches'));
 const Users = lazy(() => import('./pages/Users'));
 const PosTerminal = lazy(() => import('./pages/PosTerminal'));
+const WaiterPanel = lazy(() => import('./pages/WaiterPanel'));
 const Reports = lazy(() => import('./pages/Reports'));
 const SuperAdmin = lazy(() => import('./pages/SuperAdmin'));
 const PublicLayout = lazy(() => import('./layouts/PublicLayout'));
 const MobileMenu = lazy(() => import('./pages/public/MobileMenu'));
+const KitchenPanel = lazy(() => import('./pages/KitchenPanel'));
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -59,6 +61,8 @@ function App() {
           />
           
           <Route path="/pos-terminal/:branchId" element={<PosTerminal />} />
+          <Route path="/waiter-panel/:branchId" element={<WaiterPanel />} />
+          <Route path="/kitchen-panel" element={<KitchenPanel />} />
           
           {/* Super Admin Route */}
           <Route 

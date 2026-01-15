@@ -5,6 +5,9 @@ CREATE TABLE orders (
     total_amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(20) DEFAULT 'PENDING',
     items JSONB,
+    source VARCHAR(20) DEFAULT 'POS', -- POS, QR, WAITER
+    note TEXT,
+    payment_id INTEGER REFERENCES payments(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

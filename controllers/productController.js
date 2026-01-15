@@ -28,7 +28,7 @@ const getAllProducts = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     const tenantId = req.user.tenantId || req.user.tenant_id;
-    const { category_id, name, description, price, is_available, image_url } = req.body;
+    const { category_id, name, description, price, is_available, image_url, options } = req.body;
 
     if (!name || price === undefined) {
       return res.status(400).json({ error: 'Name and Price are required' });
@@ -39,8 +39,8 @@ const createProduct = async (req, res) => {
     }
 
     const result = await pool.query(
-      'INSERT INTO products (tenant_id, category_id, name, description, price, is_available, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [tenantId, category_id || null, name, description, price, is_available !== undefined ? is_available : true, image_url || null]
+      'INSERT INTO products (tenant_id, category_id, name, description, price, is_available, image_url, options) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [tenantId, category_id || null, name, description, price, is_available !== undefined ? is_available : true, image_url || null, JSON.stringify(options || [])]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -71,6 +71,7 @@ const updateProduct = async (req, res) => {
     if (price !== undefined) { fields.push(`price = $${idx++}`); values.push(price); }
     if (is_available !== undefined) { fields.push(`is_available = $${idx++}`); values.push(is_available); }
     if (image_url !== undefined) { fields.push(`image_url = $${idx++}`); values.push(image_url); }
+    if (req.body.options !== undefined) { fields.push(`options = $${idx++}`); values.push(JSON.stringify(req.body.options)); }
     if (req.body.rank !== undefined) { fields.push(`rank = $${idx++}`); values.push(req.body.rank); }
 
     if (fields.length === 0) {

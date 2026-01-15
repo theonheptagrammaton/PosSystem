@@ -24,6 +24,7 @@ export default function Reports() {
         categories: [],
         transactions: []
     });
+    const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [loading, setLoading] = useState(false);
     const socketRef = useRef(null);
     const user = JSON.parse(localStorage.getItem('user'));
@@ -285,7 +286,7 @@ ${data.categories.map(c => `- ${c.category_name}: ₺${parseFloat(c.total_sales)
                     {/* Detailed Transactions List */}
                     <div className="mt-12 border border-black overflow-hidden">
                         <div className="bg-black text-white p-4 font-bold uppercase tracking-widest text-xs flex justify-between">
-                            <span>Son İşlemler</span>
+                            <span>Son İşlemler (Detay için tıkla)</span>
                             <span className="text-gray-500 font-mono">LİMİT: 100</span>
                         </div>
                         <div className="overflow-x-auto">
@@ -295,26 +296,26 @@ ${data.categories.map(c => `- ${c.category_name}: ₺${parseFloat(c.total_sales)
                                         <th className="p-4 border-r border-gray-200">İŞLEM NO</th>
                                         <th className="p-4 border-r border-gray-200">TARİH / SAAT</th>
                                         <th className="p-4 border-r border-gray-200">ŞUBE / MASA</th>
-                                        <th className="p-4 border-r border-gray-200">DURUM</th>
+                                        <th className="p-4 border-r border-gray-200">KAYNAK</th>
                                         <th className="p-4 text-right">TUTAR</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {data.transactions.map((t, idx) => (
-                                        <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                                            <td className="p-4 border-r border-gray-200 font-mono">#{t.id}</td>
+                                        <tr 
+                                            key={idx} 
+                                            onClick={() => setSelectedTransaction(t)}
+                                            className="border-b border-gray-100 last:border-0 hover:bg-gray-100 transition-colors cursor-pointer group"
+                                        >
+                                            <td className="p-4 border-r border-gray-200 font-mono group-hover:text-black text-gray-600">#{t.id}</td>
                                             <td className="p-4 border-r border-gray-200 font-mono">
                                                 {new Date(t.created_at).toLocaleString('tr-TR')}
                                             </td>
                                             <td className="p-4 border-r border-gray-200 uppercase font-bold text-[11px]">
                                                 {t.branch_name} / {t.table_no}
                                             </td>
-                                            <td className="p-4 border-r border-gray-200">
-                                                <span className={`px-2 py-0.5 text-[9px] font-black uppercase ${
-                                                    t.status === 'PENDING' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
-                                                }`}>
-                                                    {t.status === 'PENDING' ? 'AÇIK' : 'KAPALI'}
-                                                </span>
+                                            <td className="p-4 border-r border-gray-200 text-xs font-bold text-blue-600 uppercase">
+                                                {t.source}
                                             </td>
                                             <td className="p-4 text-right font-black">₺{parseFloat(t.total_amount).toFixed(2)}</td>
                                         </tr>
@@ -324,6 +325,63 @@ ${data.categories.map(c => `- ${c.category_name}: ₺${parseFloat(c.total_sales)
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Transaction Detail Modal */}
+            {selectedTransaction && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedTransaction(null)}>
+                    <div className="bg-white max-w-lg w-full rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="bg-black text-white p-4 flex justify-between items-center">
+                            <div>
+                                <h3 className="font-bold uppercase tracking-widest">FİŞ DETAYI</h3>
+                                <p className="text-[10px] text-gray-400 font-mono">#{selectedTransaction.id}</p>
+                            </div>
+                            <button onClick={() => setSelectedTransaction(null)} className="p-1 hover:bg-white/20 rounded">
+                                <span className="text-xl font-bold">×</span>
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                                <div>
+                                    <div className="text-xs text-gray-500 font-bold uppercase">TARİH</div>
+                                    <div className="font-mono font-bold">{new Date(selectedTransaction.created_at).toLocaleString('tr-TR')}</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-xs text-gray-500 font-bold uppercase">MASA / KAYNAK</div>
+                                    <div className="font-black text-lg">{selectedTransaction.table_no}</div>
+                                    <div className="text-xs text-blue-600 font-bold">{selectedTransaction.source}</div>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-3 mb-6 max-h-60 overflow-y-auto">
+                                {selectedTransaction.items && selectedTransaction.items.length > 0 ? (
+                                    selectedTransaction.items.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-start border-b border-dashed border-gray-200 pb-2 last:border-0">
+                                            <div>
+                                                <div className="font-bold text-sm">
+                                                    {item.quantity}x {item.name}
+                                                </div>
+                                                {item.selectedOptions && item.selectedOptions.length > 0 && (
+                                                    <div className="text-[10px] text-gray-500">
+                                                        {item.selectedOptions.map(o => o.name).join(', ')}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="font-mono text-sm">₺{parseFloat(item.price * (item.quantity||1)).toFixed(2)}</div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center text-gray-400 italic">Ürün detayı bulunamadı.</div>
+                                )}
+                            </div>
+                            
+                            <div className="flex justify-between items-center pt-4 border-t border-black">
+                                <span className="font-black text-lg">TOPLAM</span>
+                                <span className="font-black text-2xl">₺{parseFloat(selectedTransaction.total_amount).toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>

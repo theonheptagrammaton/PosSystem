@@ -58,7 +58,8 @@ export default function PosTerminal() {
                  fetchPendingOrders();
              } else {
                  // Normal active order (or approval event)
-                 if (data.table_no === `MASA-${selectedTable}`) {
+                 const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
+                 if (data.table_no === formattedTableNo) {
                      fetchTableOrders(selectedTable);
                  }
                  fetchBranchStatus(branch.tenant_id, branch.id);
@@ -127,8 +128,11 @@ export default function PosTerminal() {
   const fetchTableOrders = async (tableId) => {
       if (!branch) return;
       try {
-          // table_no format: MASA-1
-          const res = await api.get(`/api/orders/table/${branch.tenant_id}/${branch.id}/MASA-${tableId}`);
+          // table_no format: MASA-1 or just "TRENDYOL"
+          // If tableId is number (standard table), prefix MASA-. If string (Quick Order), use as is.
+          const formattedTableNo = typeof tableId === 'number' ? `MASA-${tableId}` : tableId;
+          
+          const res = await api.get(`/api/orders/table/${branch.tenant_id}/${branch.id}/${formattedTableNo}`);
           setTableOrders(res.data.items || []);
           setTableTotal(res.data.total_amount || 0);
       } catch (err) {
@@ -157,36 +161,60 @@ export default function PosTerminal() {
       }
   };
 
+  const handleRejectOrder = async (order) => {
+      try {
+          await api.post(`/api/orders/reject/${order.id}`);
+          setViewingPendingOrder(null);
+          showNotification({ title: 'REDDEDİLDİ', message: 'Sipariş reddedildi.', type: 'info' });
+          fetchPendingOrders();
+      } catch (err) {
+          showNotification({ title: 'HATA', message: 'Reddetme başarısız', type: 'error' });
+      }
+  };
+
   // --- Actions ---
   const handleTableSelect = (id) => {
       setSelectedTable(id);
   };
 
-    const handleProductClick = async (product) => {
+    const handleProductClick = async (product, selectedOptions = []) => {
       if (!selectedTable) {
-        showNotification({ title: 'UYARI', message: 'Lütfen önce bir masa seçin!', type: 'info' });
+        showNotification({ title: 'UYARI', message: 'Lütfen önce bir masa veya sipariş türü seçin!', type: 'info' });
         return;
       }
+
+      // If product has options and none selected yet, open modal
+      if (!selectedOptions.length && product.options && product.options.length > 0) {
+          setOptionModal({ product, selected: [] });
+          return;
+      }
       
+      const optionPrice = selectedOptions.reduce((acc, opt) => acc + opt.price_change, 0);
+      const finalPrice = parseFloat(product.price) + optionPrice;
+      const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
+
       // Immediate Persistence: Add item as a new order row
       try {
           const payload = {
             tenant_id: branch.tenant_id,
             branch_id: branch.id, // SEND BRANCH ID
-            table_no: `MASA-${selectedTable}`,
-            total_amount: product.price, // Price of this single addition
+            table_no: formattedTableNo,
+            total_amount: finalPrice, // Price of this single addition
             items: [{
                 id: product.id,
                 name: product.name,
-                price: product.price,
-                quantity: 1
+                price: finalPrice,
+                quantity: 1,
+                selectedOptions
             }],
-            status: 'PENDING' // Explicitly set as Active/Approved for POS
+            status: 'PENDING', // Explicitly set as Active/Approved for POS
+            source: typeof selectedTable === 'number' ? 'POS' : selectedTable // Set Source to Platform Name if Quick Order
           };
           
           await api.post('/api/orders', payload);
           // Refresh to show in list
           fetchTableOrders(selectedTable);
+          setOptionModal(null); // Close modal if open
       } catch (err) {
           showNotification({ title: 'HATA', message: 'Ürün eklenirken hata oluştu.', type: 'error' });
       }
@@ -195,7 +223,8 @@ export default function PosTerminal() {
   const handleItemRemove = async (productId) => {
       if (!selectedTable) return;
       try {
-          await api.delete(`/api/orders/table/${branch.tenant_id}/${branch.id}/MASA-${selectedTable}/item/${productId}`);
+          const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
+          await api.delete(`/api/orders/table/${branch.tenant_id}/${branch.id}/${formattedTableNo}/item/${productId}`);
           // Refresh happens via socket, but valid to optimistic update or fetch
           fetchTableOrders(selectedTable);
       } catch (err) {
@@ -207,14 +236,22 @@ export default function PosTerminal() {
   const groupTableOrders = (items) => {
       const grouped = {};
       items.forEach(item => {
-          if (grouped[item.id]) {
-              grouped[item.id].quantity += item.quantity;
+          // Create unique key based on ID and Options
+          const optionsKey = item.selectedOptions 
+              ? item.selectedOptions.map(o => o.name).sort().join('-') 
+              : '';
+          const key = `${item.id}-${optionsKey}`;
+
+          if (grouped[key]) {
+              grouped[key].quantity += item.quantity;
           } else {
-              grouped[item.id] = { ...item };
+              grouped[key] = { ...item, key }; // Store key for reference if needed
           }
       });
       return Object.values(grouped);
   };
+
+  const [optionModal, setOptionModal] = useState(null);
 
   const handlePayment = async () => {
       if (!selectedTable) return;
@@ -223,16 +260,18 @@ export default function PosTerminal() {
         return;
       }
       
+      const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
+
       const confirmed = await showNotification({
         title: 'ÖDEME ONAYI',
-        message: `MASA-${selectedTable} ödemesi alındı mı? Tutar: ₺${tableTotal.toFixed(2)}`,
+        message: `${formattedTableNo} ödemesi alındı mı? Tutar: ₺${tableTotal.toFixed(2)}`,
         type: 'confirm'
       });
       
       if (!confirmed) return;
 
       try {
-          await api.post(`/api/orders/table/${branch.tenant_id}/${branch.id}/MASA-${selectedTable}/pay`);
+          await api.post(`/api/orders/table/${branch.tenant_id}/${branch.id}/${formattedTableNo}/pay`);
           showNotification({ title: 'BAŞARILI', message: 'Ödeme Alındı, Masa Temizlendi.', type: 'info' });
           fetchTableOrders(selectedTable);
       } catch (err) {
@@ -263,6 +302,29 @@ export default function PosTerminal() {
             <div className="w-64 bg-white border-r border-gray-300 flex flex-col shadow-lg z-10">
                 <div className="p-4 bg-gray-50 border-b border-gray-200 font-bold uppercase text-sm tracking-wider flex items-center gap-2">
                     <Utensils size={16}/> Masalar
+                </div>
+
+                {/* Quick Orders Section */}
+                <div className="p-2 grid grid-cols-2 gap-2 border-b border-gray-200 bg-white">
+                    {[
+                        { id: 'GEL-AL', label: 'GEL AL', color: 'bg-green-100 text-green-800 border-green-200' },
+                        { id: 'TELEFON', label: 'TELEFON', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+                        { id: 'TRENDYOL', label: 'TRENDYOL', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+                        { id: 'YEMEKSEPETI', label: 'YEMEKSEPETİ', color: 'bg-red-100 text-red-800 border-red-200' },
+                        { id: 'GETIR', label: 'GETİR', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+                        { id: 'MIGROS', label: 'MIGROS', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+                    ].map(type => (
+                        <button
+                            key={type.id}
+                            onClick={() => handleTableSelect(type.id)}
+                            className={`p-3 rounded-lg border font-bold text-xs uppercase transition-all shadow-sm
+                                ${selectedTable === type.id 
+                                    ? 'bg-black text-white border-black scale-95 ring-2 ring-black ring-offset-1 z-10' 
+                                    : `${type.color} hover:brightness-95`}`}
+                        >
+                            {type.label}
+                        </button>
+                    ))}
                 </div>
 
                 {/* Pending Orders Section */}
@@ -370,8 +432,8 @@ export default function PosTerminal() {
                 {/* Header */}
                 <div className="h-16 bg-gray-50 border-b border-gray-200 flex items-center justify-between px-6">
                     <div>
-                        <div className="text-xs text-gray-500 font-bold uppercase">SEÇİLİ MASA</div>
-                        <div className="text-2xl font-black">MASA {selectedTable || '-'}</div>
+                        <div className="text-xs text-gray-500 font-bold uppercase">SEÇİLİ MASA / SİPARİŞ</div>
+                        <div className="text-2xl font-black">{typeof selectedTable === 'number' ? `MASA ${selectedTable}` : selectedTable}</div>
                     </div>
                     {selectedTable && (
                         <button onClick={() => fetchTableOrders(selectedTable)} className="p-2 hover:bg-gray-200 rounded-full">
@@ -395,6 +457,11 @@ export default function PosTerminal() {
                                 <div className="flex-1">
                                     <div className="font-bold text-gray-800">{item.name}</div>
                                     <div className="text-xs text-gray-500 font-mono">₺{item.price}</div>
+                                    {item.selectedOptions && item.selectedOptions.length > 0 && (
+                                        <div className="text-[10px] text-blue-600 font-bold mt-1">
+                                            {item.selectedOptions.map(o => o.name).join(', ')}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button 
@@ -447,10 +514,34 @@ export default function PosTerminal() {
                         <button onClick={() => setViewingPendingOrder(null)} className="p-1 hover:bg-white/20 rounded"><ArrowLeft/></button>
                     </div>
                     <div className="p-6">
-                        <div className="mb-4 text-center">
-                            <div className="text-sm text-gray-500 font-bold uppercase">SİPARİŞ KAYNAĞI</div>
-                            <div className="text-3xl font-black">{viewingPendingOrder.table_no}</div>
+                        {/* Header Info */}
+                        <div className="mb-6 grid grid-cols-2 gap-4">
+                            <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-[10px] text-gray-500 font-bold uppercase">MASA</div>
+                                <div className="text-xl font-black">{viewingPendingOrder.table_no}</div>
+                            </div>
+                            <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-[10px] text-gray-500 font-bold uppercase">KAYNAK</div>
+                                <div className="text-xl font-black text-blue-600">{viewingPendingOrder.source || 'POS'}</div>
+                            </div>
+                            <div className="text-center p-2 bg-gray-50 rounded col-span-2">
+                                <div className="text-[10px] text-gray-500 font-bold uppercase">SİPARİŞ SAATİ</div>
+                                <div className="text-lg font-bold">
+                                    {new Date(viewingPendingOrder.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    <span className="text-xs font-normal text-gray-400 ml-2">
+                                        ({Math.floor((new Date() - new Date(viewingPendingOrder.created_at)) / 60000)} dk önce)
+                                    </span>
+                                </div>
+                            </div>
                         </div>
+
+                        {/* Order Note */}
+                        {viewingPendingOrder.note && (
+                            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-center">
+                                <div className="text-[10px] font-bold uppercase mb-1">SİPARİŞ NOTU</div>
+                                <div className="font-bold italic">"{viewingPendingOrder.note}"</div>
+                            </div>
+                        )}
                         
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 max-h-60 overflow-y-auto">
                             {viewingPendingOrder.items.map((item, i) => (
@@ -458,6 +549,11 @@ export default function PosTerminal() {
                                     <div>
                                         <div className="font-bold">{item.name}</div>
                                         <div className="text-xs text-gray-400">₺{item.price}</div>
+                                        {item.selectedOptions && item.selectedOptions.length > 0 && (
+                                            <div className="text-[10px] text-blue-600 font-bold mt-1">
+                                                {item.selectedOptions.map(o => o.name).join(', ')}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="font-mono font-bold">x{item.quantity}</div>
                                 </div>
@@ -469,12 +565,20 @@ export default function PosTerminal() {
                             <span>₺{viewingPendingOrder.total_amount}</span>
                         </div>
 
-                        <button 
-                            onClick={() => handleApproveOrder(viewingPendingOrder)}
-                            className="w-full bg-black text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-green-600 transition-colors"
-                        >
-                            SİPARİŞİ ONAYLA
-                        </button>
+                        <div className="flex gap-4">
+                            <button 
+                                onClick={() => handleRejectOrder(viewingPendingOrder)}
+                                className="flex-1 bg-red-600 text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-red-700 transition-colors"
+                            >
+                                REDDET
+                            </button>
+                            <button 
+                                onClick={() => handleApproveOrder(viewingPendingOrder)}
+                                className="flex-1 bg-black text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-green-600 transition-colors"
+                            >
+                                ONAYLA
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -19,5 +19,6 @@ router.get('/stats', adminController.getGlobalStats);
 router.get('/tenants', adminController.getAllTenants);
 router.post('/tenants', adminController.createTenant);
 router.delete('/tenants/:id', adminController.deleteTenant);
+router.get('/analytics', adminController.getSalesAnalytics);
 
 module.exports = router;

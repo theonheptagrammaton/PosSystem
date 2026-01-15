@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 
 // --- Create Order (Append Item) ---
 const createOrder = async (req, res) => {
-  const { tenant_id, branch_id, table_no, total_amount, items, status } = req.body;
+      const { tenant_id, branch_id, table_no, total_amount, items, status, source, note } = req.body;
   const io = req.app.get('io');
 
   if (!tenant_id || !total_amount) {
@@ -16,11 +16,11 @@ const createOrder = async (req, res) => {
     const initialStatus = status || 'WAITING_APPROVAL';
 
     const query = `
-      INSERT INTO orders (tenant_id, branch_id, table_no, total_amount, items, status)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO orders (tenant_id, branch_id, table_no, total_amount, items, status, source, note)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *;
     `;
-    const values = [tenant_id, branch_id, table_no, total_amount, JSON.stringify(items), initialStatus];
+    const values = [tenant_id, branch_id, table_no, total_amount, JSON.stringify(items), initialStatus, source || 'POS', note || null];
     const result = await pool.query(query, values);
     const newOrder = result.rows[0];
 
@@ -87,6 +87,7 @@ const getTableOrders = async (req, res) => {
 };
 
 // --- Close Table (Payment) ---
+// --- Close Table (Payment) ---
 const closeTable = async (req, res) => {
     const { tenantId, branchId, tableNo } = req.params;
     const io = req.app.get('io');
@@ -95,24 +96,51 @@ const closeTable = async (req, res) => {
         return res.status(400).json({ error: 'Tenant ID, Branch ID and Table No are required' });
     }
 
+    const client = await pool.connect(); // Use transaction
+
     try {
-      // Ensure tenantId and branchId are parsed as integer
+      await client.query('BEGIN');
+
       const parsedTenantId = parseInt(tenantId, 10);
       const parsedBranchId = parseInt(branchId, 10);
       
-      const query = `
-          UPDATE orders 
-          SET status = 'COMPLETED'
+      // 1. Get Pending Orders to calculate total
+      const ordersQuery = `
+          SELECT * FROM orders 
           WHERE tenant_id = $1 AND branch_id = $2 AND table_no = $3 AND status = 'PENDING'
-          RETURNING *
+          FOR UPDATE
       `;
-      const result = await pool.query(query, [parsedTenantId, parsedBranchId, tableNo]);
-  
-      if (result.rowCount === 0) {
-          // No active orders found for this table, or table already closed
-          // We can return 404 or just success message saying "No active orders"
+      const ordersResult = await client.query(ordersQuery, [parsedTenantId, parsedBranchId, tableNo]);
+
+      if (ordersResult.rowCount === 0) {
+          await client.query('ROLLBACK');
           return res.status(200).json({ message: 'No active orders found to close.', closed_orders: 0 });
       }
+
+      // Calculate Total Amount
+      let totalAmount = 0;
+      ordersResult.rows.forEach(order => {
+          totalAmount += parseFloat(order.total_amount);
+      });
+
+      // 2. Create Payment Record
+      const paymentQuery = `
+          INSERT INTO payments (tenant_id, branch_id, table_no, total_amount, payment_method)
+          VALUES ($1, $2, $3, $4, 'CASH')
+          RETURNING id
+      `;
+      const paymentResult = await client.query(paymentQuery, [parsedTenantId, parsedBranchId, tableNo, totalAmount]);
+      const paymentId = paymentResult.rows[0].id;
+
+      // 3. Update Orders with Payment ID and Status
+      const updateQuery = `
+          UPDATE orders 
+          SET status = 'COMPLETED', payment_id = $1
+          WHERE tenant_id = $2 AND branch_id = $3 AND table_no = $4 AND status = 'PENDING'
+      `;
+      await client.query(updateQuery, [paymentId, parsedTenantId, parsedBranchId, tableNo]);
+      
+      await client.query('COMMIT');
 
       if (io) {
           io.to(String(tenantId)).emit('table_closed', {
@@ -121,11 +149,14 @@ const closeTable = async (req, res) => {
           });
       }
   
-      res.json({ message: 'Ödeme alındı, masa temizlendi.', closed_orders: result.rowCount });
+      res.json({ message: 'Ödeme alındı, masa temizlendi.', closed_orders: ordersResult.rowCount, payment_id: paymentId });
   
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error closing table:', error);
         res.status(500).json({ error: 'Sunucu hatası: Ödeme alınamadı.', details: error.message });
+    } finally {
+        client.release();
     }
 };
 
@@ -149,33 +180,33 @@ const getBranchStatus = async (req, res) => {
 };
 
 // --- Get All Orders (Dashboard History) ---
+// --- Get All Payments (Dashboard History) ---
 const getAllOrders = async (req, res) => {
     const tenantId = req.user.tenantId || req.user.tenant_id;
     try {
-        // Updated query to fetch Branch Name
         const query = `
-            SELECT o.*, b.name as branch_name 
-            FROM orders o
-            LEFT JOIN branches b ON o.branch_id = b.id
-            WHERE o.tenant_id = $1 
-            ORDER BY o.created_at DESC 
+            SELECT p.*, b.name as branch_name 
+            FROM payments p
+            LEFT JOIN branches b ON p.branch_id = b.id
+            WHERE p.tenant_id = $1 
+            ORDER BY p.created_at DESC 
             LIMIT 50
         `;
         const result = await pool.query(query, [tenantId]);
         
         const formatted = result.rows.map(row => ({
-            id: `SIP-${row.id}`,
-            status: row.status === 'PENDING' ? 'DOLU' : 'TAMAMLANDI', // Updated Status Logic
+            id: `ISLEM-${row.id}`,
+            status: 'TAMAMLANDI', 
             amount: `₺${row.total_amount}`,
-            details: row.items,
+            details: [], // Details now require separate fetch or aggregation, for summary view empty is fine or we can change UI to not need it immediately
             created_at: row.created_at,
-            table_no: row.table_no,     // Forward Table Info
-            branch_name: row.branch_name || 'Merkez' // Forward Branch Info
+            table_no: row.table_no,
+            branch_name: row.branch_name || 'Merkez'
         }));
 
         res.json(formatted);
     } catch (error) {
-        console.error('Error fetching all orders:', error);
+        console.error('Error fetching payments:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -308,6 +339,77 @@ const approveOrder = async (req, res) => {
     }
 };
 
+// --- Reject Order ---
+const rejectOrder = async (req, res) => {
+    const { orderId } = req.params;
+    const io = req.app.get('io');
+    
+    try {
+        const result = await pool.query(
+            "UPDATE orders SET status = 'REJECTED' WHERE id = $1 RETURNING *",
+            [orderId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        
+        const updatedOrder = result.rows[0];
+
+        if (io) {
+            io.to(String(updatedOrder.tenant_id)).emit('new_order', {
+                id: updatedOrder.id,
+                table_no: updatedOrder.table_no,
+                branch_id: updatedOrder.branch_id,
+                status: 'REJECTED',
+                is_approval: true // Trigger refresh on clients
+            });
+        }
+
+        res.json(updatedOrder);
+    } catch (error) {
+        console.error('Error rejecting order:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+}
+
+
+// --- Mark Order Ready (Kitchen) ---
+const markOrderReady = async (req, res) => {
+    const { orderId } = req.params;
+    const io = req.app.get('io');
+
+    try {
+        const result = await pool.query(
+            "UPDATE orders SET status = 'READY' WHERE id = $1 RETURNING *",
+            [orderId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const order = result.rows[0];
+
+        // Notify POS/Waiter
+        if (io) {
+            io.to(String(order.tenant_id)).emit('order_ready', order);
+            // Also emit generic update to refresh lists
+            io.to(String(order.tenant_id)).emit('new_order', {
+                ...order,
+                status: 'READY',
+                is_ready: true
+            });
+        }
+
+        res.json(order);
+    } catch (error) {
+        console.error('Mark Ready error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
   createOrder,
   getTableOrders,
@@ -316,6 +418,7 @@ module.exports = {
   getAllOrders,
   removeItem,
   getPendingOrders,
-  approveOrder
+  approveOrder,
+  rejectOrder,
+  markOrderReady
 };
-

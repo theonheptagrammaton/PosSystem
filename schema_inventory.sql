@@ -16,6 +16,7 @@ CREATE TABLE products (
     is_available BOOLEAN DEFAULT TRUE,
     rank INTEGER DEFAULT 0,
     image_url TEXT,
+    options JSONB DEFAULT '[]', -- [{name: "1.5 Porsiyon", price_change: 50}]
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

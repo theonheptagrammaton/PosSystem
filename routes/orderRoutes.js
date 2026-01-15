@@ -13,6 +13,8 @@ router.delete('/table/:tenantId/:branchId/:tableNo/item/:productId', orderContro
 router.get('/status/:tenantId/:branchId', orderController.getBranchStatus);
 router.get('/pending/:tenantId/:branchId', orderController.getPendingOrders);
 router.post('/approve/:orderId', orderController.approveOrder);
+router.post('/reject/:orderId', orderController.rejectOrder);
+router.post('/ready/:orderId', orderController.markOrderReady);
 
 // Authenticated History Route (Dashboard)
 router.get('/', authenticateToken, orderController.getAllOrders);

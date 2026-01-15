@@ -2,7 +2,7 @@
 -- However, for multi-tenant SaaS, UUIDs are often better. But I'll stick to standard simpler SERIAL or INTEGER unless I see reasons otherwise. Let's use SERIAL for simplicity as requested "id".
 
 -- Create Enum Type for User Roles
-CREATE TYPE user_role AS ENUM ('admin', 'manager', 'cashier');
+CREATE TYPE user_role AS ENUM ('admin', 'manager', 'cashier', 'waiter', 'kitchen');
 
 -- Tenants Table
 CREATE TABLE tenants (

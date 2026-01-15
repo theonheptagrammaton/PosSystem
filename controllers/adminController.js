@@ -111,9 +111,120 @@ const deleteTenant = async (req, res) => {
     }
 };
 
+// --- Advanced Analytics & Tactics ---
+const getSalesAnalytics = async (req, res) => {
+    try {
+        // 1. Hourly Sales Distribution (00-23)
+        const hourlyQuery = `
+            SELECT 
+                EXTRACT(HOUR FROM created_at) as hour,
+                COUNT(*) as order_count,
+                SUM(total_amount) as total_revenue
+            FROM orders
+            WHERE (status = 'COMPLETED' OR status = 'TAMAMLANDI')
+            AND created_at > NOW() - INTERVAL '30 days'
+            GROUP BY EXTRACT(HOUR FROM created_at)
+            ORDER BY hour ASC
+        `;
+        const hourlyRes = await pool.query(hourlyQuery);
+        
+        // Fill missing hours with 0
+        const hourlyData = Array.from({ length: 24 }, (_, i) => {
+            const row = hourlyRes.rows.find(r => parseInt(r.hour) === i);
+            return {
+                hour: i,
+                order_count: row ? parseInt(row.order_count) : 0,
+                revenue: row ? parseFloat(row.total_revenue) : 0
+            };
+        });
+
+        // 2. Product Performance
+        // Extract product name from JSONB items array
+        // Note: This is expensive on large datasets, but fine for God Mode implementation phase
+        const productQuery = `
+            SELECT 
+                item->>'name' as name,
+                SUM((item->>'quantity')::int) as quantity,
+                SUM((item->>'price')::decimal * (item->>'quantity')::int) as revenue
+            FROM orders, jsonb_array_elements(items) as item
+            WHERE (status = 'COMPLETED' OR status = 'TAMAMLANDI')
+            AND created_at > NOW() - INTERVAL '30 days'
+            GROUP BY item->>'name'
+            ORDER BY revenue DESC
+        `;
+        const productRes = await pool.query(productQuery);
+        const products = productRes.rows.map(row => ({
+            name: row.name,
+            quantity: parseInt(row.quantity),
+            revenue: parseFloat(row.revenue)
+        }));
+
+        // 3. Heuristic Tactic Generation
+        const tactics = [];
+
+        // Analysis: Peak Hours
+        const sortedHours = [...hourlyData].sort((a, b) => b.revenue - a.revenue);
+        const peakHour = sortedHours[0];
+        const lowHour = sortedHours[sortedHours.length - 1];
+
+        if (peakHour && peakHour.revenue > 0) {
+            tactics.push({
+                type: 'PEAK_HOUR',
+                title: 'Yoğun Saat Stratejisi',
+                message: `En yoğun satış saatiniz ${peakHour.hour}:00 - ${peakHour.hour + 1}:00 arası. Bu saat aralığında popüler ürünlerin fiyatlarında %5-10 artış veya "Hızlı Menü" paketleri oluşturarak ciroyu artırabilirsiniz.`,
+                icon: 'TrendingUp'
+            });
+        }
+
+        // Analysis: Low Hours
+        if (lowHour) {
+            tactics.push({
+                type: 'LOW_HOUR',
+                title: 'Ölü Saatleri Canlandırma',
+                message: `Saat ${lowHour.hour}:00 civarında satışlar en düşük seviyede. Bu saatler için "Happy Hour" (%20 indirim) veya "Kahve yanında Tatlı İkramı" gibi kampanyalar düzenleyin.`,
+                icon: 'Clock'
+            });
+        }
+
+        // Analysis: Top Product Pushing
+        if (products.length > 0) {
+            const topProduct = products[0];
+            tactics.push({
+                type: 'TOP_PRODUCT',
+                title: 'Yıldız Ürün Fırsatı',
+                message: `En çok satan ürününüz "${topProduct.name}". Bu ürünü menüde daha görünür yapın veya yanında yüksek kar marjlı bir içecek önerisi ekleyin.`,
+                icon: 'Star'
+            });
+        }
+
+        // Analysis: Underperforming but High Revenue candidates (Logic: sold moderate amount but distinct)
+        // Simple logic: Bottom 25% of products
+        if (products.length > 5) {
+            const worseProduct = products[products.length - 1];
+            tactics.push({
+                type: 'DEAD_STOCK',
+                title: 'Menü Optimizasyonu',
+                message: `"${worseProduct.name}" ürünü son 30 günde çok az ilgi gördü. Reçetesini değiştirmeyi veya menüden kaldırmayı düşünün.`,
+                icon: 'AlertTriangle'
+            });
+        }
+
+        res.json({
+            hourly_data: hourlyData,
+            product_performance: products,
+            tactics: tactics
+        });
+
+    } catch (error) {
+        console.error('Error in sales analytics:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
   getGlobalStats,
   getAllTenants,
   createTenant,
-  deleteTenant
+  deleteTenant,
+  getSalesAnalytics
 };

@@ -23,7 +23,8 @@ export default function Inventory() {
     price: '',
     description: '',
     is_available: true,
-    image_url: ''
+    image_url: '',
+    options: [] 
   });
   
   // ... (useEffects and fetch functions remain same, omitted for brevity if using replace_file_content but here I need to be careful not to delete them if I'm replacing a chunk. I will target specific blocks to avoid deleting standard logic)
@@ -140,7 +141,7 @@ export default function Inventory() {
       
       setIsProductModalOpen(false);
       setEditingProductId(null); // Reset editing state
-      setFormData({ name: '', price: '', description: '', is_available: true, image_url: '' });
+      setFormData({ name: '', price: '', description: '', is_available: true, image_url: '', options: [] });
       fetchProducts(selectedCategory.id);
     } catch (err) {
       showNotification({ 
@@ -176,7 +177,8 @@ export default function Inventory() {
       price: product.price,
       description: product.description || '',
       is_available: product.is_available,
-      image_url: product.image_url || ''
+      image_url: product.image_url || '',
+      options: product.options || [] // Load existing options
     });
     setIsProductModalOpen(true);
   };
@@ -350,7 +352,7 @@ export default function Inventory() {
               <button 
                 onClick={() => {
                   setEditingProductId(null);
-                  setFormData({ name: '', price: '', description: '', is_available: true, image_url: '' });
+                  setFormData({ name: '', price: '', description: '', is_available: true, image_url: '', options: [] });
                   setIsProductModalOpen(true);
                 }}
                 className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black border border-black transition-colors"
@@ -523,6 +525,56 @@ export default function Inventory() {
                   </button>
                </div>
              )}
+          </div>
+
+          {/* Options Section */}
+          <div className="border border-black p-4 bg-gray-50">
+             <label className="block text-xs font-bold mb-2 uppercase">Varyantlar / Seçenekler</label>
+             <div className="flex flex-col gap-2 mb-2 max-h-40 overflow-y-auto">
+                 {formData.options.map((opt, idx) => (
+                     <div key={idx} className="flex gap-2 items-center">
+                         <input 
+                             type="text" 
+                             placeholder="Seçenek Adı (örn: 1.5 Porsiyon)"
+                             className="flex-1 border border-gray-300 p-1 text-xs outline-none focus:border-black"
+                             value={opt.name}
+                             onChange={(e) => {
+                                 const newOpts = [...formData.options];
+                                 newOpts[idx].name = e.target.value;
+                                 setFormData({...formData, options: newOpts});
+                             }}
+                         />
+                         <input 
+                             type="number" 
+                             placeholder="Fiyat Farkı (₺)"
+                             className="w-24 border border-gray-300 p-1 text-xs outline-none focus:border-black"
+                             value={opt.price_change}
+                             onChange={(e) => {
+                                 const newOpts = [...formData.options];
+                                 newOpts[idx].price_change = parseFloat(e.target.value) || 0;
+                                 setFormData({...formData, options: newOpts});
+                             }}
+                         />
+                         <button 
+                             type="button" 
+                             onClick={() => {
+                                 const newOpts = formData.options.filter((_, i) => i !== idx);
+                                 setFormData({...formData, options: newOpts});
+                             }}
+                             className="text-red-500 hover:text-red-700"
+                         >
+                             <Trash2 size={14}/>
+                         </button>
+                     </div>
+                 ))}
+             </div>
+             <button 
+                type="button"
+                onClick={() => setFormData({...formData, options: [...formData.options, { name: '', price_change: 0 }]})}
+                className="text-xs bg-black text-white px-2 py-1 font-bold uppercase hover:bg-gray-700"
+             >
+                 + SeÇenek Ekle
+             </button>
           </div>
 
           <div>
