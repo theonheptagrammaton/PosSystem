@@ -148,6 +148,8 @@ export default function Users() {
               onChange={e => setFormData({...formData, role: e.target.value})}
             >
                 <option value="cashier">Kasiyer (Sadece POS)</option>
+                <option value="waiter">Garson (Mobil Sipariş)</option>
+                <option value="kitchen">Mutfak (KDS Ekranı)</option>
                 <option value="branch_manager">Bayi Yetkilisi (Şube Yönetimi)</option>
                 {/* Admin creation can be restricted or allowed */}
             </select>

@@ -185,24 +185,39 @@ const getAllOrders = async (req, res) => {
     const tenantId = req.user.tenantId || req.user.tenant_id;
     try {
         const query = `
-            SELECT p.*, b.name as branch_name 
+            SELECT p.*, b.name as branch_name,
+                   jsonb_agg(o.items) as all_items,
+                   MIN(o.source) as source_agg
             FROM payments p
             LEFT JOIN branches b ON p.branch_id = b.id
+            LEFT JOIN orders o ON o.payment_id = p.id
             WHERE p.tenant_id = $1 
+            GROUP BY p.id, b.name
             ORDER BY p.created_at DESC 
             LIMIT 50
         `;
         const result = await pool.query(query, [tenantId]);
         
-        const formatted = result.rows.map(row => ({
-            id: `ISLEM-${row.id}`,
-            status: 'TAMAMLANDI', 
-            amount: `₺${row.total_amount}`,
-            details: [], // Details now require separate fetch or aggregation, for summary view empty is fine or we can change UI to not need it immediately
-            created_at: row.created_at,
-            table_no: row.table_no,
-            branch_name: row.branch_name || 'Merkez'
-        }));
+        const formatted = result.rows.map(row => {
+            // Flatten nested arrays of items from multiple orders
+            // row.all_items is [ [item1, item2], [item3] ]
+            let flattenedItems = [];
+            if (row.all_items && Array.isArray(row.all_items)) {
+                flattenedItems = row.all_items.flat().filter(Boolean);
+            }
+
+            return {
+                id: row.id, // Keep numeric ID for modal
+                display_id: `ISLEM-${row.id}`,
+                status: 'TAMAMLANDI', 
+                total_amount: row.total_amount,
+                items: flattenedItems, 
+                created_at: row.created_at,
+                table_no: row.table_no,
+                branch_name: row.branch_name || 'Merkez',
+                source: row.source_agg || 'POS'
+            };
+        });
 
         res.json(formatted);
     } catch (error) {

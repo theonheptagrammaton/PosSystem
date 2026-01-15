@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { ShoppingCart, ArrowLeft, Trash2, Utensils, CheckCircle, RefreshCcw, Bell } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Trash2, Utensils, CheckCircle, RefreshCcw, Bell, XCircle } from 'lucide-react';
 import notificationSound from '../assets/zil.mp3';
 import io from 'socket.io-client';
 import { useNotification } from '../context/NotificationContext';
@@ -299,13 +299,13 @@ export default function PosTerminal() {
 
         <div className="flex-1 flex overflow-hidden">
             {/* COLUMN 1: TABLES (Left Sidebar) */}
-            <div className="w-64 bg-white border-r border-gray-300 flex flex-col shadow-lg z-10">
+            <div className="w-80 bg-white border-r border-gray-300 flex flex-col shadow-lg z-10">
                 <div className="p-4 bg-gray-50 border-b border-gray-200 font-bold uppercase text-sm tracking-wider flex items-center gap-2">
                     <Utensils size={16}/> Masalar
                 </div>
 
                 {/* Quick Orders Section */}
-                <div className="p-2 grid grid-cols-2 gap-2 border-b border-gray-200 bg-white">
+                <div className="p-3 grid grid-cols-3 gap-3 border-b border-gray-200 bg-white">
                     {[
                         { id: 'GEL-AL', label: 'GEL AL', color: 'bg-green-100 text-green-800 border-green-200' },
                         { id: 'TELEFON', label: 'TELEFON', color: 'bg-blue-100 text-blue-800 border-blue-200' },
@@ -317,7 +317,7 @@ export default function PosTerminal() {
                         <button
                             key={type.id}
                             onClick={() => handleTableSelect(type.id)}
-                            className={`p-3 rounded-lg border font-bold text-xs uppercase transition-all shadow-sm
+                            className={`p-3 rounded-xl border font-bold text-[10px] uppercase transition-all shadow-sm flex items-center justify-center text-center leading-tight
                                 ${selectedTable === type.id 
                                     ? 'bg-black text-white border-black scale-95 ring-2 ring-black ring-offset-1 z-10' 
                                     : `${type.color} hover:brightness-95`}`}
@@ -348,7 +348,7 @@ export default function PosTerminal() {
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 content-start">
+                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 gap-3 content-start">
                     {tables.map(tId => {
                         const isBusy = busyTables.includes(tId);
                         const isSelected = selectedTable === tId;
@@ -357,7 +357,7 @@ export default function PosTerminal() {
                         <button 
                             key={tId}
                             onClick={() => handleTableSelect(tId)}
-                            className={`h-20 rounded-lg border-2 flex flex-col items-center justify-center transition-all shadow-sm
+                            className={`h-20 rounded-xl border-2 flex flex-col items-center justify-center transition-all shadow-sm
                                 ${isSelected 
                                     ? 'bg-black text-white border-black scale-105 z-10' 
                                     : isBusy
@@ -394,7 +394,7 @@ export default function PosTerminal() {
 
                 {/* Product Grid */}
                 <div className="flex-1 p-6 overflow-y-auto">
-                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                         {products.map(p => (
                             <button 
                                 key={p.id}
@@ -579,6 +579,68 @@ export default function PosTerminal() {
                                 ONAYLA
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        )}
+        {/* Option Selection Modal */}
+        {optionModal && (
+            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-black text-white p-4 flex justify-between items-center shrink-0">
+                        <h3 className="font-bold text-lg">{optionModal.product.name}</h3>
+                        <button onClick={() => setOptionModal(null)} className="p-2 hover:bg-gray-800 rounded-full"><XCircle size={24}/></button>
+                    </div>
+                    
+                    <div className="p-6 overflow-y-auto flex-1">
+                        <p className="text-sm text-gray-500 mb-4 font-bold uppercase tracking-wide">Lütfen Seçenekleri Belirleyin</p>
+                        <div className="space-y-3">
+                            {optionModal.product.options.map((opt, idx) => {
+                                const isSelected = optionModal.selected.some(s => s.name === opt.name);
+                                return (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                setOptionModal(prev => ({
+                                                    ...prev,
+                                                    selected: prev.selected.filter(s => s.name !== opt.name)
+                                                }));
+                                            } else {
+                                                setOptionModal(prev => ({
+                                                    ...prev,
+                                                    selected: [...prev.selected, opt]
+                                                }));
+                                            }
+                                        }}
+                                        className={`w-full flex justify-between items-center p-4 rounded-xl border-2 transition-all
+                                            ${isSelected 
+                                                ? 'border-black bg-gray-50' 
+                                                : 'border-gray-100 hover:border-gray-200'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center
+                                                ${isSelected ? 'bg-black border-black' : 'border-gray-300'}`}>
+                                                {isSelected && <CheckCircle size={14} className="text-white"/>}
+                                            </div>
+                                            <span className={`font-bold ${isSelected ? 'text-black' : 'text-gray-600'}`}>{opt.name}</span>
+                                        </div>
+                                        <span className="font-mono font-bold text-gray-500">
+                                            {opt.price_change > 0 ? `+₺${opt.price_change}` : ''}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="p-4 border-t border-gray-100 bg-gray-50 shrink-0">
+                        <button 
+                            onClick={() => handleProductClick(optionModal.product, optionModal.selected)}
+                            className="w-full bg-black text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors shadow-lg"
+                        >
+                            EKLE (₺{(parseFloat(optionModal.product.price) + optionModal.selected.reduce((a,b)=>a+b.price_change,0)).toFixed(2)})
+                        </button>
                     </div>
                 </div>
             </div>
