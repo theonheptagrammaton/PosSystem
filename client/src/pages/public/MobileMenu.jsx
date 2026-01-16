@@ -122,6 +122,9 @@ export default function MobileMenu() {
     }
   };
 
+  const totalAmount = calculateTotal();
+  const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
   if (orderPlaced) {
     // Show success banner instead of full-screen blocker
     return (
