@@ -567,13 +567,13 @@ export default function PosTerminal() {
                         <div className="flex gap-4">
                             <button 
                                 onClick={() => handleRejectOrder(viewingPendingOrder)}
-                                className="flex-1 bg-red-600 text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-lg"
+                                className="flex-1 bg-red-600 text-black py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-lg border-2 border-black"
                             >
                                 ✗ REDDET
                             </button>
                             <button 
                                 onClick={() => handleApproveOrder(viewingPendingOrder)}
-                                className="flex-1 bg-green-600 text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-green-700 active:scale-95 transition-all shadow-lg"
+                                className="flex-1 bg-green-600 text-black py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-green-700 active:scale-95 transition-all shadow-lg border-2 border-black"
                             >
                                 ✓ ONAYLA
                             </button>

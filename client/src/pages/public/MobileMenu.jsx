@@ -288,9 +288,7 @@ export default function MobileMenu() {
       );
   }
 
-  const totalAmount = calculateTotal();
-  const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-
+  // Totals calculated at the top for use in both view states
   return (
     <div className="bg-white min-h-screen pb-24 relative">
       {/* Header */}

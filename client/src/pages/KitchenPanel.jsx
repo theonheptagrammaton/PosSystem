@@ -169,16 +169,16 @@ export default function KitchenPanel() {
                           )}
                           
                           {/* Items List */}
-                          <div className="flex-1 p-4 space-y-3 overflow-y-auto max-h-64">
-                              {order.items.map((item, idx) => (
-                                  <div key={idx} className="flex justify-between items-start">
+                          <div className="flex-1 p-4 space-y-3 overflow-y-auto max-h-64 bg-white/5">
+                              {order.items && order.items.map((item, idx) => (
+                                  <div key={idx} className="flex justify-between items-start border-b border-white/10 pb-2 last:border-0">
                                        <div>
-                                           <div className={`font-bold text-lg ${item.quantity > 1 ? 'text-yellow-400' : 'text-gray-200'}`}>
+                                           <div className={`font-black text-xl ${item.quantity > 1 ? 'text-orange-400' : 'text-white'}`}>
                                                {item.quantity}x {item.name}
                                            </div>
-                                           {item.selectedOptions && (
-                                               <div className="text-xs text-blue-300 mt-0.5">
-                                                   {item.selectedOptions.map(o => o.name).join(', ')}
+                                           {item.selectedOptions && item.selectedOptions.length > 0 && (
+                                               <div className="text-sm text-blue-300 mt-1 font-bold">
+                                                   → {item.selectedOptions.map(o => o.name).join(', ')}
                                                </div>
                                            )}
                                        </div>
@@ -187,17 +187,17 @@ export default function KitchenPanel() {
                           </div>
                           
                           {/* Actions */}
-                          <div className="grid grid-cols-2 gap-1 p-2 bg-gray-800 border-t border-gray-700">
+                          <div className="grid grid-cols-2 gap-1 p-2 bg-gray-100 border-t border-gray-300">
                                <button 
                                    onClick={() => handleReject(order.id)}
-                                   className="py-4 bg-gray-700 hover:bg-red-900 hover:text-red-100 text-gray-400 rounded-lg font-bold flex flex-col items-center justify-center gap-1 transition-colors"
+                                   className="py-4 bg-gray-300 hover:bg-red-700 hover:text-white text-black rounded-lg font-bold flex flex-col items-center justify-center gap-1 transition-colors border border-gray-400"
                                >
                                    <XCircle size={20}/>
                                    <span className="text-[10px] uppercase">Reddet</span>
                                </button>
                                <button 
                                    onClick={() => handleReady(order.id)}
-                                   className="py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold flex flex-col items-center justify-center gap-1 transition-colors shadowed-button"
+                                   className="py-4 bg-green-600 hover:bg-green-500 text-black rounded-lg font-bold flex flex-col items-center justify-center gap-1 transition-colors shadowed-button border border-green-700"
                                >
                                    <CheckCircle size={24}/>
                                    <span className="text-xs uppercase tracking-widest">HAZIR</span>
