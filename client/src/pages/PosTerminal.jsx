@@ -89,7 +89,6 @@ export default function PosTerminal() {
       // Generate Tables based on count
       const tableList = Array.from({ length: b.table_count || 10 }, (_, i) => i + 1);
       setTables(tableList);
-      setTables(tableList);
       fetchBranchStatus(b.tenant_id, b.id); 
       fetchPendingOrders(b.tenant_id, b.id);
     } catch (err) {

@@ -113,7 +113,7 @@ export default function MobileMenu() {
     try {
       await api.post('/api/orders', payload);
       setOrderPlaced(true);
-      setCart({});
+      setCart([]);
       setShowCartModal(false);
       setOrderNote('');
     } catch (err) {
@@ -123,18 +123,138 @@ export default function MobileMenu() {
   };
 
   if (orderPlaced) {
+    // Show success banner instead of full-screen blocker
     return (
-      <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center p-8 z-50 animate-fadeIn text-center">
-        <div className="border-4 border-white p-10 bg-black">
-          <h1 className="text-3xl font-black uppercase tracking-[0.2em] mb-4">SİPARİŞİNİZ ALINDI</h1>
-          <p className="font-mono text-xs text-gray-500 mb-8">Masa No: {tableId}</p>
+      <div className="bg-white min-h-screen pb-24 relative">
+        {/* Success Banner */}
+        <div className="sticky top-0 z-50 bg-green-600 text-white p-4 flex items-center justify-between animate-fadeIn shadow-lg">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={24} />
+            <div>
+              <div className="font-bold">Sipariş Alındı!</div>
+              <div className="text-xs opacity-90">Mutfağımız hazırlıyor...</div>
+            </div>
+          </div>
           <button 
             onClick={() => setOrderPlaced(false)}
-            className="bg-white text-black px-10 py-5 font-black uppercase tracking-[0.2em] hover:bg-gray-200 transition-colors"
+            className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-xs font-bold"
           >
             YENİ SİPARİŞ
           </button>
         </div>
+
+        {/* Continue with normal menu view */}
+        {/* Header */}
+        <div className="p-6 border-b border-black flex flex-col items-center justify-center bg-black text-white">
+           <h1 className="text-xl font-bold uppercase tracking-widest">{data.company_name || 'RESTORAN MENÜ'}</h1>
+           <p className="text-xs font-mono text-gray-400 mt-1">Masa No: {tableId}</p>
+        </div>
+
+        {/* Categories Accordion */}
+        <div className="p-4 flex flex-col gap-4">
+          {data.categories.map(cat => {
+            const categoryProducts = data.products.filter(p => p.category_id === cat.id);
+            const isExpanded = expandedCategory === cat.id;
+
+            if (categoryProducts.length === 0) return null;
+
+            return (
+              <div key={cat.id} className="border-b border-black last:border-b-0 pb-4">
+                <button 
+                  onClick={() => toggleCategory(cat.id)}
+                  className="w-full flex justify-between items-center py-2 font-bold text-lg uppercase tracking-wider text-left"
+                >
+                  {cat.name}
+                  {isExpanded ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                </button>
+                
+                {/* Products List */}
+                {isExpanded && (
+                  <div className="flex flex-col gap-4 mt-2 animate-fadeIn">
+                    {categoryProducts.map(product => (
+                        <div key={product.id} className="border border-black p-4 flex flex-col gap-2">
+                           <div className="flex gap-4">
+                             {product.image_url && (
+                               <div className="w-20 h-20 shrink-0 border border-black overflow-hidden bg-gray-50">
+                                 <img 
+                                   src={product.image_url.startsWith('http') ? product.image_url : `${api.defaults.baseURL}${product.image_url}`} 
+                                   alt={product.name}
+                                   className="w-full h-full object-cover"
+                                 />
+                               </div>
+                             )}
+                             <div className="flex-1">
+                               <div className="flex justify-between items-start">
+                                 <h3 className="font-bold text-sm uppercase">{product.name}</h3>
+                                 <div className="font-mono font-bold whitespace-nowrap ml-2">
+                                   ₺{product.price}
+                                 </div>
+                               </div>
+                               <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{product.description}</p>
+                             </div>
+                           </div>
+                         
+                         {/* Controls */}
+                         <div className="flex items-center justify-end mt-2 gap-2">
+                            {product.options && product.options.length > 0 ? (
+                                // Product WITH Options
+                                <div className="flex items-center gap-2">
+                                    {getProductQty(product.id) > 0 && <span className="font-bold text-xs bg-gray-100 px-2 py-1 rounded">Sepette: {getProductQty(product.id)}</span>}
+                                    <button 
+                                      onClick={() => setOptionModal({ product, selected: [] })}
+                                      className="bg-black text-white px-4 py-2 text-xs font-bold uppercase rounded hover:bg-gray-800"
+                                    >
+                                      EKLE +
+                                    </button>
+                                </div>
+                            ) : (
+                                // Standard Product
+                                <>
+                                    <button 
+                                      onClick={() => removeFromCart(`${product.id}-`)}
+                                      className="p-1 text-black hover:opacity-50 transition-opacity"
+                                    >
+                                      <Minus size={22} strokeWidth={3} />
+                                 </button>
+                                   
+                                   <div className="font-mono font-bold w-6 text-center text-black text-lg">
+                                     {getProductQty(product.id)}
+                                   </div>
+
+                                   <button 
+                                     onClick={() => addToCart(product)}
+                                     className="p-1 text-black hover:opacity-50 transition-opacity"
+                                   >
+                                     <Plus size={22} strokeWidth={3} />
+                                   </button>
+                                </>
+                            )}
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Sticky Footer */}
+        {cartItemCount > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-black text-white p-4 flex justify-between items-center z-40 border-t border-white" style={{paddingBottom: 'safe-area-inset-bottom'}}>
+             <div className="flex flex-col">
+               <span className="text-[10px] text-gray-400 font-mono tracking-widest">TOPLAM ({cartItemCount} çeşit)</span>
+               <span className="text-xl font-bold font-mono tracking-tighter">₺{totalAmount.toFixed(2)}</span>
+             </div>
+             
+             <button 
+               onClick={() => setShowCartModal(true)}
+               className="bg-white text-black px-6 py-3 font-bold uppercase tracking-widest hover:bg-gray-200 transition-colors text-xs sm:text-sm"
+             >
+               SEPETİ GÖR & ONAYLA
+             </button>
+          </div>
+        )}
       </div>
     );
   }

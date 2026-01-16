@@ -74,14 +74,13 @@ export default function Dashboard() {
            return;
        }
 
-       // 2. Count Active Tables (Status = 'DOLU' or based on API pending logic)
+       // 2. Count Active Tables (Status = 'PENDING')
        // The orders data from /api/orders returns *all* orders (history + active).
-       // We need to filter for active ones. 
-       // Note: getAllOrders (Dashboard) creates view models. We need to check 'status' === 'DOLU'.
+       // Active tables have orders with status 'PENDING' (being served)
        
        // Count unique tables that are currently busy
        const activeTables = new Set(
-           ordersData.filter(o => o.status === 'DOLU').map(o => o.table_no)
+           ordersData.filter(o => o.status === 'PENDING').map(o => o.table_no)
        ).size;
 
        const rate = Math.round((activeTables / totalCapacity) * 100);

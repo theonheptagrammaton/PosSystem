@@ -47,6 +47,7 @@ export default function Users() {
     e.preventDefault();
     try {
       await api.post('/api/users', formData);
+      showNotification({ title: 'BAŞARILI', message: 'Kullanıcı oluşturuldu', type: 'info' });
       setIsModalOpen(false);
       setFormData({ 
         username: '', 
@@ -195,8 +196,9 @@ export default function Users() {
           <div>
             <label className="block text-xs font-bold mb-1 uppercase">Şifre</label>
             <input 
-              type="text" 
+              type="password" 
               required
+              minLength={6}
               className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
               value={formData.password}
               onChange={e => setFormData({...formData, password: e.target.value})}

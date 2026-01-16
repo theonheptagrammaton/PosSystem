@@ -231,13 +231,18 @@ const removeItem = async (req, res) => {
     const { tenantId, branchId, tableNo, productId } = req.params;
     const io = req.app.get('io');
 
+    const client = await pool.connect();
+    
     try {
-        // 1. Get Pending Orders for Table
+        await client.query('BEGIN');
+        
+        // 1. Get Pending Orders for Table WITH ROW LOCK
         const query = `
             SELECT * FROM orders 
             WHERE tenant_id = $1 AND branch_id = $2 AND table_no = $3 AND status = 'PENDING'
+            FOR UPDATE
         `;
-        const result = await pool.query(query, [tenantId, branchId, tableNo]);
+        const result = await client.query(query, [tenantId, branchId, tableNo]);
         
         let targetOrder = null;
         let itemIndex = -1;
@@ -254,6 +259,7 @@ const removeItem = async (req, res) => {
         }
 
         if (!targetOrder) {
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Item not found in active orders' });
         }
 
@@ -262,9 +268,6 @@ const removeItem = async (req, res) => {
         const itemPrice = parseFloat(items[itemIndex].price);
         
         // This endpoint removes ONE instance (decrement)
-        // Since our data structure might have separate entries (qty=1) or combined (qty=N), logic depends on how it was saved.
-        // Current save logic: simple append with qty=1 usually. But let's handle numeric decrement.
-        
         if (items[itemIndex].quantity > 1) {
              items[itemIndex].quantity -= 1;
         } else {
@@ -275,19 +278,21 @@ const removeItem = async (req, res) => {
         // 4. Update Database
         if (items.length === 0) {
             // If order row empty, delete it
-            await pool.query('DELETE FROM orders WHERE id = $1', [targetOrder.id]);
+            await client.query('DELETE FROM orders WHERE id = $1', [targetOrder.id]);
         } else {
             // Update items and total_amount
-            // Recalculate total or just subtract? Subtracting is safer for floating point if careful, but recalculating entire array is robust.
+            // Recalculate total for accuracy
             const newTotal = items.reduce((acc, i) => acc + (parseFloat(i.price) * i.quantity), 0);
             
-            await pool.query(
+            await client.query(
                 'UPDATE orders SET items = $1, total_amount = $2 WHERE id = $3',
                 [JSON.stringify(items), newTotal, targetOrder.id]
             );
         }
 
-        // 5. Emit Update
+        await client.query('COMMIT');
+
+        // 5. Emit Update (after successful commit)
         if (io) {
             io.to(String(tenantId)).emit('new_order', {
                 table_no: tableNo,
@@ -298,8 +303,11 @@ const removeItem = async (req, res) => {
         res.json({ message: 'Item removed/decremented' });
 
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error removing item:', error);
         res.status(500).json({ error: 'Internal Server Error' });
+    } finally {
+        client.release();
     }
 };
 
@@ -353,6 +361,44 @@ const approveOrder = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+// Kitchen Preparing Endpoint
+// Add this function to orderController.js around line 400
+
+const startPreparing = async (req, res) => {
+    const { orderId } = req.params;
+    const io = req.app.get('io');
+
+    try {
+        const result = await pool.query(
+            "UPDATE orders SET status = 'PREPARING', preparing_started_at = NOW() WHERE id = $1 RETURNING *",
+            [orderId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const order = result.rows[0];
+
+        // Notify all connected clients
+        if (io) {
+            io.to(String(order.tenant_id)).emit('new_order', {
+                ...order,
+                status: 'PREPARING'
+            });
+        }
+
+        res.json(order);
+    } catch (error) {
+        console.error('Start Preparing error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Then add to module.exports:
+// startPreparing,
+
 
 // --- Reject Order ---
 const rejectOrder = async (req, res) => {

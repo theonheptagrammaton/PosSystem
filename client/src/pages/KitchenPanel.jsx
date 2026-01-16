@@ -97,7 +97,12 @@ export default function KitchenPanel() {
 
     const handleReject = async (orderId) => {
          // Kitchen rejecting an order? (Maybe out of stock)
-         if (!window.confirm('Bu siparişi reddetmek istediğinize emin misiniz?')) return;
+         const confirmed = await showNotification({ 
+             title: 'SİPARİŞİ REDDET', 
+             message: 'Bu siparişi reddetmek istediğinize emin misiniz?', 
+             type: 'confirm' 
+         });
+         if (!confirmed) return;
          
          try {
             await api.post(`/api/orders/reject/${orderId}`);

@@ -54,7 +54,9 @@ export default function Reports() {
 
         return () => {
             if (socketRef.current) {
-                socketRef.current.disconnect();
+                if (socketRef.current.connected) {
+                    socketRef.current.disconnect();
+                }
                 socketRef.current = null;
             }
         };

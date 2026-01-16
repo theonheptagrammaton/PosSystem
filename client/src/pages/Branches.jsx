@@ -29,8 +29,10 @@ export default function Branches() {
     try {
       if (editingId) {
         await api.put(`/api/branches/${editingId}`, formData);
+        showNotification({ title: 'BAŞARILI', message: 'Şube güncellendi', type: 'info' });
       } else {
         await api.post('/api/branches', formData);
+        showNotification({ title: 'BAŞARILI', message: 'Şube oluşturuldu', type: 'info' });
       }
       setIsModalOpen(false);
       setFormData({ name: '', address: '', phone: '', table_count: 10 });

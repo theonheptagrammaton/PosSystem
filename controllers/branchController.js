@@ -32,9 +32,14 @@ const createBranch = async (req, res) => {
       return res.status(400).json({ error: 'Branch name is required' });
     }
 
+    const tableCount = parseInt(table_count) || 10;
+    if (tableCount < 1 || tableCount > 200) {
+      return res.status(400).json({ error: 'Table count must be between 1 and 200' });
+    }
+
     const result = await pool.query(
       'INSERT INTO branches (tenant_id, name, address, phone, table_count) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [tenantId, name, address, phone, table_count || 10]
+      [tenantId, name, address, phone, tableCount]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {

@@ -102,6 +102,8 @@ export default function Onboarding() {
               onChange={(e) => setPhone(e.target.value)}
               className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
               placeholder="5XX XXX XX XX"
+              pattern="[0-9]{10}"
+              title="10 haneli telefon numarası giriniz (5XXXXXXXXX)"
               required
             />
           </div>
