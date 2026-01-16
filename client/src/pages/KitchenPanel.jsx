@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import io from 'socket.io-client';
 import { useNotification } from '../context/NotificationContext';
-import { ChefHat, Clock, CheckCircle, XCircle, Bell, RefreshCcw } from 'lucide-react';
+import { ChefHat, Clock, CheckCircle, XCircle, Bell, RefreshCcw, LogOut } from 'lucide-react';
 import notificationSound from '../assets/zil.mp3';
 
 export default function KitchenPanel() {
@@ -113,25 +113,27 @@ export default function KitchenPanel() {
     if (!tenantId) return <div className="p-10 text-center text-red-500 font-bold">Lütfen giriş yapın veya mutfak kullanıcısı oluşturun.</div>;
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-4">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 bg-orange-600 rounded-xl animate-pulse">
+        <div className="min-h-screen bg-gray-100 text-black p-4 font-sans">
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6 flex justify-between items-center border border-gray-200">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-black text-white rounded-xl shadow-lg">
                         <ChefHat size={32} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black tracking-widest uppercase">MUTFAK PANELİ</h1>
-                        <p className="text-gray-400 text-xs font-mono">{new Date().toLocaleDateString()} - {user?.full_name}</p>
+                        <h1 className="text-2xl font-black tracking-widest uppercase text-black">MUTFAK PANELİ</h1>
+                        <p className="text-gray-500 text-xs font-mono font-bold uppercase">{new Date().toLocaleDateString()} — {user?.full_name}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                     <div className="text-right">
-                         <div className="text-xs text-gray-500 font-bold uppercase">BEKLEYEN</div>
-                         <div className="text-3xl font-black text-orange-500">{orders.length}</div>
+                         <div className="text-[10px] text-gray-400 font-black uppercase tracking-tighter">BEKLEYEN SİPARİŞ</div>
+                         <div className="text-4xl font-black text-black">{orders.length}</div>
                     </div>
-                    <button onClick={fetchActiveOrders} className="p-3 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors">
+                    <button onClick={fetchActiveOrders} className="p-3 bg-gray-100 text-black rounded-full hover:bg-gray-200 transition-all border border-gray-200 shadow-sm">
                         <RefreshCcw size={20} />
+                    </button>
+                    <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login'; }} className="p-3 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-all border border-red-100 shadow-sm">
+                        <LogOut size={20} />
                     </button>
                 </div>
             </div>
@@ -139,41 +141,41 @@ export default function KitchenPanel() {
             {/* Orders Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                  {orders.map(order => (
-                     <div key={order.id} className="bg-gray-800 rounded-xl border-l-4 border-orange-500 flex flex-col shadow-lg overflow-hidden">
+                     <div key={order.id} className="bg-white rounded-2xl border border-gray-200 flex flex-col shadow-xl overflow-hidden hover:border-black transition-all group">
                           {/* Card Header */}
-                          <div className="p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-start">
+                          <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                                 <div>
-                                     <div className="font-black text-2xl uppercase mb-1">{order.table_no.replace('MASA-', 'MASA ')}</div>
-                                     <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
+                                     <div className="font-black text-2xl uppercase text-black tracking-tight">{order.table_no.replace('MASA-', 'MASA ')}</div>
+                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase">
                                          <Clock size={12} /> 
                                          {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                         <span className="text-gray-600">
-                                            ({Math.floor((new Date() - new Date(order.created_at)) / 60000)} dk)
+                                         <span className="text-orange-600">
+                                            ({Math.floor((new Date() - new Date(order.created_at)) / 60000)} dk önce)
                                          </span>
                                      </div>
                                 </div>
-                                <div className="bg-gray-700 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-gray-300">
+                                <div className="bg-black text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
                                     #{order.id}
                                 </div>
                           </div>
                           
                           {/* Note */}
                           {order.note && (
-                              <div className="bg-red-900/30 p-2 text-red-200 text-center text-sm font-bold border-b border-red-900/50">
-                                  NOT: {order.note}
+                              <div className="bg-red-50 p-3 text-red-700 text-center text-xs font-black border-b border-red-100 uppercase tracking-tight">
+                                  ⚠️ NOT: {order.note}
                               </div>
                           )}
                           
                           {/* Items List */}
-                          <div className="flex-1 p-4 space-y-3 overflow-y-auto max-h-64 bg-white/5">
+                          <div className="flex-1 p-4 space-y-3 bg-white">
                               {order.items && order.items.map((item, idx) => (
-                                  <div key={idx} className="flex justify-between items-start border-b border-white/10 pb-2 last:border-0">
+                                  <div key={idx} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
                                        <div>
-                                           <div className={`font-black text-xl ${item.quantity > 1 ? 'text-orange-400' : 'text-white'}`}>
+                                           <div className={`font-black text-lg leading-tight ${item.quantity > 1 ? 'text-orange-600' : 'text-black'}`}>
                                                {item.quantity}x {item.name}
                                            </div>
                                            {item.selectedOptions && item.selectedOptions.length > 0 && (
-                                               <div className="text-sm text-blue-300 mt-1 font-bold">
+                                               <div className="text-[10px] text-blue-600 mt-1 font-black uppercase tracking-tight">
                                                    → {item.selectedOptions.map(o => o.name).join(', ')}
                                                </div>
                                            )}
@@ -183,20 +185,20 @@ export default function KitchenPanel() {
                           </div>
                           
                           {/* Actions */}
-                          <div className="grid grid-cols-2 gap-1 p-2 bg-gray-100 border-t border-gray-300">
+                          <div className="grid grid-cols-2 gap-2 p-3 bg-gray-50 border-t border-gray-200">
                                <button 
                                    onClick={() => handleReject(order.id)}
-                                   className="py-4 bg-gray-300 hover:bg-red-700 hover:text-white text-black rounded-lg font-bold flex flex-col items-center justify-center gap-1 transition-colors border border-gray-400"
+                                   className="py-3 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-xl font-black flex flex-col items-center justify-center gap-1 transition-all border border-red-100 active:scale-95"
                                >
                                    <XCircle size={20}/>
-                                   <span className="text-[10px] uppercase">Reddet</span>
+                                   <span className="text-[10px] uppercase tracking-tighter">İPTAL</span>
                                </button>
                                <button 
                                    onClick={() => handleReady(order.id)}
-                                   className="py-4 bg-green-600 hover:bg-green-500 text-black rounded-lg font-bold flex flex-col items-center justify-center gap-1 transition-colors shadowed-button border border-green-700"
+                                   className="py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black flex flex-col items-center justify-center gap-1 transition-all shadow-md active:scale-95 border border-green-700"
                                >
                                    <CheckCircle size={24}/>
-                                   <span className="text-xs uppercase tracking-widest">HAZIR</span>
+                                   <span className="text-[10px] uppercase tracking-widest">HAZIR</span>
                                </button>
                           </div>
                      </div>
