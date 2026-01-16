@@ -53,12 +53,21 @@ const getTableOrders = async (req, res) => {
   const { tenantId, branchId, tableNo } = req.params; 
 
   try {
+    // Support both "MASA-1" and "1" formats
+    const tableNoPlain = tableNo.replace('MASA-', '').replace('masa-', '');
+    const tableNoWithPrefix = tableNo.startsWith('MASA-') || tableNo.startsWith('masa-') 
+      ? tableNo 
+      : `MASA-${tableNo}`;
+    
     const query = `
         SELECT * FROM orders 
-        WHERE tenant_id = $1 AND branch_id = $2 AND table_no = $3 AND status = 'PENDING'
+        WHERE tenant_id = $1 
+          AND branch_id = $2 
+          AND (table_no = $3 OR table_no = $4 OR table_no = $5)
+          AND status = 'PENDING'
         ORDER BY created_at ASC
     `;
-    const result = await pool.query(query, [tenantId, branchId, tableNo]);
+    const result = await pool.query(query, [tenantId, branchId, tableNo, tableNoPlain, tableNoWithPrefix]);
     
     // Aggregation Logic
     let aggregatedItems = [];
@@ -170,8 +179,14 @@ const getBranchStatus = async (req, res) => {
             WHERE tenant_id = $1 AND branch_id = $2 AND status = 'PENDING'
         `;
         const result = await pool.query(query, [tenantId, branchId]);
-        // Extract table numbers
-        const busyTables = result.rows.map(row => row.table_no);
+        
+        // Normalize table numbers to consistent format (remove MASA- prefix if exists)
+        const busyTables = result.rows.map(row => {
+            const tableNo = row.table_no;
+            // Remove MASA- prefix for consistency
+            return tableNo.replace(/^MASA-/i, '');
+        });
+        
         res.json(busyTables);
     } catch (error) {
         console.error('Error fetching branch status:', error);
@@ -236,13 +251,22 @@ const removeItem = async (req, res) => {
     try {
         await client.query('BEGIN');
         
+        // Support both "MASA-1" and "1" formats
+        const tableNoPlain = tableNo.replace('MASA-', '').replace('masa-', '');
+        const tableNoWithPrefix = tableNo.startsWith('MASA-') || tableNo.startsWith('masa-') 
+            ? tableNo 
+            : `MASA-${tableNo}`;
+        
         // 1. Get Pending Orders for Table WITH ROW LOCK
         const query = `
             SELECT * FROM orders 
-            WHERE tenant_id = $1 AND branch_id = $2 AND table_no = $3 AND status = 'PENDING'
+            WHERE tenant_id = $1 
+              AND branch_id = $2 
+              AND (table_no = $3 OR table_no = $4 OR table_no = $5)
+              AND status = 'PENDING'
             FOR UPDATE
         `;
-        const result = await client.query(query, [tenantId, branchId, tableNo]);
+        const result = await client.query(query, [tenantId, branchId, tableNo, tableNoPlain, tableNoWithPrefix]);
         
         let targetOrder = null;
         let itemIndex = -1;
