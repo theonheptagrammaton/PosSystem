@@ -481,5 +481,7 @@ module.exports = {
   getPendingOrders,
   approveOrder,
   rejectOrder,
-  markOrderReady
+  markOrderReady,
+  startPreparing,  // ← BU SATIRI EKLE
+  getPaymentHistoryFormatted
 };
