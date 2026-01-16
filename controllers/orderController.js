@@ -112,14 +112,23 @@ const closeTable = async (req, res) => {
 
       const parsedTenantId = parseInt(tenantId, 10);
       const parsedBranchId = parseInt(branchId, 10);
+
+      // Support both "MASA-1" and "1" formats
+      const tableNoPlain = tableNo.replace('MASA-', '').replace('masa-', '');
+      const tableNoWithPrefix = tableNo.startsWith('MASA-') || tableNo.startsWith('masa-') 
+          ? tableNo 
+          : `MASA-${tableNo}`;
       
       // 1. Get Pending Orders to calculate total
       const ordersQuery = `
           SELECT * FROM orders 
-          WHERE tenant_id = $1 AND branch_id = $2 AND table_no = $3 AND status = 'PENDING'
+          WHERE tenant_id = $1 
+            AND branch_id = $2 
+            AND (table_no = $3 OR table_no = $4 OR table_no = $5)
+            AND status = 'PENDING'
           FOR UPDATE
       `;
-      const ordersResult = await client.query(ordersQuery, [parsedTenantId, parsedBranchId, tableNo]);
+      const ordersResult = await client.query(ordersQuery, [parsedTenantId, parsedBranchId, tableNo, tableNoPlain, tableNoWithPrefix]);
 
       if (ordersResult.rowCount === 0) {
           await client.query('ROLLBACK');
