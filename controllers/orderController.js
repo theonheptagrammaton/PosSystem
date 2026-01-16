@@ -145,9 +145,12 @@ const closeTable = async (req, res) => {
       const updateQuery = `
           UPDATE orders 
           SET status = 'COMPLETED', payment_id = $1
-          WHERE tenant_id = $2 AND branch_id = $3 AND table_no = $4 AND status = 'PENDING'
+          WHERE tenant_id = $2 
+            AND branch_id = $3 
+            AND (table_no = $4 OR table_no = $5 OR table_no = $6)
+            AND status = 'PENDING'
       `;
-      await client.query(updateQuery, [paymentId, parsedTenantId, parsedBranchId, tableNo]);
+      await client.query(updateQuery, [paymentId, parsedTenantId, parsedBranchId, tableNo, tableNoPlain, tableNoWithPrefix]);
       
       await client.query('COMMIT');
 
