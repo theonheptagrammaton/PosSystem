@@ -295,7 +295,7 @@ export default function Dashboard() {
           <tbody>
             {orders.length === 0 ? (
                <tr>
-                 <td colSpan="5" className="p-4 text-center text-gray-400 italic">HENÜZ SİPARİŞ YOK</td>
+                 <td colSpan="6" className="p-4 text-center text-gray-400 italic">HENÜZ SİPARİŞ YOK</td>
                </tr>
             ) : orders.map((row, idx) => (
               <tr key={idx} className="border-b border-black last:border-b-0 hover:bg-gray-50 transition-colors">
@@ -310,14 +310,18 @@ export default function Dashboard() {
                 </td>
                 <td className="p-4 border-r border-black text-xs font-bold">
                   <span className={`px-2 py-1 ${
-                    row.status === 'DOLU' ? 'bg-red-600 text-black animate-pulse' : 
-                    row.status === 'TAMAMLANDI' ? 'bg-green-600 text-black' :
+                    row.status === 'DOLU' || row.status === 'PENDING' ? 'bg-red-600 text-black animate-pulse' : 
+                    row.status === 'TAMAMLANDI' || row.status === 'COMPLETED' ? 'bg-green-600 text-black' :
                     'bg-gray-200 text-black'
                   }`}>
                     {row.status}
                   </span>
                 </td>
-                <td className="p-4 font-mono">{row.amount}</td>
+                <td className="p-4 font-mono border-r border-black">
+                  {typeof row.amount === 'string' ? row.amount : 
+                   typeof row.total_amount === 'number' ? `₺${row.total_amount.toFixed(2)}` :
+                   row.total_amount ? `₺${parseFloat(row.total_amount).toFixed(2)}` : '₺0.00'}
+                </td>
                 <td className="p-4 border-l border-black text-center">
                    <button 
                      onClick={() => handleViewOrder(row)}
@@ -343,11 +347,27 @@ export default function Dashboard() {
           {selectedOrder && (
             <div>
               <p className="mb-2"><strong>ID:</strong> {selectedOrder.id}</p>
-              <p className="mb-2"><strong>Tutar:</strong> {selectedOrder.amount}</p>
+              <p className="mb-2"><strong>Masa:</strong> {selectedOrder.table_no}</p>
+              <p className="mb-2"><strong>Şube:</strong> {selectedOrder.branch_name}</p>
               <p className="mb-2"><strong>Durum:</strong> {selectedOrder.status}</p>
+              <p className="mb-2"><strong>Tutar:</strong> {
+                typeof selectedOrder.amount === 'string' ? selectedOrder.amount :
+                typeof selectedOrder.total_amount === 'number' ? `₺${selectedOrder.total_amount.toFixed(2)}` :
+                selectedOrder.total_amount ? `₺${parseFloat(selectedOrder.total_amount).toFixed(2)}` : '₺0.00'
+              }</p>
               <div className="mt-4 border-t border-gray-300 pt-2">
                 <strong>İçerik:</strong>
-                <pre className="text-xs bg-gray-100 p-2 mt-1">{JSON.stringify(selectedOrder.details, null, 2)}</pre>
+                {selectedOrder.details || selectedOrder.items ? (
+                  <div className="mt-2 space-y-1">
+                    {(selectedOrder.details || selectedOrder.items || []).map((item, idx) => (
+                      <div key={idx} className="text-sm bg-gray-50 p-2 rounded">
+                        {item.name} x{item.quantity || 1} = ₺{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 mt-1">Detay bulunamadı</p>
+                )}
               </div>
             </div>
           )}

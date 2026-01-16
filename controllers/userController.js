@@ -72,7 +72,7 @@ exports.createUser = async (req, res) => {
     }
 
     // Role Validation
-    const allowedRoles = ['branch_manager', 'cashier'];
+    const allowedRoles = ['branch_manager', 'cashier', 'waiter', 'kitchen'];
     if (!allowedRoles.includes(role)) {
        return res.status(400).json({ error: 'Invalid role. Allowed: ' + allowedRoles.join(', ') });
     }
