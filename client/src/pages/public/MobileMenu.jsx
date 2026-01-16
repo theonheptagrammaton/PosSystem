@@ -202,10 +202,11 @@ export default function MobileMenu() {
                             {product.options && product.options.length > 0 ? (
                                 // Product WITH Options
                                 <div className="flex items-center gap-4">
-                                    {getProductQty(product.id) > 0 && <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">Sepette: {getProductQty(product.id)}</span>}
+                                    {getProductQty(product.id) > 0 && <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Sepette: {getProductQty(product.id)}</span>}
                                     <button 
                                       onClick={() => setOptionModal({ product, selected: [] })}
-                                      className="bg-zinc-900 text-white px-5 py-2 text-[10px] font-bold uppercase tracking-widest rounded-full hover:bg-black transition-all active:scale-95 shadow-lg shadow-zinc-200"
+                                      style={{ backgroundColor: '#18181b', color: '#ffffff' }}
+                                      className="bg-zinc-900 text-white px-8 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-full hover:bg-black transition-all active:scale-95 shadow-lg"
                                     >
                                       EKLE +
                                     </button>
@@ -313,7 +314,7 @@ export default function MobileMenu() {
                 className="w-full flex justify-between items-center py-5 font-medium text-xs uppercase tracking-[0.3em] text-zinc-900 text-left border-b border-zinc-50"
               >
                 {cat.name}
-                {isExpanded ? <ChevronUp size={14} className="text-zinc-300"/> : <ChevronDown size={14} className="text-zinc-300"/>}
+                {isExpanded ? <ChevronUp size={14} className="text-zinc-500"/> : <ChevronDown size={14} className="text-zinc-500"/>}
               </button>
               
               {/* Products List */}
@@ -333,12 +334,12 @@ export default function MobileMenu() {
                            )}
                            <div className="flex-1 flex flex-col justify-center">
                              <div className="flex justify-between items-baseline mb-1">
-                               <h3 className="font-medium text-sm text-zinc-900 uppercase tracking-widest">{product.name}</h3>
-                               <div className="text-xs font-light text-zinc-400 ml-4 italic">
+                               <h3 className="font-semibold text-sm text-zinc-900 uppercase tracking-widest">{product.name}</h3>
+                               <div className="text-xs font-bold text-zinc-900 ml-4 italic">
                                  ₺{product.price}
                                </div>
                              </div>
-                             <p className="text-[10px] text-zinc-400 leading-relaxed font-light mt-1 line-clamp-2 uppercase tracking-tighter">{product.description}</p>
+                             <p className="text-[10px] text-zinc-500 leading-relaxed font-medium mt-1 line-clamp-2 uppercase tracking-tighter">{product.description}</p>
                            </div>
                          </div>
                        
@@ -346,10 +347,11 @@ export default function MobileMenu() {
                           {product.options && product.options.length > 0 ? (
                               // Product WITH Options
                               <div className="flex items-center gap-4">
-                                  {getProductQty(product.id) > 0 && <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Sepette: {getProductQty(product.id)}</span>}
+                                  {getProductQty(product.id) > 0 && <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Sepette: {getProductQty(product.id)}</span>}
                                   <button 
                                     onClick={() => setOptionModal({ product, selected: [] })}
-                                    className="bg-zinc-900 text-white px-8 py-2 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-xl shadow-zinc-100 active:scale-95"
+                                    style={{ backgroundColor: '#18181b', color: '#ffffff' }}
+                                    className="bg-zinc-900 text-white px-8 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-black transition-all shadow-lg active:scale-95"
                                   >
                                     EKLE +
                                   </button>
@@ -387,17 +389,20 @@ export default function MobileMenu() {
         })}
       </div>
 
-      {/* Sticky Footer */}
       {cartItemCount > 0 && (
-        <div className="fixed bottom-6 left-6 right-6 bg-zinc-900 text-white p-6 flex justify-between items-center z-40 rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-slideUp border border-zinc-800">
+        <div 
+            style={{ backgroundColor: '#18181b', color: '#ffffff' }}
+            className="fixed bottom-6 left-6 right-6 p-6 flex justify-between items-center z-40 rounded-3xl shadow-2xl animate-slideUp border border-zinc-700"
+        >
            <div className="flex flex-col">
-             <span className="text-[10px] text-zinc-500 font-bold tracking-[0.3em] uppercase mb-1">Toplam</span>
+             <span className="text-[10px] text-zinc-400 font-bold tracking-[0.3em] uppercase mb-1">TOPLAM</span>
              <span className="text-2xl font-light tracking-tighter">₺{totalAmount.toFixed(2)}</span>
            </div>
            
            <button 
              onClick={() => setShowCartModal(true)}
-             className="bg-white text-black px-8 py-3 rounded-2xl font-bold uppercase tracking-[0.2em] transition-all text-[10px] active:scale-95 shadow-lg"
+             style={{ backgroundColor: '#ffffff', color: '#18181b' }}
+             className="bg-white text-black px-8 py-3 rounded-2xl font-bold uppercase tracking-[0.2em] transition-all text-[11px] active:scale-95 shadow-lg"
            >
              SEPETİ GÖR
            </button>
@@ -417,27 +422,27 @@ export default function MobileMenu() {
                   
                   <div className="p-8 pt-4 overflow-y-auto flex-1">
                       {cart.map((item, idx) => (
-                          <div key={idx} className="flex justify-between items-start mb-6 border-b border-zinc-50 pb-4 last:border-0">
+                          <div key={idx} className="flex justify-between items-start mb-6 border-b border-zinc-100 pb-4 last:border-0">
                               <div>
-                                  <div className="font-medium uppercase text-xs tracking-widest text-zinc-800">{item.name}</div>
-                                  <div className="text-[10px] text-zinc-400 mt-1 uppercase tracking-tight italic">₺{item.price} x {item.quantity}</div>
+                                  <div className="font-bold uppercase text-xs tracking-widest text-zinc-900">{item.name}</div>
+                                  <div className="text-[11px] text-zinc-500 mt-1 uppercase tracking-tight font-bold italic">₺{item.price} x {item.quantity}</div>
                                   {item.selectedOptions && item.selectedOptions.length > 0 && (
-                                      <div className="text-[9px] text-zinc-400 mt-2 uppercase tracking-widest bg-zinc-50 px-2 py-1 inline-block rounded">
+                                      <div className="text-[10px] text-zinc-600 mt-2 uppercase tracking-widest bg-zinc-100 px-3 py-1.5 inline-block rounded-lg font-medium">
                                           {item.selectedOptions.map(o => o.name).join(' · ')}
                                       </div>
                                   )}
                               </div>
                               <div className="flex flex-col items-end gap-2">
-                                  <div className="font-light text-sm tracking-tight">₺{(item.price * item.quantity).toFixed(2)}</div>
-                                  <button onClick={() => removeFromCart(item.key)} className="text-[9px] text-zinc-300 hover:text-red-500 font-bold uppercase tracking-[0.2em] transition-colors">ÇIKAR</button>
+                                  <div className="font-bold text-sm tracking-tight text-zinc-900">₺{(item.price * item.quantity).toFixed(2)}</div>
+                                  <button onClick={() => removeFromCart(item.key)} className="text-[10px] text-red-600 hover:text-red-700 font-black uppercase tracking-[0.2em] transition-colors">ÇIKAR</button>
                               </div>
                           </div>
                       ))}
 
                       <div className="mt-8 pt-8 border-t border-zinc-100">
-                          <label className="block text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-300 mb-4">Sipariş Notu</label>
+                          <label className="block text-[11px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-4">Sipariş Notu</label>
                           <textarea 
-                              className="w-full bg-zinc-50 border-none p-5 rounded-3xl font-sans text-xs focus:ring-1 focus:ring-zinc-200 outline-none transition-all placeholder:text-zinc-300"
+                              className="w-full bg-zinc-50 border border-zinc-100 p-5 rounded-3xl font-sans text-sm focus:ring-2 focus:ring-zinc-200 outline-none transition-all placeholder:text-zinc-400 text-zinc-900"
                               placeholder="Özel isteklerinizi belirtebilirsiniz..."
                               rows={3}
                               value={orderNote}
@@ -446,18 +451,19 @@ export default function MobileMenu() {
                       </div>
                   </div>
 
-                  <div className="p-8 bg-white shrink-0">
+                  <div className="p-8 bg-zinc-50 shrink-0">
                        <div className="flex justify-between items-center mb-8">
-                           <span className="text-[10px] font-bold tracking-[0.3em] text-zinc-300 uppercase">Toplam Tutar</span>
-                           <span className="text-3xl font-light text-black tracking-tighter">₺{totalAmount.toFixed(2)}</span>
+                           <span className="text-[11px] font-black tracking-[0.3em] text-zinc-500 uppercase">Toplam Tutar</span>
+                           <span className="text-3xl font-bold text-zinc-900 tracking-tighter">₺{totalAmount.toFixed(2)}</span>
                        </div>
                        <button 
                           onClick={handlePlaceOrder}
-                          className="w-full bg-zinc-900 text-white py-5 rounded-3xl font-bold uppercase tracking-[0.4em] text-[11px] hover:bg-black transition-all active:scale-95 shadow-2xl shadow-zinc-200"
+                          style={{ backgroundColor: '#18181b', color: '#ffffff' }}
+                          className="w-full bg-zinc-900 text-white py-5 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[12px] hover:bg-black transition-all active:scale-95 shadow-2xl"
                        >
                            SİPARİŞİ ONAYLA
                        </button>
-                       <div className="h-4"></div>
+                       <div className="h-6"></div>
                   </div>
               </div>
           </div>
@@ -468,12 +474,12 @@ export default function MobileMenu() {
               <div className="bg-white w-full max-w-lg rounded-t-[3.5rem] p-10 flex flex-col max-h-[92vh] shadow-[0_-30px_70px_-15px_rgba(0,0,0,0.15)] border-t border-zinc-100">
                   <div className="flex justify-between items-start mb-10">
                       <div>
-                          <h3 className="font-light text-2xl uppercase tracking-[0.2em] text-zinc-900">{optionModal.product.name}</h3>
-                          <div className="h-4 w-[1px] bg-zinc-200 my-3"></div>
-                          <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.3em]">Tercihlerinizi seçin</p>
+                          <h3 className="font-bold text-2xl uppercase tracking-[0.1em] text-zinc-900">{optionModal.product.name}</h3>
+                          <div className="h-1 w-12 bg-zinc-900 my-4"></div>
+                          <p className="text-zinc-600 text-[11px] font-black uppercase tracking-[0.2em]">Tercihlerinizi seçin</p>
                       </div>
-                      <button onClick={() => setOptionModal(null)} className="p-3 text-zinc-300 hover:text-black">
-                          <X size={28} strokeWidth={1} />
+                      <button onClick={() => setOptionModal(null)} className="p-3 text-zinc-400 hover:text-black bg-zinc-100 rounded-full">
+                          <X size={24} />
                       </button>
                   </div>
 
