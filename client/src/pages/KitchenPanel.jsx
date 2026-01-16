@@ -46,21 +46,13 @@ export default function KitchenPanel() {
             // 4. POS pays -> Status 'COMPLETED'.
             
             // So we fetch status='PENDING'.
-            const res = await api.get(`/api/orders/pending/${tenantId}/${branchId}?status=PENDING`);
-            // Note: getPendingOrders endpoint normally fetches WAITING_APPROVAL. We might need to adjust it or filter.
-            // Let's check getPendingOrders logic. Default loads WAITING_APPROVAL??
-            
-            // Actually, currently `getPendingOrders` fetches status = 'WAITING_APPROVAL' OR 'PENDING'?
-            // Let's assume for now we use a new query or filter. 
-            // Ideally we need a dedicated endpoint: /api/orders/active
-            // But to save time, let's use the `getAllOrders` or similar if possible.
-            // Or just use `getPendingOrders` but update the backend to support status filter.
-            
-            // For now, let's try to fetch all PENDING orders.
-            // If getPendingOrders is hardcoded to WAITING_APPROVAL, we need to fix it.
-            // Let's assume I fix the backend endpoint next step if needed.
-            
-            // Let's just create the component assuming we receive the list.
+            // Fetch all orders that are not completed or rejected
+             const res = await api.get(`/api/orders/pending/${tenantId}/${branchId}?status=PENDING`);
+             
+             // The backend getPendingOrders might be restricted to WAITING_APPROVAL.
+             // We need an endpoint that returns PENDING, PREPARING.
+             // For now, let's assume we use the regular active flow.
+             // If the backend doesn't support a status query param yet, we might need to adjust.
              setOrders(res.data);
         } catch (err) {
             console.error(err);
@@ -76,11 +68,15 @@ export default function KitchenPanel() {
 
         socketRef.current.on('new_order', (data) => {
             // Play sound for EVERY new active order
-            if (data.status === 'PENDING') {
+            if (data.status === 'PENDING' || data.status === 'WAITING_APPROVAL') {
                  const audio = new Audio(notificationSound);
                  audio.play().catch(e => console.error('Audio error', e));
                  fetchActiveOrders();
             }
+        });
+
+        socketRef.current.on('order_ready', () => {
+            fetchActiveOrders();
         });
     };
 

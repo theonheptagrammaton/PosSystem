@@ -115,7 +115,7 @@ export default function WaiterPanel() {
               table_no: `MASA-${selectedTable}`,
               total_amount: total,
               items: items,
-              status: 'WAITING_APPROVAL', // Goes to pending list
+              status: 'PENDING', // Bypasses approval, goes directly to kitchen
               source: 'GARSON',
               note: orderNote
           });

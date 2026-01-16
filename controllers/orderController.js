@@ -64,7 +64,7 @@ const getTableOrders = async (req, res) => {
         WHERE tenant_id = $1 
           AND branch_id = $2 
           AND (table_no = $3 OR table_no = $4 OR table_no = $5)
-          AND status = 'PENDING'
+          AND status IN ('PENDING', 'PREPARING', 'READY')
         ORDER BY created_at ASC
     `;
     const result = await pool.query(query, [tenantId, branchId, tableNo, tableNoPlain, tableNoWithPrefix]);
@@ -75,9 +75,10 @@ const getTableOrders = async (req, res) => {
 
     result.rows.forEach(row => {
         const items = row.items; // JSONB is auto-parsed by pg
-        // Merge items (simple append for now, could be smarter)
+        // Merge items and inject parent status
         if (Array.isArray(items)) {
-            aggregatedItems = [...aggregatedItems, ...items];
+            const itemsWithStatus = items.map(i => ({ ...i, parent_status: row.status }));
+            aggregatedItems = [...aggregatedItems, ...itemsWithStatus];
         }
         totalAmount += parseFloat(row.total_amount);
     });
@@ -125,7 +126,7 @@ const closeTable = async (req, res) => {
           WHERE tenant_id = $1 
             AND branch_id = $2 
             AND (table_no = $3 OR table_no = $4 OR table_no = $5)
-            AND status = 'PENDING'
+            AND status IN ('PENDING', 'PREPARING', 'READY')
           FOR UPDATE
       `;
       const ordersResult = await client.query(ordersQuery, [parsedTenantId, parsedBranchId, tableNo, tableNoPlain, tableNoWithPrefix]);
@@ -157,7 +158,7 @@ const closeTable = async (req, res) => {
           WHERE tenant_id = $2 
             AND branch_id = $3 
             AND (table_no = $4 OR table_no = $5 OR table_no = $6)
-            AND status = 'PENDING'
+            AND status IN ('PENDING', 'PREPARING', 'READY')
       `;
       await client.query(updateQuery, [paymentId, parsedTenantId, parsedBranchId, tableNo, tableNoPlain, tableNoWithPrefix]);
       
@@ -188,7 +189,7 @@ const getBranchStatus = async (req, res) => {
         const query = `
             SELECT DISTINCT table_no 
             FROM orders 
-            WHERE tenant_id = $1 AND branch_id = $2 AND status = 'PENDING'
+            WHERE tenant_id = $1 AND branch_id = $2 AND status IN ('PENDING', 'PREPARING', 'READY')
         `;
         const result = await pool.query(query, [tenantId, branchId]);
         
@@ -275,7 +276,7 @@ const removeItem = async (req, res) => {
             WHERE tenant_id = $1 
               AND branch_id = $2 
               AND (table_no = $3 OR table_no = $4 OR table_no = $5)
-              AND status = 'PENDING'
+              AND status IN ('PENDING', 'PREPARING', 'READY')
             FOR UPDATE
         `;
         const result = await client.query(query, [tenantId, branchId, tableNo, tableNoPlain, tableNoWithPrefix]);
@@ -350,13 +351,24 @@ const removeItem = async (req, res) => {
 // --- Get Pending Approval Orders ---
 const getPendingOrders = async (req, res) => {
     const { tenantId, branchId } = req.params;
+    const { status } = req.query;
     try {
-        const query = `
+        let query = `
             SELECT * FROM orders 
-            WHERE tenant_id = $1 AND branch_id = $2 AND status = 'WAITING_APPROVAL'
-            ORDER BY created_at ASC
+            WHERE tenant_id = $1 AND branch_id = $2
         `;
-        const result = await pool.query(query, [tenantId, branchId]);
+        const values = [tenantId, branchId];
+        
+        if (status) {
+            query += " AND status = $3";
+            values.push(status);
+        } else {
+            query += " AND status = 'WAITING_APPROVAL'";
+        }
+        
+        query += " ORDER BY created_at ASC";
+        
+        const result = await pool.query(query, values);
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching pending orders:', error);

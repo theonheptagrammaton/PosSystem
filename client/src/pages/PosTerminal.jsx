@@ -51,21 +51,24 @@ export default function PosTerminal() {
          });
          
           socketRef.current.on('new_order', (data) => {
-             // If this is a pending order, play sound and refresh pending list
-             if (data.status === 'WAITING_APPROVAL') {
+             // If this is a pending order or a new waiter order, play sound
+             if (data.status === 'WAITING_APPROVAL' || (data.status === 'PENDING' && data.source === 'GARSON')) {
                  const audio = new Audio(notificationSound);
                  audio.play().catch(e => console.error('Audio play error', e));
-                 fetchPendingOrders();
-             } else {
-                 // Normal active order (or approval event)
-                 const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
-                 if (data.table_no === formattedTableNo) {
-                     fetchTableOrders(selectedTable);
-                 }
-                 fetchBranchStatus(branch.tenant_id, branch.id);
-                 // If it was an approval, we also refresh pending to remove it
-                 if (data.is_approval) fetchPendingOrders();
+                 if (data.status === 'WAITING_APPROVAL') fetchPendingOrders();
              }
+             
+             // Refresh active table orders if we are looking at that table
+             const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
+             if (data.table_no === formattedTableNo) {
+                 fetchTableOrders(selectedTable);
+             }
+             
+             // Always refresh table colors (RED/WHITE)
+             fetchBranchStatus(branch.tenant_id, branch.id);
+             
+             // If it was an approval/rejection event, refresh pending list
+             if (data.is_approval) fetchPendingOrders();
          });
          
          socketRef.current.on('table_closed', () => {
@@ -232,23 +235,24 @@ export default function PosTerminal() {
   };
 
   // Helper to group identical items
-  const groupTableOrders = (items) => {
-      const grouped = {};
-      items.forEach(item => {
-          // Create unique key based on ID and Options
-          const optionsKey = item.selectedOptions 
-              ? item.selectedOptions.map(o => o.name).sort().join('-') 
-              : '';
-          const key = `${item.id}-${optionsKey}`;
+   const groupTableOrders = (items) => {
+       const grouped = {};
+       items.forEach(item => {
+           // Create unique key based on ID, Options AND Status
+           const optionsKey = item.selectedOptions 
+               ? item.selectedOptions.map(o => o.name).sort().join('-') 
+               : '';
+           const status = item.parent_status || 'PENDING'; // Assume items inherit status from parent order row
+           const key = `${item.id}-${optionsKey}-${status}`;
 
-          if (grouped[key]) {
-              grouped[key].quantity += item.quantity;
-          } else {
-              grouped[key] = { ...item, key }; // Store key for reference if needed
-          }
-      });
-      return Object.values(grouped);
-  };
+           if (grouped[key]) {
+               grouped[key].quantity += item.quantity;
+           } else {
+               grouped[key] = { ...item, key, status }; 
+           }
+       });
+       return Object.values(grouped);
+   };
 
   const [optionModal, setOptionModal] = useState(null);
 
@@ -454,7 +458,11 @@ export default function PosTerminal() {
                         groupTableOrders(tableOrders).map((item, idx) => (
                             <div key={idx} className="flex justify-between items-center border-b border-gray-100 pb-2 last:border-0">
                                 <div className="flex-1">
-                                    <div className="font-bold text-gray-800">{item.name}</div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="font-bold text-gray-800">{item.name}</div>
+                                        {item.status === 'READY' && <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-black border border-green-200">READY</span>}
+                                        {item.status === 'PREPARING' && <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-black border border-blue-200">COOKING</span>}
+                                    </div>
                                     <div className="text-xs text-gray-500 font-mono">₺{item.price}</div>
                                     {item.selectedOptions && item.selectedOptions.length > 0 && (
                                         <div className="text-[10px] text-blue-600 font-bold mt-1">
