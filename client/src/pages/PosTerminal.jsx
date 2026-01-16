@@ -415,8 +415,8 @@ export default function PosTerminal() {
                                 </div>
                                 <div className="p-3 flex-1 flex flex-col justify-between">
                                     <div>
-                                        <div className="font-bold text-gray-800 leading-tight group-hover:underline text-sm line-clamp-1">{p.name}</div>
-                                        <div className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{p.description}</div>
+                                        <div className="font-bold text-gray-800 leading-tight group-hover:underline text-sm line-clamp-2 min-h-[2.5rem]">{p.name}</div>
+                                        <div className="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{p.description}</div>
                                     </div>
                                     <div className="font-mono text-sm font-bold text-black mt-1">₺{p.price}</div>
                                 </div>
@@ -567,13 +567,13 @@ export default function PosTerminal() {
                         <div className="flex gap-4">
                             <button 
                                 onClick={() => handleRejectOrder(viewingPendingOrder)}
-                                className="flex-1 bg-red-600 text-black py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-lg border-2 border-black"
+                                className="flex-1 bg-red-600 text-white py-4 rounded-lg font-black uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-lg border-2 border-black"
                             >
                                 ✗ REDDET
                             </button>
                             <button 
                                 onClick={() => handleApproveOrder(viewingPendingOrder)}
-                                className="flex-1 bg-green-600 text-black py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-green-700 active:scale-95 transition-all shadow-lg border-2 border-black"
+                                className="flex-1 bg-green-600 text-white py-4 rounded-lg font-black uppercase tracking-widest hover:bg-green-700 active:scale-95 transition-all shadow-lg border-2 border-black"
                             >
                                 ✓ ONAYLA
                             </button>
