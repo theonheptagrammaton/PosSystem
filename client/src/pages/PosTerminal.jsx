@@ -545,8 +545,8 @@ export default function PosTerminal() {
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 max-h-60 overflow-y-auto">
                             {viewingPendingOrder.items.map((item, i) => (
                                 <div key={i} className="flex justify-between border-b border-gray-200 pb-2 last:border-0 mb-2 last:mb-0">
-                                    <div>
-                                        <div className="font-bold">{item.name}</div>
+                                    <div className="flex-1 pr-4 min-w-0">
+                                        <div className="font-bold truncate" title={item.name}>{item.name}</div>
                                         <div className="text-xs text-gray-400">₺{item.price}</div>
                                         {item.selectedOptions && item.selectedOptions.length > 0 && (
                                             <div className="text-[10px] text-blue-600 font-bold mt-1">
@@ -554,7 +554,7 @@ export default function PosTerminal() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="font-mono font-bold">x{item.quantity}</div>
+                                    <div className="font-mono font-bold whitespace-nowrap">x{item.quantity}</div>
                                 </div>
                             ))}
                         </div>
@@ -567,15 +567,15 @@ export default function PosTerminal() {
                         <div className="flex gap-4">
                             <button 
                                 onClick={() => handleRejectOrder(viewingPendingOrder)}
-                                className="flex-1 bg-red-600 text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-red-700 transition-colors"
+                                className="flex-1 bg-red-600 text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-lg"
                             >
-                                REDDET
+                                ✗ REDDET
                             </button>
                             <button 
                                 onClick={() => handleApproveOrder(viewingPendingOrder)}
-                                className="flex-1 bg-black text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-green-600 transition-colors"
+                                className="flex-1 bg-green-600 text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-green-700 active:scale-95 transition-all shadow-lg"
                             >
-                                ONAYLA
+                                ✓ ONAYLA
                             </button>
                         </div>
                     </div>
