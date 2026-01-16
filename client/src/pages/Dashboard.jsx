@@ -124,10 +124,13 @@ export default function Dashboard() {
   const calculateDailyRevenue = () => {
     const today = new Date().toDateString();
     const todayOrders = orders.filter(o => o.status === 'TAMAMLANDI' && o.created_at && new Date(o.created_at).toDateString() === today);
-    return todayOrders.map(o => ({
-        time: new Date(o.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-        amount: parseFloat(o.amount.replace('₺', '')) || 0
-    }));
+    return todayOrders.map(o => {
+        const amt = o.amount || o.total_amount || 0;
+        return {
+            time: new Date(o.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+            amount: typeof amt === 'string' ? parseFloat(amt.replace('₺', '')) : parseFloat(amt) || 0
+        };
+    });
   };
 
   // 2. Branch Performance
@@ -135,7 +138,8 @@ export default function Dashboard() {
     const perfMap = {};
     const validOrders = orders.filter(o => o.status === 'TAMAMLANDI');
     validOrders.forEach(o => {
-        const amount = parseFloat(o.amount.replace('₺', '')) || 0;
+        const amt = o.amount || o.total_amount || 0;
+        const amount = typeof amt === 'string' ? parseFloat(amt.replace('₺', '')) : parseFloat(amt) || 0;
         perfMap[o.branch_name] = (perfMap[o.branch_name] || 0) + amount;
     });
     return Object.entries(perfMap).map(([name, total]) => ({ name, total }));
@@ -162,12 +166,14 @@ export default function Dashboard() {
     const distMap = {};
     const validOrders = orders.filter(o => o.status === 'TAMAMLANDI');
     validOrders.forEach(o => {
-        if (!Array.isArray(o.details)) return;
-        o.details.forEach(item => {
+        if (!Array.isArray(o.details) && !Array.isArray(o.items)) return;
+        const items = o.details || o.items || [];
+        items.forEach(item => {
             const product = products.find(p => p.id === item.id);
             const category = categories.find(c => c.id === product?.category_id);
             const catName = category?.name || 'Diğer';
-            const amount = (parseFloat(item.price) || 0) * (item.quantity || 1);
+            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+            const amount = itemPrice * (item.quantity || 1);
             distMap[catName] = (distMap[catName] || 0) + amount;
         });
     });
