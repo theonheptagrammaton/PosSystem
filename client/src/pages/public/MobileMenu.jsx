@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api';
-import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp, Minus, Plus, CheckCircle, X } from 'lucide-react';
 
 export default function MobileMenu() {
   const { tenantId, branchId, tableId } = useParams(); // Using tableId as table_no

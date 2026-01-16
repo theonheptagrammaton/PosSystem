@@ -24,6 +24,12 @@ export default function Login() {
 
       if (user.role === 'SUPER_ADMIN') {
         navigate('/super-admin');
+      } else if (user.role === 'kitchen') {
+        // Kitchen staff goes to Kitchen Panel
+        navigate('/kitchen-panel');
+      } else if (user.role === 'waiter') {
+        // Waiter goes to Waiter Panel
+        navigate(`/waiter-panel/${user.branch_id}`);
       } else if (user.role === 'cashier') {
         // Cashier goes straight to POS
         navigate(`/pos-terminal/${user.branch_id}`);
