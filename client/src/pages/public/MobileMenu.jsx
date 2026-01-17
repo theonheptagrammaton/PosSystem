@@ -274,7 +274,7 @@ export default function MobileMenu() {
                                           <div className="flex items-center border-2 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)]">
                                               <button 
                                                 onClick={() => removeFromCart(`${product.id}-`)}
-                                                className="w-10 h-10 flex items-center justify-center bg-black text-white hover:bg-gray-800 transition-colors border-r-2 border-black active:bg-gray-700"
+                                                className="w-10 h-10 flex items-center justify-center bg-black text-white hover:bg-gray-800 transition-colors border-r-2 border-white active:bg-gray-900"
                                               >
                                                 <Minus size={16} strokeWidth={3} />
                                               </button>
@@ -285,7 +285,7 @@ export default function MobileMenu() {
 
                                               <button 
                                                 onClick={() => addToCart(product)}
-                                                className="w-10 h-10 flex items-center justify-center bg-black text-white hover:bg-gray-800 transition-colors border-l-2 border-black active:bg-gray-700"
+                                                className="w-10 h-10 flex items-center justify-center bg-black text-white hover:bg-gray-800 transition-colors border-l-2 border-white active:bg-gray-900"
                                               >
                                                 <Plus size={16} strokeWidth={3} />
                                               </button>
