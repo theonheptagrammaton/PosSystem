@@ -586,6 +586,10 @@ export default function PosTerminal() {
                         <div className="space-y-3">
                             {optionModal.product.options.map((opt, idx) => {
                                 const isSelected = optionModal.selected.some(s => s.name === opt.name);
+                                const basePrice = parseFloat(optionModal.product.price);
+                                const extraPrice = parseFloat(opt.price_change);
+                                const totalPrice = basePrice + extraPrice;
+                                
                                 return (
                                     <button
                                         key={idx}
@@ -614,9 +618,16 @@ export default function PosTerminal() {
                                             </div>
                                             <span className={`font-bold uppercase text-sm ${isSelected ? 'text-black' : 'text-gray-500'}`}>{opt.name}</span>
                                         </div>
-                                        <span className="font-mono font-bold text-xs">
-                                            {opt.price_change > 0 ? `+₺${opt.price_change}` : 'ÜCRETSİZ'}
-                                        </span>
+                                        <div className="text-right">
+                                            <span className="font-mono font-bold text-xs block">
+                                                {opt.price_change > 0 ? `+₺${extraPrice.toFixed(2)}` : 'ÜCRETSİZ'}
+                                            </span>
+                                            {opt.price_change > 0 && (
+                                                <span className="text-[9px] font-bold text-gray-400 block mt-0.5">
+                                                    (₺{basePrice} + ₺{extraPrice} = ₺{totalPrice})
+                                                </span>
+                                            )}
+                                        </div>
                                     </button>
                                 );
                             })}

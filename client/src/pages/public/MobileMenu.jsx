@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp, Minus, Plus, CheckCircle, X } from 'lucide-reac
 export default function MobileMenu() {
   const { tenantId, branchId, tableId } = useParams(); 
   const [data, setData] = useState({ categories: [], products: [] });
-  const [expandedCategory, setExpandedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [cart, setCart] = useState([]); 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function MobileMenu() {
         const res = await api.get(`/api/public/menu/${tenantId}`);
         setData(res.data);
         if (res.data.categories && res.data.categories.length > 0) {
-          setExpandedCategory(res.data.categories[0].id);
+          // Default to ALL, no need to set expandedCategory
         }
       } catch (err) {
         console.error('Menü getirilemedi:', err);
@@ -36,8 +36,9 @@ export default function MobileMenu() {
     fetchData();
   }, [tenantId]);
 
-  const toggleCategory = (id) => {
-    setExpandedCategory(prev => prev === id ? null : id);
+  const handleCategorySelect = (id) => {
+    setSelectedCategory(id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const addToCart = (product, selectedOptions = []) => {
@@ -178,94 +179,130 @@ export default function MobileMenu() {
   return (
     <div className="bg-white min-h-screen pb-24 relative font-sans text-black">
       {/* Header */}
-      <div className="p-10 border-b border-gray-100 flex flex-col items-center justify-center bg-white">
-         <h1 className="text-2xl font-black uppercase tracking-[0.3em] text-center leading-relaxed">{data.company_name || 'RESTORAN MENÜ'}</h1>
-         <div className="h-6 w-[2px] bg-black my-4"></div>
+      <div className="pt-8 pb-4 border-b border-gray-100 flex flex-col items-center justify-center bg-white sticky top-0 z-30 shadow-sm">
+         <h1 className="text-xl font-black uppercase tracking-[0.3em] text-center leading-relaxed">{data.company_name || 'RESTORAN MENÜ'}</h1>
+         <div className="h-4 w-[2px] bg-black my-2"></div>
          <p className="text-[10px] font-black text-gray-400 tracking-[0.2em] uppercase">MASA {tableId}</p>
       </div>
 
-      {/* Categories */}
-      <div className="p-4 flex flex-col gap-0">
-        {data.categories.map(cat => {
-          const categoryProducts = data.products.filter(p => p.category_id === cat.id);
-          const isExpanded = expandedCategory === cat.id;
+      {/* Sticky Categories Bar */}
+      <div className="sticky top-[105px] z-20 bg-white border-b border-black shadow-md">
+          <div className="flex overflow-x-auto whitespace-nowrap p-4 gap-3 scrollbar-hide">
+              <button 
+                  onClick={() => handleCategorySelect('ALL')}
+                  className={`px-6 py-3 text-xs font-black uppercase tracking-widest border-2 transition-all flex-shrink-0
+                  ${selectedCategory === 'ALL' 
+                      ? 'bg-black text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]' 
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'}`}
+              >
+                  TÜM ÜRÜNLER
+              </button>
+              {data.categories.map(cat => (
+                  <button 
+                      key={cat.id}
+                      onClick={() => handleCategorySelect(cat.id)}
+                      className={`px-6 py-3 text-xs font-black uppercase tracking-widest border-2 transition-all flex-shrink-0
+                      ${selectedCategory === cat.id 
+                          ? 'bg-black text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]' 
+                          : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'}`}
+                  >
+                      {cat.name}
+                  </button>
+              ))}
+          </div>
+      </div>
 
+      {/* Categories & Products */}
+      <div className="p-4 flex flex-col gap-8 pb-32">
+        {data.categories.map(cat => {
+          // Filter logic: Show if ALL is selected OR if this specific category is selected
+          if (selectedCategory !== 'ALL' && selectedCategory !== cat.id) return null;
+
+          const categoryProducts = data.products.filter(p => p.category_id === cat.id);
           if (categoryProducts.length === 0) return null;
 
           return (
-            <div key={cat.id} className="border-b border-black last:border-0">
-              <button 
-                onClick={() => toggleCategory(cat.id)}
-                className={`w-full flex justify-between items-center py-6 font-black text-sm uppercase tracking-[0.2em] text-left hover:bg-gray-50 transition-colors px-2
-                ${isExpanded ? 'bg-black text-white' : 'bg-white text-black'}`}
-              >
-                <span>{cat.name}</span>
-                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
+            <div key={cat.id} className="animate-fadeIn">
+              <div className="flex items-center gap-4 mb-4">
+                  <div className="h-px bg-black flex-1"></div>
+                  <h2 className="font-black text-lg uppercase tracking-[0.2em] text-center bg-black text-white px-4 py-1 transform -skew-x-12">{cat.name}</h2>
+                  <div className="h-px bg-black flex-1"></div>
+              </div>
               
               {/* Products List */}
-              {isExpanded && (
-                <div className="flex flex-col gap-0 mt-0 animate-fadeIn border-l-2 border-black">
-                  {categoryProducts.map(product => (
-                      <div key={product.id} className="flex flex-col p-6 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                         <div className="flex gap-4 items-start">
+              <div className="flex flex-col gap-4">
+                {categoryProducts.map(product => (
+                    <div key={product.id} className="bg-white border-2 border-transparent hover:border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-col">
+                           {/* Image */}
                            {product.image_url && (
-                             <div className="w-24 h-24 shrink-0 bg-gray-100 border border-gray-200">
+                             <div className="w-full h-48 bg-gray-100 border-b border-gray-100 overflow-hidden relative group">
                                <img 
                                  src={product.image_url.startsWith('http') ? product.image_url : `${api.defaults.baseURL}${product.image_url}`} 
                                  alt={product.name}
                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                />
+                               <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
                              </div>
                            )}
-                           <div className="flex-1 min-w-0">
-                             <div className="flex justify-between items-start mb-1 flex-wrap gap-2">
-                               <h3 className="font-black text-sm uppercase tracking-wide break-words">{product.name}</h3>
-                               <div className="font-mono font-bold text-sm whitespace-nowrap">
-                                 ₺{product.price}
+                           
+                           {/* Content */}
+                           <div className="p-5 flex flex-col gap-3">
+                               <div className="flex justify-between items-start gap-4">
+                                   <div className="flex-1">
+                                       <h3 className="font-black text-lg uppercase tracking-tight leading-tight">{product.name}</h3>
+                                       <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mt-1 leading-relaxed line-clamp-2">{product.description}</p>
+                                   </div>
+                                   <div className="font-black text-xl tracking-tighter text-right">
+                                       ₺{product.price}
+                                   </div>
                                </div>
-                             </div>
-                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide break-words leading-relaxed">{product.description}</p>
-                           </div>
-                         </div>
-                       
-                       <div className="flex items-center justify-end mt-4 gap-4">
-                          {product.options && product.options.length > 0 ? (
-                              <div className="flex items-center gap-4">
-                                  {getProductQty(product.id) > 0 && <span className="text-[10px] font-black text-black uppercase tracking-widest border-b border-black">SEPETTE: {getProductQty(product.id)}</span>}
-                                  <button 
-                                    onClick={() => setOptionModal({ product, selected: [] })}
-                                    className="bg-black text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black border-2 border-black transition-all active:translate-y-1"
-                                  >
-                                    SEÇENEK EKLE
-                                  </button>
-                              </div>
-                          ) : (
-                              <div className="flex items-center border-2 border-black bg-white">
-                                  <button 
-                                    onClick={() => removeFromCart(`${product.id}-`)}
-                                    className="p-2 text-black hover:bg-gray-100 transition-colors border-r border-black"
-                                  >
-                                    <Minus size={14} />
-                                  </button>
-                                  
-                                  <div className="font-mono font-bold min-w-[32px] text-center text-sm">
-                                    {getProductQty(product.id)}
-                                  </div>
 
-                                  <button 
-                                    onClick={() => addToCart(product)}
-                                    className="p-2 text-black hover:bg-gray-100 transition-colors border-l border-black"
-                                  >
-                                    <Plus size={14} />
-                                  </button>
-                              </div>
-                          )}
-                       </div>
+                               <div className="pt-3 mt-2 border-t border-gray-100 flex justify-end">
+                                  {product.options && product.options.length > 0 ? (
+                                      <div className="flex items-center gap-3 w-full justify-end">
+                                          {getProductQty(product.id) > 0 && (
+                                              <span className="text-[10px] font-black text-black uppercase tracking-widest border-b-2 border-black">
+                                                  SEPETTE: {getProductQty(product.id)}
+                                              </span>
+                                          )}
+                                          <button 
+                                            onClick={() => setOptionModal({ product, selected: [] })}
+                                            className="bg-black text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
+                                          >
+                                            SEÇENEK EKLE
+                                          </button>
+                                      </div>
+                                  ) : (
+                                      <div className="flex items-center gap-4 w-full justify-between sm:justify-end">
+                                          {getProductQty(product.id) > 0 && <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 sm:hidden">ADET</span>}
+                                          <div className="flex items-center border-2 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)]">
+                                              <button 
+                                                onClick={() => removeFromCart(`${product.id}-`)}
+                                                className="w-10 h-10 flex items-center justify-center text-black hover:bg-gray-100 transition-colors border-r-2 border-black active:bg-gray-200"
+                                              >
+                                                <Minus size={16} strokeWidth={3} />
+                                              </button>
+                                              
+                                              <div className="font-black min-w-[40px] text-center text-lg">
+                                                {getProductQty(product.id)}
+                                              </div>
+
+                                              <button 
+                                                onClick={() => addToCart(product)}
+                                                className="w-10 h-10 flex items-center justify-center text-black hover:bg-gray-100 transition-colors border-l-2 border-black active:bg-gray-200"
+                                              >
+                                                <Plus size={16} strokeWidth={3} />
+                                              </button>
+                                          </div>
+                                      </div>
+                                  )}
+                               </div>
+                           </div>
+                        </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           );
         })}
@@ -363,6 +400,10 @@ export default function MobileMenu() {
                   <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-3">
                       {optionModal.product.options.map((opt, idx) => {
                           const isSelected = optionModal.selected.some(o => o.name === opt.name);
+                          const basePrice = parseFloat(optionModal.product.price);
+                          const extraPrice = parseFloat(opt.price_change);
+                          const totalPrice = basePrice + extraPrice;
+
                           return (
                               <button 
                                   key={idx}
@@ -379,7 +420,16 @@ export default function MobileMenu() {
                                         : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'}`}
                               >
                                   <span className="font-black text-xs uppercase tracking-widest">{opt.name}</span>
-                                  <span className="font-mono font-bold text-xs">{opt.price_change > 0 ? `+₺${opt.price_change}` : '0'}</span>
+                                  <div className="text-right">
+                                    <span className="font-mono font-bold text-xs block">
+                                        {opt.price_change > 0 ? `+₺${extraPrice.toFixed(2)}` : 'ÜCRETSİZ'}
+                                    </span>
+                                    {opt.price_change > 0 && (
+                                        <span className={`text-[9px] font-bold block mt-0.5 ${isSelected ? 'text-gray-400' : 'text-gray-400'}`}>
+                                            (₺{basePrice} + ₺{extraPrice} = ₺{totalPrice})
+                                        </span>
+                                    )}
+                                  </div>
                               </button>
                           );
                       })}

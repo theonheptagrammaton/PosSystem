@@ -300,47 +300,58 @@ export default function Inventory() {
         </div>
 
         {/* Categories List */}
-        <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+        <div className="flex-1 overflow-y-auto pr-2 space-y-3">
            {categories.map(cat => (
              <div 
                key={cat.id}
                onClick={() => setSelectedCategory(cat)}
-               className={`p-4 cursor-pointer border-2 transition-all flex justify-between items-center group
+               className={`p-4 cursor-pointer border-2 transition-all flex flex-col gap-3 group relative overflow-hidden
                  ${selectedCategory?.id === cat.id 
-                    ? 'bg-black text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]' 
-                    : 'bg-white text-black border-gray-100 hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]'}`}
+                    ? 'bg-black text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.4)] translate-x-[-2px] translate-y-[-2px]' 
+                    : 'bg-white text-black border-gray-200 hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]'}`}
              >
-                <div className="font-black text-xs uppercase tracking-wide">{cat.name}</div>
-                <div className={`flex gap-2 ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                    <div className="flex flex-col gap-1">
+                <div className="flex justify-between items-center w-full z-10 relative">
+                    <div className="font-black text-sm uppercase tracking-wider truncate pr-2">{cat.name}</div>
+                    
+                    <div className={`flex gap-3 items-center ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                        <div className="flex gap-1">
+                            <button 
+                                onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'up')}
+                                disabled={categories.indexOf(cat) === 0}
+                                className={`p-1.5 rounded-full transition-colors disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white hover:bg-gray-800' : 'text-black hover:bg-gray-100'}`}
+                            >
+                                <ArrowUp size={16} />
+                            </button>
+                            <button 
+                                onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'down')}
+                                disabled={categories.indexOf(cat) === categories.length - 1}
+                                className={`p-1.5 rounded-full transition-colors disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white hover:bg-gray-800' : 'text-black hover:bg-gray-100'}`}
+                            >
+                                <ArrowDown size={16} />
+                            </button>
+                        </div>
+                        <div className="h-6 w-px bg-current opacity-20"></div>
                         <button 
-                            onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'up')}
-                            disabled={categories.indexOf(cat) === 0}
-                            className={`transition-colors disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}
+                            onClick={(e) => openEditCategoryModal(e, cat)}
+                            className={`p-1.5 hover:scale-110 transition-transform ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
                         >
-                            <ArrowUp size={10} />
+                            <Pencil size={18} />
                         </button>
                         <button 
-                            onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'down')}
-                            disabled={categories.indexOf(cat) === categories.length - 1}
-                            className={`transition-colors disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}
+                            onClick={(e) => handleDeleteCategory(e, cat.id)}
+                            className={`p-1.5 transition-colors ${selectedCategory?.id === cat.id ? 'text-white hover:text-red-400' : 'text-black hover:text-red-600'}`}
                         >
-                            <ArrowDown size={10} />
+                            <Trash2 size={18} />
                         </button>
                     </div>
-                    <button 
-                        onClick={(e) => openEditCategoryModal(e, cat)}
-                        className={`hover:scale-110 transition-transform ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
-                    >
-                        <Pencil size={14} />
-                    </button>
-                    <button 
-                        onClick={(e) => handleDeleteCategory(e, cat.id)}
-                        className={`transition-colors ${selectedCategory?.id === cat.id ? 'text-white hover:text-red-300' : 'text-black hover:text-red-600'}`}
-                    >
-                        <Trash2 size={14} />
-                    </button>
                 </div>
+                
+                {/* Visual Indicator for Selected State */}
+                {selectedCategory?.id === cat.id && (
+                    <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
+                        <div className="w-16 h-16 bg-white rounded-full translate-x-1/2 translate-y-1/2 blur-2xl"></div>
+                    </div>
+                )}
              </div>
            ))}
            {categories.length === 0 && (
@@ -551,12 +562,15 @@ export default function Inventory() {
 
           {/* Options Section */}
           <div className="border-2 border-black p-4 bg-gray-50">
-             <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
-                 <label className="block text-[10px] font-black uppercase tracking-widest">SEÇENEKLER / VARYANTLAR</label>
+             <div className="flex justify-between items-center mb-2 border-b border-gray-300 pb-2">
+                 <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest">SEÇENEKLER / VARYANTLAR</label>
+                    <p className="text-[9px] text-gray-500 font-bold uppercase mt-1">Müşterinin seçebileceği ekstra özellikler (Örn: Sos, Ekstra Peynir)</p>
+                 </div>
                  <button 
                     type="button"
                     onClick={() => setFormData({...formData, options: [...formData.options, { name: '', price_change: 0 }]})}
-                    className="text-[9px] bg-black text-white px-3 py-1.5 font-bold uppercase hover:bg-gray-800 transition-colors"
+                    className="text-[9px] bg-black text-white px-3 py-2 font-bold uppercase hover:bg-gray-800 transition-colors shadow-sm"
                  >
                      + SEÇENEK EKLE
                  </button>
@@ -564,45 +578,61 @@ export default function Inventory() {
              
              <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2">
                  {formData.options.length === 0 && (
-                     <div className="text-center text-[10px] text-gray-400 font-bold uppercase py-2">Henüz seçenek eklenmedi</div>
+                     <div className="text-center text-[10px] text-gray-400 font-bold uppercase py-4 border-2 border-dashed border-gray-200">
+                        Henüz seçenek eklenmedi.
+                     </div>
                  )}
                  {formData.options.map((opt, idx) => (
-                     <div key={idx} className="flex gap-2 items-center">
-                         <input 
-                             type="text" 
-                             placeholder="SEÇENEK ADI"
-                             className="flex-1 border border-gray-300 p-2 text-xs outline-none focus:border-black font-bold uppercase"
-                             value={opt.name}
-                             onChange={(e) => {
-                                 const newOpts = [...formData.options];
-                                 newOpts[idx].name = e.target.value;
-                                 setFormData({...formData, options: newOpts});
-                             }}
-                         />
-                         <input 
-                             type="number" 
-                             placeholder="FARK (₺)"
-                             className="w-24 border border-gray-300 p-2 text-xs outline-none focus:border-black font-mono font-bold"
-                             value={opt.price_change}
-                             onChange={(e) => {
-                                 const newOpts = [...formData.options];
-                                 newOpts[idx].price_change = parseFloat(e.target.value) || 0;
-                                 setFormData({...formData, options: newOpts});
-                             }}
-                         />
-                         <button 
-                             type="button" 
-                             onClick={() => {
-                                 const newOpts = formData.options.filter((_, i) => i !== idx);
-                                 setFormData({...formData, options: newOpts});
-                             }}
-                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                         >
-                             <Trash2 size={14}/>
-                         </button>
+                     <div key={idx} className="flex gap-2 items-center bg-white p-2 border border-gray-200 shadow-sm">
+                         <div className="flex-1">
+                             <label className="text-[8px] font-black text-gray-400 uppercase tracking-wider block mb-1">Seçenek Adı</label>
+                             <input 
+                                 type="text" 
+                                 placeholder="ÖRN: ACILI"
+                                 className="w-full border border-gray-300 p-2 text-xs outline-none focus:border-black font-bold uppercase"
+                                 value={opt.name}
+                                 onChange={(e) => {
+                                     const newOpts = [...formData.options];
+                                     newOpts[idx].name = e.target.value;
+                                     setFormData({...formData, options: newOpts});
+                                 }}
+                             />
+                         </div>
+                         <div className="w-24">
+                             <label className="text-[8px] font-black text-gray-400 uppercase tracking-wider block mb-1">Ek Ücret</label>
+                             <input 
+                                 type="number" 
+                                 placeholder="0"
+                                 className="w-full border border-gray-300 p-2 text-xs outline-none focus:border-black font-mono font-bold"
+                                 value={opt.price_change}
+                                 onChange={(e) => {
+                                     const newOpts = [...formData.options];
+                                     newOpts[idx].price_change = parseFloat(e.target.value) || 0;
+                                     setFormData({...formData, options: newOpts});
+                                 }}
+                             />
+                         </div>
+                         <div className="self-end pb-1">
+                             <button 
+                                 type="button" 
+                                 onClick={() => {
+                                     const newOpts = formData.options.filter((_, i) => i !== idx);
+                                     setFormData({...formData, options: newOpts});
+                                 }}
+                                 className="p-2 text-gray-400 hover:text-red-600 transition-colors hover:bg-red-50"
+                                 title="Seçeneği Sil"
+                             >
+                                 <Trash2 size={16}/>
+                             </button>
+                         </div>
                      </div>
                  ))}
              </div>
+             {formData.options.length > 0 && (
+                 <div className="text-[9px] text-gray-500 font-bold uppercase mt-2 text-center bg-yellow-50 p-1 border border-yellow-100 text-yellow-800">
+                    * Ek ücret ürünün ana fiyatına {formData.price ? `(₺${formData.price})` : ''} eklenecektir.
+                 </div>
+             )}
           </div>
 
           <div className="flex items-center gap-2 pt-2">
