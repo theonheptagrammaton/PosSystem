@@ -274,20 +274,20 @@ export default function MobileMenu() {
                                           <div className="flex items-center border-2 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)]">
                                               <button 
                                                 onClick={() => removeFromCart(`${product.id}-`)}
-                                                className="w-10 h-10 flex items-center justify-center text-black hover:bg-gray-100 transition-colors border-r-2 border-black active:bg-gray-200"
+                                                className="w-10 h-10 flex items-center justify-center bg-black text-white hover:bg-gray-800 transition-colors border-r-2 border-black active:bg-gray-700"
                                               >
-                                                <Minus size={16} strokeWidth={3} color="black" />
+                                                <Minus size={16} strokeWidth={3} />
                                               </button>
                                               
-                                              <div className="font-black min-w-[40px] text-center text-lg text-black">
+                                              <div className="font-black min-w-[40px] text-center text-lg text-black bg-white">
                                                 {getProductQty(product.id)}
                                               </div>
 
                                               <button 
                                                 onClick={() => addToCart(product)}
-                                                className="w-10 h-10 flex items-center justify-center text-black hover:bg-gray-100 transition-colors border-l-2 border-black active:bg-gray-200"
+                                                className="w-10 h-10 flex items-center justify-center bg-black text-white hover:bg-gray-800 transition-colors border-l-2 border-black active:bg-gray-700"
                                               >
-                                                <Plus size={16} strokeWidth={3} color="black" />
+                                                <Plus size={16} strokeWidth={3} />
                                               </button>
                                           </div>
                                       </div>
