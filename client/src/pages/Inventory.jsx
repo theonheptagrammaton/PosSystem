@@ -628,11 +628,6 @@ export default function Inventory() {
                      </div>
                  ))}
              </div>
-             {formData.options.length > 0 && (
-                 <div className="text-[9px] text-gray-500 font-bold uppercase mt-2 text-center bg-yellow-50 p-1 border border-yellow-100 text-yellow-800">
-                    * Ek ücret ürünün ana fiyatına {formData.price ? `(₺${formData.price})` : ''} eklenecektir.
-                 </div>
-             )}
           </div>
 
           <div className="flex items-center gap-2 pt-2">
