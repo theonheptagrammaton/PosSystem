@@ -47,7 +47,7 @@
   }
 
   input, select, textarea {
-    @apply border border-gray outline-none px-4 py-2 focus:border-black transition-colors w-full bg-white text-black;
+    @apply border border-gray-200 outline-none px-4 py-2 focus:border-black transition-colors w-full bg-white text-black;
   }
 
   /* Loading Spinner */

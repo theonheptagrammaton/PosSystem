@@ -5,16 +5,6 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    colors: {
-      black: '#000000',
-      white: '#FFFFFF',
-      gray: {
-        DEFAULT: '#E5E5E5', // Only for borders
-        light: '#E5E5E5', 
-      },
-      transparent: 'transparent',
-      current: 'currentColor',
-    },
     borderRadius: {
       none: '0',
       sm: '0',
@@ -44,6 +34,11 @@ export default {
       borderWidth: {
         DEFAULT: '1px',
       },
+      colors: {
+        gray: {
+            DEFAULT: '#E5E5E5',
+        }
+      }
     },
   },
   plugins: [],
