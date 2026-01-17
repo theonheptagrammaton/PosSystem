@@ -287,7 +287,7 @@ export default function PosTerminal() {
 
         <div className="flex-1 flex overflow-hidden">
             {/* COLUMN 1: TABLES (Left Sidebar) */}
-            <div className="w-80 bg-white border-r border-black flex flex-col shadow-lg z-10">
+            <div className="w-64 lg:w-80 bg-white border-r border-black flex flex-col shadow-lg z-10 flex-shrink-0 transition-all duration-300">
                 <div className="p-4 bg-black text-white font-black uppercase text-xs tracking-widest flex items-center gap-2">
                     <Utensils size={14}/> MASALAR
                 </div>
@@ -336,7 +336,7 @@ export default function PosTerminal() {
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 gap-3 content-start bg-gray-50">
+                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-3 content-start bg-gray-50">
                     {tables.map(tId => {
                         const isBusy = busyTables.includes(tId);
                         const isSelected = selectedTable === tId;
@@ -345,7 +345,7 @@ export default function PosTerminal() {
                         <button 
                             key={tId}
                             onClick={() => handleTableSelect(tId)}
-                            className={`h-24 border-2 flex flex-col items-center justify-center transition-all relative
+                            className={`h-20 lg:h-24 border-2 flex flex-col items-center justify-center transition-all relative
                                 ${isSelected 
                                     ? 'bg-black text-white border-black z-10 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] translate-x-[-2px] translate-y-[-2px]' 
                                     : isBusy
@@ -381,20 +381,20 @@ export default function PosTerminal() {
                 </div>
 
                 {/* Product Grid */}
-                <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex-1 p-3 lg:p-6 overflow-y-auto bg-gray-50">
+                    <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4">
                         {products.map(p => (
                             <button 
                                 key={p.id}
                                 onClick={() => handleProductClick(p)}
-                                className="bg-white border-2 border-transparent hover:border-black transition-all text-left flex flex-col overflow-hidden min-h-[18rem] h-auto group shadow-md hover:shadow-xl hover:-translate-y-1"
+                                className="bg-white border-2 border-transparent hover:border-black transition-all text-left flex flex-col overflow-hidden min-h-[14rem] lg:min-h-[18rem] h-auto group shadow-md hover:shadow-xl hover:-translate-y-1"
                             >
-                                <div className="h-40 bg-gray-100 flex-shrink-0 relative overflow-hidden border-b border-gray-100 group-hover:border-black transition-colors">
+                                <div className="h-32 lg:h-40 bg-gray-100 flex-shrink-0 relative overflow-hidden border-b border-gray-100 group-hover:border-black transition-colors">
                                      {p.image_url ? (
                                          <img 
                                             src={p.image_url.startsWith('http') ? p.image_url : `${api.defaults.baseURL}${p.image_url}`} 
                                             alt={p.name}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 grayscale group-hover:grayscale-0"
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                          />
                                      ) : (
                                          <div className="w-full h-full flex items-center justify-center text-gray-300 group-hover:text-black transition-colors">
@@ -405,12 +405,12 @@ export default function PosTerminal() {
                                          EKLE +
                                      </div>
                                 </div>
-                                <div className="p-5 flex-1 flex flex-col justify-between">
+                                <div className="p-3 lg:p-5 flex-1 flex flex-col justify-between">
                                     <div>
-                                        <div className="font-black text-black leading-tight uppercase text-base break-words mb-2">{p.name}</div>
-                                        <div className="text-xs text-gray-500 font-mono uppercase break-words leading-relaxed group-hover:text-black transition-colors">{p.description}</div>
+                                        <div className="font-black text-black leading-tight uppercase text-xs lg:text-base break-words mb-2">{p.name}</div>
+                                        <div className="text-[10px] lg:text-xs text-gray-500 font-mono uppercase break-words leading-relaxed group-hover:text-black transition-colors">{p.description}</div>
                                     </div>
-                                    <div className="font-black text-xl text-black mt-4 text-right tracking-tight">₺{p.price}</div>
+                                    <div className="font-black text-base lg:text-xl text-black mt-2 lg:mt-4 text-right tracking-tight">₺{p.price}</div>
                                 </div>
                             </button>
                         ))}
@@ -419,12 +419,12 @@ export default function PosTerminal() {
             </div>
 
             {/* COLUMN 3: ORDER / CART (Right) */}
-            <div className="w-96 bg-white border-l border-black flex flex-col shadow-2xl z-10">
+            <div className="w-80 lg:w-96 bg-white border-l border-black flex flex-col shadow-2xl z-10 flex-shrink-0 transition-all duration-300">
                 {/* Header */}
-                <div className="h-16 bg-black text-white border-b border-gray-800 flex items-center justify-between px-6">
+                <div className="h-14 lg:h-16 bg-black text-white border-b border-gray-800 flex items-center justify-between px-4 lg:px-6">
                     <div>
-                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">SİPARİŞ ÖZETİ</div>
-                        <div className="text-xl font-black uppercase tracking-tighter">{typeof selectedTable === 'number' ? `MASA ${selectedTable}` : selectedTable}</div>
+                        <div className="text-[9px] lg:text-[10px] text-gray-400 font-bold uppercase tracking-widest">SİPARİŞ ÖZETİ</div>
+                        <div className="text-lg lg:text-xl font-black uppercase tracking-tighter">{typeof selectedTable === 'number' ? `MASA ${selectedTable}` : selectedTable}</div>
                     </div>
                     {selectedTable && (
                         <button onClick={() => fetchTableOrders(selectedTable)} className="p-2 hover:bg-gray-800 transition-colors">
@@ -464,14 +464,14 @@ export default function PosTerminal() {
                                     <div className="flex items-center gap-1 bg-white border-2 border-black">
                                         <button 
                                             onClick={() => handleItemRemove(item.id)}
-                                            className="w-8 h-8 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-black text-lg active:scale-95"
+                                            className="w-6 h-6 lg:w-8 lg:h-8 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-black text-base lg:text-lg active:scale-95"
                                         >
                                             -
                                         </button>
-                                        <span className="font-black w-8 text-center text-sm">{item.quantity}</span>
+                                        <span className="font-black w-6 lg:w-8 text-center text-xs lg:text-sm">{item.quantity}</span>
                                         <button 
                                             onClick={() => handleProductClick(item)} 
-                                            className="w-8 h-8 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-black text-lg active:scale-95 border-l-2 border-black"
+                                            className="w-6 h-6 lg:w-8 lg:h-8 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-black text-base lg:text-lg active:scale-95 border-l-2 border-black"
                                         >
                                             +
                                         </button>

@@ -214,7 +214,7 @@ export default function MobileMenu() {
                                <img 
                                  src={product.image_url.startsWith('http') ? product.image_url : `${api.defaults.baseURL}${product.image_url}`} 
                                  alt={product.name}
-                                 className="w-full h-full object-cover grayscale"
+                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                />
                              </div>
                            )}

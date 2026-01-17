@@ -389,7 +389,7 @@ export default function Inventory() {
                            <img 
                             src={p.image_url.startsWith('http') ? p.image_url : `${api.defaults.baseURL}${p.image_url}`} 
                             alt={p.name} 
-                            className="w-12 h-12 object-cover border-2 border-gray-200 inline-block grayscale group-hover:grayscale-0 transition-all"
+                            className="w-12 h-12 object-cover border-2 border-gray-200 inline-block transition-all"
                            />
                          ) : (
                            <div className="w-12 h-12 border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-[9px] font-black text-gray-400">NO IMG</div>
@@ -535,7 +535,7 @@ export default function Inventory() {
                <div className="mt-2 border-2 border-dashed border-gray-300 p-4 bg-gray-50 flex items-center justify-between">
                   <img 
                     src={formData.image_url.startsWith('http') ? formData.image_url : `${api.defaults.baseURL}${formData.image_url}`} 
-                    className="h-16 w-16 object-cover border border-black grayscale" 
+                    className="h-16 w-16 object-cover border border-black" 
                     alt="Önizleme"
                   />
                   <button 
