@@ -419,11 +419,6 @@ export default function MobileMenu() {
                                     <span className="font-mono font-bold text-xs block">
                                         {opt.price_change > 0 ? `+₺${extraPrice.toFixed(2)}` : 'ÜCRETSİZ'}
                                     </span>
-                                    {opt.price_change > 0 && (
-                                        <span className={`text-[9px] font-bold block mt-0.5 ${isSelected ? 'text-gray-400' : 'text-gray-400'}`}>
-                                            (₺{basePrice} + ₺{extraPrice} = ₺{totalPrice})
-                                        </span>
-                                    )}
                                   </div>
                               </button>
                           );

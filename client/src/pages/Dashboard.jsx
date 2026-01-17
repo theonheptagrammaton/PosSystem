@@ -10,7 +10,7 @@ import io from 'socket.io-client';
 import api from '../api';
 import Modal from '../components/Modal'; 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { X, RefreshCcw, TrendingUp, Activity, DollarSign, LogOut } from 'lucide-react';
+import { X, RefreshCcw, TrendingUp, Activity, DollarSign, LogOut, Zap, PieChart, AlertTriangle, Target, Award } from 'lucide-react';
 
 export default function Dashboard() {
   const { isGodMode, toggleGodMode } = useGodMode();
@@ -183,34 +183,80 @@ export default function Dashboard() {
 
   const generateTactics = () => {
     const tactics = [];
+    const validOrders = orders.filter(o => o.status === 'TAMAMLANDI' || o.status === 'COMPLETED');
+    const totalRevenue = validOrders.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+    const orderCount = validOrders.length;
+    
+    // 1. Hourly Analysis (Rush Hour)
     const hourly = calculateHourlyData();
     const busyHour = hourly.reduce((max, curr) => curr.revenue > max.revenue ? curr : max, hourly[0]);
-    
-    // Busy Hour Tactic
     if (busyHour.revenue > 0) {
         tactics.push({
             title: 'YOĞUN SAAT ANALİZİ',
-            message: `SAAT ${busyHour.hour}:00 EN ÇOK CİRO ELDE EDİLEN SAAT. PERSONEL TAKVİYESİ ÖNERİLİR.`,
+            message: `SAAT ${busyHour.hour}:00 CİRONUZUN ZİRVESİ. BU SAATTE MUTFAK PERSONELİNİ ARTIRARAK SERVİS HIZINIZI %30 İYİLEŞTİREBİLİRSİNİZ.`,
             icon: 'Clock'
         });
     }
 
-    // Top Product Tactic
-    const topProds = calculateTopProducts();
-    if (topProds.length > 0) {
+    // 2. Average Order Value (AOV) Analysis
+    if (orderCount > 0) {
+        const aov = totalRevenue / orderCount;
         tactics.push({
-            title: 'YILDIZ ÜRÜN',
-            message: `${topProds[0].name} EN ÇOK SATAN ÜRÜNÜNÜZ. BUNU BUNDLE MENÜ YAPARAK KÂRINIZI ARTIRABİLİRSİNİZ.`,
-            icon: 'Star'
+            title: 'SEPET BÜYÜTME FIRSATI',
+            message: `ORTALAMA SİPARİŞ TUTARINIZ ₺${aov.toFixed(0)}. GARSONLARINIZI "YAN ÜRÜN" (İÇECEK/TATLI) ÖNERMEYE TEŞVİK EDEREK BUNU ₺${(aov * 1.2).toFixed(0)} SEVİYESİNE ÇIKARABİLİRSİNİZ.`,
+            icon: 'TrendingUp'
+        });
+    }
+
+    // 3. Category Dominance
+    const catDist = calculateCategoryDist();
+    if (catDist.length > 0) {
+        const topCat = catDist.sort((a,b) => b.value - a.value)[0];
+        const share = totalRevenue > 0 ? Math.round((topCat.value / totalRevenue) * 100) : 0;
+        tactics.push({
+            title: 'KATEGORİ DOMİNASYONU',
+            message: `CİRONUZUN %${share}'Sİ [${topCat.name}] KATEGORİSİNDEN GELİYOR. BU KATEGORİYE YENİ "PREMIUM" SEÇENEKLER EKLEYEREK KÂRLILIĞI ARTIRIN.`,
+            icon: 'PieChart'
+        });
+    }
+
+    // 4. Dead Stock Analysis (Underperforming Products)
+    // Find products included in orders
+    const soldProductIds = new Set();
+    validOrders.forEach(o => {
+        (o.details || o.items || []).forEach(i => soldProductIds.add(i.id));
+    });
+    
+    const unsoldProducts = products.filter(p => !soldProductIds.has(p.id));
+    if (unsoldProducts.length > 0) {
+        const randomUnsold = unsoldProducts.slice(0, 2).map(p => p.name).join(', ');
+        tactics.push({
+            title: 'ÖLÜ YATIRIM UYARISI',
+            message: `[${randomUnsold}] GİBİ ÜRÜNLER HİÇ SATILMADI. MENÜDEN ÇIKARMAYI VEYA GÜNÜN FIRSATI OLARAK SUNMAYI DEĞERLENDİRİN.`,
+            icon: 'AlertTriangle'
+        });
+    }
+
+    // 5. Cancellation Analysis
+    const cancelledCount = orders.filter(o => o.status === 'İPTAL' || o.status === 'REJECTED' || o.status === 'CANCELLED').length;
+    if (cancelledCount > 2) {
+        const cancelRate = Math.round((cancelledCount / orders.length) * 100);
+        tactics.push({
+            title: 'KAYIP KAZANÇ ALARMI',
+            message: `SİPARİŞLERİN %${cancelRate}'İ İPTAL EDİLMİŞ. MUTFAK VE SERVİS KOORDİNASYONUNU GÖZDEN GEÇİREREK BU KAÇAĞI ÖNLEYİN.`,
+            icon: 'LogOut'
         });
     }
     
-    // General Trend (Placeholder logic as we don't have historical comparison easily available on frontend without more data)
-    tactics.push({
-        title: 'SATIŞ TRENDİ',
-        message: 'SİPARİŞLERİNİZ STABİL BİR ARTIŞ GÖSTERİYOR. KAMPANYA İLE DESTEKLEYEBİLİRSİNİZ.',
-        icon: 'TrendingUp'
-    });
+    // 6. Star Product Logic
+    const topProds = calculateTopProducts();
+    if (topProds.length > 0) {
+         tactics.push({
+            title: 'YILDIZ ÜRÜN',
+            message: `${topProds[0].name} MÜŞTERİLERİN FAVORİSİ. BU ÜRÜNÜ SOSYAL MEDYADA REKLAM ÇIKARAK YENİ MÜŞTERİ ÇEKEBİLİRSİNİZ.`,
+            icon: 'Award'
+        });
+    }
 
     return tactics;
   };
@@ -327,22 +373,25 @@ export default function Dashboard() {
           <div className="bg-black p-0 border-2 border-white/20 flex flex-col overflow-hidden hover:border-white transition-colors">
               <div className="p-6 border-b-2 border-white/20 bg-white/5">
                   <h3 className="font-black text-sm text-white mb-2 flex items-center gap-2 uppercase tracking-widest">
-                      <TrendingUp size={16} />
+                      <Zap size={16} className="text-yellow-400" />
                       KÂR ARTIRMA TAKTİKLERİ
                   </h3>
-                  <p className="text-[10px] text-gray-400 font-mono">YAPAY ZEKA DESTEKLİ SATIŞ METRİKLERİ</p>
+                  <p className="text-[10px] text-gray-400 font-mono">YAPAY ZEKA DESTEKLİ GELİŞMİŞ ANALİZLER</p>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[300px]">
                   {tacticsData.length > 0 ? (
                       tacticsData.map((tactic, idx) => (
-                          <div key={idx} className="flex gap-4 p-4 border border-white/10 hover:border-white transition-colors group bg-black">
+                          <div key={idx} className="flex gap-4 p-4 border border-white/10 hover:border-white transition-colors group bg-black animate-fadeIn">
                               <div className="shrink-0 mt-1">
                                   <div className="w-8 h-8 flex items-center justify-center text-white border border-white group-hover:bg-white group-hover:text-black transition-colors">
                                       {tactic.icon === 'TrendingUp' && <TrendingUp size={16} />}
                                       {tactic.icon === 'Clock' && <Activity size={16} />}
                                       {tactic.icon === 'Star' && <DollarSign size={16} />}
-                                      {tactic.icon === 'AlertTriangle' && <LogOut size={16} className="rotate-180" />} 
+                                      {tactic.icon === 'LogOut' && <LogOut size={16} />}
+                                      {tactic.icon === 'PieChart' && <PieChart size={16} />}
+                                      {tactic.icon === 'AlertTriangle' && <AlertTriangle size={16} className="text-red-500" />}
+                                      {tactic.icon === 'Award' && <Award size={16} className="text-yellow-500" />}
                                   </div>
                               </div>
                               <div>
@@ -354,7 +403,7 @@ export default function Dashboard() {
                   ) : (
                       <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-2">
                           <Activity size={24} className="opacity-20" />
-                          <p className="text-[10px] uppercase tracking-widest">VERİ TOPLANIYOR...</p>
+                          <p className="text-[10px] uppercase tracking-widest">VERİ ANALİZİ YAPILIYOR...</p>
                       </div>
                   )}
               </div>
