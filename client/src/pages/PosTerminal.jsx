@@ -293,7 +293,7 @@ export default function PosTerminal() {
                 </div>
 
                 {/* Quick Orders Section */}
-                <div className="p-3 grid grid-cols-3 gap-2 border-b border-gray-200 bg-white">
+                <div className="p-4 grid grid-cols-2 gap-3 border-b border-gray-200 bg-white shadow-sm">
                     {[
                         { id: 'GEL-AL', label: 'GEL AL' },
                         { id: 'TELEFON', label: 'TELEFON' },
@@ -305,10 +305,10 @@ export default function PosTerminal() {
                         <button
                             key={type.id}
                             onClick={() => handleTableSelect(type.id)}
-                            className={`p-3 border font-bold text-[10px] uppercase transition-all flex items-center justify-center text-center leading-tight
+                            className={`p-4 border-2 font-black text-xs uppercase transition-all flex items-center justify-center text-center leading-tight tracking-widest
                                 ${selectedTable === type.id 
-                                    ? 'bg-black text-white border-black' 
-                                    : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
+                                    ? 'bg-black text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' 
+                                    : 'bg-white text-black border-gray-200 hover:bg-black hover:text-white hover:border-black'}`}
                         >
                             {type.label}
                         </button>
@@ -336,7 +336,7 @@ export default function PosTerminal() {
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 gap-2 content-start bg-gray-50">
+                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 gap-3 content-start bg-gray-50">
                     {tables.map(tId => {
                         const isBusy = busyTables.includes(tId);
                         const isSelected = selectedTable === tId;
@@ -345,18 +345,18 @@ export default function PosTerminal() {
                         <button 
                             key={tId}
                             onClick={() => handleTableSelect(tId)}
-                            className={`h-20 border-2 flex flex-col items-center justify-center transition-all
+                            className={`h-24 border-2 flex flex-col items-center justify-center transition-all relative
                                 ${isSelected 
-                                    ? 'bg-black text-white border-black scale-105 z-10 shadow-xl' 
+                                    ? 'bg-black text-white border-black z-10 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] translate-x-[-2px] translate-y-[-2px]' 
                                     : isBusy
-                                        ? 'bg-gray-800 text-white border-gray-900' // Dark Gray for Busy 
-                                        : 'bg-white text-black border-gray-200 hover:border-black'}`}
+                                        ? 'bg-gray-800 text-white border-gray-800' // Dark Gray for Busy 
+                                        : 'bg-white text-black border-gray-200 hover:border-black hover:bg-black hover:text-white'}`}
                         >
                             {/* Table Number */}
-                            <span className="font-black text-xl tracking-tighter">{tId}</span>
+                            <span className="font-black text-2xl tracking-tighter">{tId}</span>
                             
                             {/* Status Text */}
-                            <span className="text-[9px] uppercase tracking-widest mt-1 opacity-70 font-bold">
+                            <span className={`text-[9px] uppercase tracking-[0.2em] mt-2 font-bold ${isBusy || isSelected ? 'text-white/70' : 'text-gray-400 group-hover:text-white/70'}`}>
                                 {isBusy ? 'DOLU' : 'BOŞ'}
                             </span>
                         </button>
@@ -387,27 +387,30 @@ export default function PosTerminal() {
                             <button 
                                 key={p.id}
                                 onClick={() => handleProductClick(p)}
-                                className="bg-white border-2 border-transparent hover:border-black transition-all text-left flex flex-col overflow-hidden min-h-[16rem] h-auto group shadow-sm hover:shadow-lg"
+                                className="bg-white border-2 border-transparent hover:border-black transition-all text-left flex flex-col overflow-hidden min-h-[18rem] h-auto group shadow-md hover:shadow-xl hover:-translate-y-1"
                             >
-                                <div className="h-32 bg-gray-100 flex-shrink-0 relative overflow-hidden border-b border-gray-100">
+                                <div className="h-40 bg-gray-100 flex-shrink-0 relative overflow-hidden border-b border-gray-100 group-hover:border-black transition-colors">
                                      {p.image_url ? (
                                          <img 
                                             src={p.image_url.startsWith('http') ? p.image_url : `${api.defaults.baseURL}${p.image_url}`} 
                                             alt={p.name}
-                                            className="w-full h-full object-cover transition-transform group-hover:scale-110 grayscale group-hover:grayscale-0"
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 grayscale group-hover:grayscale-0"
                                          />
                                      ) : (
-                                         <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                             <Utensils size={32} />
+                                         <div className="w-full h-full flex items-center justify-center text-gray-300 group-hover:text-black transition-colors">
+                                             <Utensils size={40} />
                                          </div>
                                      )}
+                                     <div className="absolute top-2 right-2 bg-black text-white text-[10px] font-bold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
+                                         EKLE +
+                                     </div>
                                 </div>
-                                <div className="p-4 flex-1 flex flex-col justify-between">
+                                <div className="p-5 flex-1 flex flex-col justify-between">
                                     <div>
-                                        <div className="font-black text-black leading-tight uppercase text-sm break-words">{p.name}</div>
-                                        <div className="text-[10px] text-gray-400 mt-1 font-mono uppercase break-words">{p.description}</div>
+                                        <div className="font-black text-black leading-tight uppercase text-base break-words mb-2">{p.name}</div>
+                                        <div className="text-xs text-gray-500 font-mono uppercase break-words leading-relaxed group-hover:text-black transition-colors">{p.description}</div>
                                     </div>
-                                    <div className="font-black text-lg text-black mt-2 text-right">₺{p.price}</div>
+                                    <div className="font-black text-xl text-black mt-4 text-right tracking-tight">₺{p.price}</div>
                                 </div>
                             </button>
                         ))}
@@ -458,17 +461,17 @@ export default function PosTerminal() {
                                     <div className="font-mono font-black text-sm">
                                         ₺{(parseFloat(item.price) * item.quantity).toFixed(2)}
                                     </div>
-                                    <div className="flex items-center gap-1 bg-gray-100 p-0.5 border border-gray-200">
+                                    <div className="flex items-center gap-1 bg-white border-2 border-black">
                                         <button 
                                             onClick={() => handleItemRemove(item.id)}
-                                            className="w-6 h-6 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-bold text-xs"
+                                            className="w-8 h-8 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-black text-lg active:scale-95"
                                         >
                                             -
                                         </button>
-                                        <span className="font-bold w-6 text-center text-xs">{item.quantity}</span>
+                                        <span className="font-black w-8 text-center text-sm">{item.quantity}</span>
                                         <button 
                                             onClick={() => handleProductClick(item)} 
-                                            className="w-6 h-6 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-bold text-xs"
+                                            className="w-8 h-8 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-black text-lg active:scale-95 border-l-2 border-black"
                                         >
                                             +
                                         </button>

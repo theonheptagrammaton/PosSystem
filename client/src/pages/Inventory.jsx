@@ -316,14 +316,14 @@ export default function Inventory() {
                         <button 
                             onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'up')}
                             disabled={categories.indexOf(cat) === 0}
-                            className={`hover:text-gray-300 disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                            className={`transition-colors disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}
                         >
                             <ArrowUp size={10} />
                         </button>
                         <button 
                             onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'down')}
                             disabled={categories.indexOf(cat) === categories.length - 1}
-                            className={`hover:text-gray-300 disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                            className={`transition-colors disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}
                         >
                             <ArrowDown size={10} />
                         </button>
@@ -336,7 +336,7 @@ export default function Inventory() {
                     </button>
                     <button 
                         onClick={(e) => handleDeleteCategory(e, cat.id)}
-                        className={`hover:text-red-500 transition-colors ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                        className={`transition-colors ${selectedCategory?.id === cat.id ? 'text-white hover:text-red-300' : 'text-black hover:text-red-600'}`}
                     >
                         <Trash2 size={14} />
                     </button>

@@ -124,35 +124,26 @@ export default function MobileMenu() {
 
   if (orderPlaced) {
     return (
-      <div className="bg-white min-h-screen pb-24 relative font-sans">
-        {/* Success Banner */}
-        <div className="sticky top-0 z-50 bg-black text-white p-4 flex items-center justify-between animate-fadeIn shadow-lg">
-          <div className="flex items-center gap-3">
-            <CheckCircle size={24} className="text-white" />
-            <div>
-              <div className="font-black uppercase tracking-widest text-sm">Sipariş Alındı</div>
-              <div className="text-[10px] font-bold opacity-70">Mutfağımız hazırlıyor...</div>
-            </div>
-          </div>
-          <button 
+      <div className="fixed inset-0 z-50 bg-black text-white flex flex-col items-center justify-center p-8 animate-fadeIn">
+        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-8 animate-slideUp">
+             <CheckCircle size={48} className="text-black" />
+        </div>
+        
+        <h1 className="text-3xl font-black uppercase tracking-widest text-center mb-4 leading-tight">SİPARİŞİNİZ ALINDI</h1>
+        <div className="w-16 h-1 bg-white mb-6"></div>
+        <p className="text-sm font-mono text-gray-400 text-center uppercase mb-12 max-w-xs leading-relaxed">
+            Siparişiniz mutfağımıza iletildi. Hazırlanmaya başlandı.
+        </p>
+
+        <button 
             onClick={() => setOrderPlaced(false)}
-            className="border-2 border-white hover:bg-white hover:text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all"
-          >
-            YENİ SİPARİŞ
-          </button>
-        </div>
-
-        {/* Header */}
-        <div className="p-8 border-b border-gray-100 flex flex-col items-center justify-center bg-white text-black">
-           <h1 className="text-xl font-black uppercase tracking-[0.3em] text-center">{data.company_name || 'RESTORAN MENÜ'}</h1>
-           <div className="h-4 w-px bg-black my-2"></div>
-           <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Masa {tableId}</p>
-        </div>
-
-        {/* Re-render categorization for continued browsing */}
-        <div className="p-4 flex flex-col gap-4 opacity-50 pointer-events-none grayscale">
-             {/* Simplified view for background */}
-             <div className="text-center text-xs font-mono uppercase mt-10">Siparişiniz hazırlanıyor...</div>
+            className="w-full max-w-xs bg-white text-black py-5 font-black uppercase tracking-[0.3em] text-xs hover:bg-gray-200 transition-all border-2 border-white active:scale-95"
+        >
+            YENİ SİPARİŞ VER
+        </button>
+        
+        <div className="absolute bottom-8 text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+            MASA: {tableId}
         </div>
       </div>
     );

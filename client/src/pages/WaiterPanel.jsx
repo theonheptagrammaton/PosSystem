@@ -139,16 +139,16 @@ export default function WaiterPanel() {
                       <LogOut size={20}/>
                   </button>
               </div>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                   {tables.map(t => (
                       <button 
                           key={t}
                           onClick={() => handleTableSelect(t)}
-                          className="h-32 bg-white border-2 border-black flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+                          className="h-40 bg-white border-2 border-black flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.5)] active:translate-x-[0px] active:translate-y-[0px] active:shadow-none"
                       >
-                          <div className="mb-2 group-hover:scale-110 transition-transform"><Table size={24}/></div>
-                          <span className="text-3xl font-black">{t}</span>
-                          <span className="text-[10px] font-bold tracking-widest uppercase mt-1 opacity-50">MASA</span>
+                          <div className="mb-4 group-hover:scale-110 transition-transform duration-300"><Table size={32}/></div>
+                          <span className="text-4xl font-black">{t}</span>
+                          <span className="text-[10px] font-bold tracking-[0.3em] uppercase mt-2 opacity-50 group-hover:opacity-100 transition-opacity">MASA</span>
                       </button>
                   ))}
               </div>
@@ -195,18 +195,18 @@ export default function WaiterPanel() {
                               addToCart(p);
                           }
                       }}
-                      className="w-full bg-white border-b border-gray-200 p-6 flex justify-between items-center active:bg-black active:text-white group transition-colors text-left"
+                      className="w-full bg-white border-b border-gray-100 p-6 flex justify-between items-center active:bg-black active:text-white group transition-all text-left hover:bg-gray-50 min-h-[5rem]"
                   >
                       <div>
-                          <div className="font-black text-lg uppercase">{p.name}</div>
-                          <div className="text-xs text-gray-500 group-active:text-gray-400 font-mono mt-1">{p.description}</div>
+                          <div className="font-black text-xl uppercase mb-1">{p.name}</div>
+                          <div className="text-xs text-gray-500 group-active:text-gray-400 font-mono uppercase tracking-wide">{p.description}</div>
                           {p.options && p.options.length > 0 && (
-                              <div className="text-[10px] font-bold mt-2 flex items-center gap-1 uppercase tracking-widest text-blue-600 group-active:text-blue-300">
-                                  <span>Seçenekler</span> <ArrowRight size={12}/>
+                              <div className="text-[10px] font-bold mt-3 flex items-center gap-2 uppercase tracking-widest text-black group-active:text-white border-l-2 border-black group-active:border-white pl-2">
+                                  <span>SEÇENEKLER MEVCUT</span> <ArrowRight size={14}/>
                               </div>
                           )}
                       </div>
-                      <div className="font-mono font-bold text-lg">₺{parseFloat(p.price).toFixed(2)}</div>
+                      <div className="font-black text-2xl tracking-tight">₺{parseFloat(p.price).toFixed(2)}</div>
                   </button>
               ))}
           </div>
@@ -245,10 +245,10 @@ export default function WaiterPanel() {
                     <button 
                         onClick={submitOrder} 
                         disabled={isSubmitting}
-                        className="w-full py-4 bg-black text-white border-2 border-black font-black text-lg uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                        className="w-full h-20 bg-black text-white border-2 border-black font-black text-xl uppercase tracking-widest hover:bg-gray-900 transition-all flex items-center justify-center gap-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                     >
-                        {isSubmitting ? <div className="spinner w-5 h-5 border-white border-t-transparent" /> : <Send size={20} />}
-                        SİPARİŞİ GÖNDER (₺{cart.reduce((acc, i) => acc + (i.price * i.quantity), 0).toFixed(2)})
+                        {isSubmitting ? <div className="spinner w-6 h-6 border-white border-t-transparent" /> : <Send size={24} />}
+                        SİPARİŞİ GÖNDER • ₺{cart.reduce((acc, i) => acc + (i.price * i.quantity), 0).toFixed(2)}
                     </button>
                  </>
              ) : (
