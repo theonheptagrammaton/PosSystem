@@ -623,11 +623,6 @@ export default function PosTerminal() {
                                             <span className="font-mono font-bold text-xs block">
                                                 {opt.price_change > 0 ? `+₺${extraPrice.toFixed(2)}` : 'ÜCRETSİZ'}
                                             </span>
-                                            {opt.price_change > 0 && (
-                                                <span className="text-[9px] font-bold text-gray-400 block mt-0.5">
-                                                    (₺{basePrice} + ₺{extraPrice} = ₺{totalPrice})
-                                                </span>
-                                            )}
                                         </div>
                                     </button>
                                 );
