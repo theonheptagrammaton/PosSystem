@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { ShoppingCart, ArrowLeft, Trash2, Utensils, CheckCircle, RefreshCcw, Bell, XCircle } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Trash2, Utensils, CheckCircle, RefreshCcw, Bell, XCircle, ChevronRight, AlertCircle } from 'lucide-react';
 import notificationSound from '../assets/zil.mp3';
 import io from 'socket.io-client';
 import { useNotification } from '../context/NotificationContext';
@@ -14,21 +14,20 @@ export default function PosTerminal() {
 
   // --- State ---
   const [branch, setBranch] = useState(null);
-  const [tables, setTables] = useState([]); // List of table IDs
-  const [busyTables, setBusyTables] = useState([]); // List of table IDs with active orders
-  const [selectedTable, setSelectedTable] = useState(null); // Currently selected table ID
+  const [tables, setTables] = useState([]); 
+  const [busyTables, setBusyTables] = useState([]);
+  const [selectedTable, setSelectedTable] = useState(null);
   
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [products, setProducts] = useState([]);
   
-  // Cart is now "Table Orders"
   const [tableOrders, setTableOrders] = useState([]); 
   const [tableTotal, setTableTotal] = useState(0);
 
-  // Pending Orders
   const [pendingOrders, setPendingOrders] = useState([]);
-  const [viewingPendingOrder, setViewingPendingOrder] = useState(null); // Pending order being reviewed in Modal
+  const [viewingPendingOrder, setViewingPendingOrder] = useState(null);
+  const [optionModal, setOptionModal] = useState(null);
 
   // --- Initialization ---
   useEffect(() => {
@@ -44,35 +43,30 @@ export default function PosTerminal() {
     if (selectedTable && branch) {
       fetchTableOrders(selectedTable);
       
-      // Setup Socket for THIS branch/tenant
       if (!socketRef.current) {
          socketRef.current = io(api.defaults.baseURL, {
             query: { tenantId: branch.tenant_id }
          });
          
           socketRef.current.on('new_order', (data) => {
-             // If this is a pending order or a new waiter order, play sound
              if (data.status === 'WAITING_APPROVAL' || (data.status === 'PENDING' && data.source === 'GARSON')) {
                  const audio = new Audio(notificationSound);
                  audio.play().catch(e => console.error('Audio play error', e));
                  if (data.status === 'WAITING_APPROVAL') fetchPendingOrders();
              }
              
-             // Refresh active table orders if we are looking at that table
              const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
              if (data.table_no === formattedTableNo) {
                  fetchTableOrders(selectedTable);
              }
              
-             // Always refresh table colors (RED/WHITE)
              fetchBranchStatus(branch.tenant_id, branch.id);
              
-             // If it was an approval/rejection event, refresh pending list
              if (data.is_approval) fetchPendingOrders();
          });
          
          socketRef.current.on('table_closed', () => {
-             fetchBranchStatus(branch.tenant_id, branch.id); // Refresh status when a table is paid
+             fetchBranchStatus(branch.tenant_id, branch.id);
          });
       }
     }
@@ -89,7 +83,6 @@ export default function PosTerminal() {
       }
       
       setBranch(b);
-      // Generate Tables based on count
       const tableList = Array.from({ length: b.table_count || 10 }, (_, i) => i + 1);
       setTables(tableList);
       fetchBranchStatus(b.tenant_id, b.id); 
@@ -103,10 +96,9 @@ export default function PosTerminal() {
       try {
           const tId = tenantIdOverride || branch?.tenant_id;
           const bId = branchIdOverride || branch?.id;
-          if (!tId || !bId) return; // Need IDs
+          if (!tId || !bId) return;
 
           const res = await api.get(`/api/orders/status/${tId}/${bId}`); 
-          // response is array of strings e.g. ["MASA-1", "MASA-5"]
           const busyIds = res.data.map(str => parseInt(str.replace('MASA-', '')));
           setBusyTables(busyIds);
       } catch (err) { console.error('Status fetch error', err); }
@@ -130,10 +122,7 @@ export default function PosTerminal() {
   const fetchTableOrders = async (tableId) => {
       if (!branch) return;
       try {
-          // table_no format: MASA-1 or just "TRENDYOL"
-          // If tableId is number (standard table), prefix MASA-. If string (Quick Order), use as is.
           const formattedTableNo = typeof tableId === 'number' ? `MASA-${tableId}` : tableId;
-          
           const res = await api.get(`/api/orders/table/${branch.tenant_id}/${branch.id}/${formattedTableNo}`);
           setTableOrders(res.data.items || []);
           setTableTotal(res.data.total_amount || 0);
@@ -185,7 +174,6 @@ export default function PosTerminal() {
         return;
       }
 
-      // If product has options and none selected yet, open modal
       if (!selectedOptions.length && product.options && product.options.length > 0) {
           setOptionModal({ product, selected: [] });
           return;
@@ -195,13 +183,12 @@ export default function PosTerminal() {
       const finalPrice = parseFloat(product.price) + optionPrice;
       const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
 
-      // Immediate Persistence: Add item as a new order row
       try {
           const payload = {
             tenant_id: branch.tenant_id,
-            branch_id: branch.id, // SEND BRANCH ID
+            branch_id: branch.id,
             table_no: formattedTableNo,
-            total_amount: finalPrice, // Price of this single addition
+            total_amount: finalPrice,
             items: [{
                 id: product.id,
                 name: product.name,
@@ -209,14 +196,13 @@ export default function PosTerminal() {
                 quantity: 1,
                 selectedOptions
             }],
-            status: 'PENDING', // Explicitly set as Active/Approved for POS
-            source: typeof selectedTable === 'number' ? 'POS' : selectedTable // Set Source to Platform Name if Quick Order
+            status: 'PENDING',
+            source: typeof selectedTable === 'number' ? 'POS' : selectedTable 
           };
           
           await api.post('/api/orders', payload);
-          // Refresh to show in list
           fetchTableOrders(selectedTable);
-          setOptionModal(null); // Close modal if open
+          setOptionModal(null);
       } catch (err) {
           showNotification({ title: 'HATA', message: 'Ürün eklenirken hata oluştu.', type: 'error' });
       }
@@ -227,22 +213,19 @@ export default function PosTerminal() {
       try {
           const formattedTableNo = typeof selectedTable === 'number' ? `MASA-${selectedTable}` : selectedTable;
           await api.delete(`/api/orders/table/${branch.tenant_id}/${branch.id}/${formattedTableNo}/item/${productId}`);
-          // Refresh happens via socket, but valid to optimistic update or fetch
           fetchTableOrders(selectedTable);
       } catch (err) {
           showNotification({ title: 'HATA', message: 'Ürün silinirken hata oluştu.', type: 'error' });
       }
   };
 
-  // Helper to group identical items
    const groupTableOrders = (items) => {
        const grouped = {};
        items.forEach(item => {
-           // Create unique key based on ID, Options AND Status
            const optionsKey = item.selectedOptions 
                ? item.selectedOptions.map(o => o.name).sort().join('-') 
                : '';
-           const status = item.parent_status || 'PENDING'; // Assume items inherit status from parent order row
+           const status = item.parent_status || 'PENDING';
            const key = `${item.id}-${optionsKey}-${status}`;
 
            if (grouped[key]) {
@@ -253,8 +236,6 @@ export default function PosTerminal() {
        });
        return Object.values(grouped);
    };
-
-  const [optionModal, setOptionModal] = useState(null);
 
   const handlePayment = async () => {
       if (!selectedTable) return;
@@ -287,43 +268,47 @@ export default function PosTerminal() {
       }
   };
 
-  if (!branch) return <div className="p-10 font-bold">Yükleniyor...</div>;
+  if (!branch) return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="spinner"></div>
+      </div>
+  );
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-100 overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-gray-100 overflow-hidden font-sans">
         {/* Top Bar */}
-        <div className="h-14 bg-black text-white flex items-center justify-between px-4 shrink-0 shadow-md z-20">
+        <div className="h-14 bg-black text-white flex items-center justify-between px-4 shrink-0 shadow-sm z-20">
             <div className="flex items-center gap-4">
                 <button onClick={() => window.close()} className="hover:text-gray-300"><ArrowLeft /></button>
-                <h1 className="font-bold tracking-widest text-lg">{branch.name} POS</h1>
+                <h1 className="font-black tracking-widest text-lg uppercase">{branch.name} POS</h1>
             </div>
-            <div className="font-mono text-sm">{new Date().toLocaleTimeString()}</div>
+            <div className="font-mono text-sm font-bold opacity-75">{new Date().toLocaleTimeString()}</div>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
             {/* COLUMN 1: TABLES (Left Sidebar) */}
-            <div className="w-80 bg-white border-r border-gray-300 flex flex-col shadow-lg z-10">
-                <div className="p-4 bg-gray-50 border-b border-gray-200 font-bold uppercase text-sm tracking-wider flex items-center gap-2">
-                    <Utensils size={16}/> Masalar
+            <div className="w-80 bg-white border-r border-black flex flex-col shadow-lg z-10">
+                <div className="p-4 bg-black text-white font-black uppercase text-xs tracking-widest flex items-center gap-2">
+                    <Utensils size={14}/> MASALAR
                 </div>
 
                 {/* Quick Orders Section */}
-                <div className="p-3 grid grid-cols-3 gap-3 border-b border-gray-200 bg-white">
+                <div className="p-3 grid grid-cols-3 gap-2 border-b border-gray-200 bg-white">
                     {[
-                        { id: 'GEL-AL', label: 'GEL AL', color: 'bg-green-100 text-green-800 border-green-200' },
-                        { id: 'TELEFON', label: 'TELEFON', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-                        { id: 'TRENDYOL', label: 'TRENDYOL', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-                        { id: 'YEMEKSEPETI', label: 'YEMEKSEPETİ', color: 'bg-red-100 text-red-800 border-red-200' },
-                        { id: 'GETIR', label: 'GETİR', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-                        { id: 'MIGROS', label: 'MIGROS', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+                        { id: 'GEL-AL', label: 'GEL AL' },
+                        { id: 'TELEFON', label: 'TELEFON' },
+                        { id: 'TRENDYOL', label: 'TRENDYOL' },
+                        { id: 'YEMEKSEPETI', label: 'YEMEKSEPETİ' },
+                        { id: 'GETIR', label: 'GETİR' },
+                        { id: 'MIGROS', label: 'MIGROS' },
                     ].map(type => (
                         <button
                             key={type.id}
                             onClick={() => handleTableSelect(type.id)}
-                            className={`p-3 rounded-xl border font-bold text-[10px] uppercase transition-all shadow-sm flex items-center justify-center text-center leading-tight
+                            className={`p-3 border font-bold text-[10px] uppercase transition-all flex items-center justify-center text-center leading-tight
                                 ${selectedTable === type.id 
-                                    ? 'bg-black text-white border-black scale-95 ring-2 ring-black ring-offset-1 z-10' 
-                                    : `${type.color} hover:brightness-95`}`}
+                                    ? 'bg-black text-white border-black' 
+                                    : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
                         >
                             {type.label}
                         </button>
@@ -332,8 +317,8 @@ export default function PosTerminal() {
 
                 {/* Pending Orders Section */}
                 {pendingOrders.length > 0 && (
-                    <div className="p-4 bg-yellow-50 border-b border-yellow-200">
-                        <div className="flex items-center gap-2 text-yellow-800 font-bold text-xs uppercase mb-2 animate-pulse">
+                    <div className="p-4 bg-gray-50 border-b border-gray-200">
+                        <div className="flex items-center gap-2 text-black font-black text-xs uppercase mb-2 animate-pulse">
                             <Bell size={14} /> Bekleyen Siparişler ({pendingOrders.length})
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -341,17 +326,17 @@ export default function PosTerminal() {
                                 <button 
                                     key={order.id}
                                     onClick={() => setViewingPendingOrder(order)}
-                                    className="bg-yellow-100 hover:bg-yellow-200 text-yellow-900 border border-yellow-300 rounded p-2 text-center"
+                                    className="bg-white hover:bg-black hover:text-white text-black border border-black p-2 text-center transition-colors shadow-sm"
                                 >
-                                    <div className="font-bold text-sm">{order.table_no}</div>
-                                    <div className="text-[10px]">₺{order.total_amount}</div>
+                                    <div className="font-black text-sm">{order.table_no}</div>
+                                    <div className="text-[10px] font-mono">₺{order.total_amount}</div>
                                 </button>
                             ))}
                         </div>
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 gap-3 content-start">
+                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-3 gap-2 content-start bg-gray-50">
                     {tables.map(tId => {
                         const isBusy = busyTables.includes(tId);
                         const isSelected = selectedTable === tId;
@@ -360,19 +345,19 @@ export default function PosTerminal() {
                         <button 
                             key={tId}
                             onClick={() => handleTableSelect(tId)}
-                            className={`h-20 rounded-xl border-2 flex flex-col items-center justify-center transition-all shadow-sm
+                            className={`h-20 border-2 flex flex-col items-center justify-center transition-all
                                 ${isSelected 
-                                    ? 'bg-black text-white border-black scale-105 z-10' 
+                                    ? 'bg-black text-white border-black scale-105 z-10 shadow-xl' 
                                     : isBusy
-                                        ? 'bg-red-600 text-black border-red-600' // Occupied Style: Red BG with Black Text
-                                        : 'bg-white text-gray-800 border-gray-200 hover:border-gray-400 hover:bg-gray-50'}`}
+                                        ? 'bg-gray-800 text-white border-gray-900' // Dark Gray for Busy 
+                                        : 'bg-white text-black border-gray-200 hover:border-black'}`}
                         >
-                            {/* Table Number - Always Visible */}
-                            <span className="font-bold text-xl">{tId}</span>
+                            {/* Table Number */}
+                            <span className="font-black text-xl tracking-tighter">{tId}</span>
                             
                             {/* Status Text */}
-                            <span className="text-[10px] uppercase tracking-widest mt-1">
-                                {isBusy ? 'DOLU' : ''}
+                            <span className="text-[9px] uppercase tracking-widest mt-1 opacity-70 font-bold">
+                                {isBusy ? 'DOLU' : 'BOŞ'}
                             </span>
                         </button>
                     )})}
@@ -380,15 +365,15 @@ export default function PosTerminal() {
             </div>
 
             {/* COLUMN 2: PRODUCTS (Middle) */}
-            <div className="flex-1 flex flex-col bg-gray-100 min-w-0">
+            <div className="flex-1 flex flex-col bg-white min-w-0">
                 {/* Categories */}
-                <div className="h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                <div className="h-16 bg-white border-b border-black flex items-center px-4 gap-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
                     {categories.map(cat => (
                         <button 
                             key={cat.id} 
                             onClick={() => setSelectedCategory(cat)}
-                            className={`px-6 py-2 rounded-full text-sm font-bold uppercase transition-colors
-                                ${selectedCategory?.id === cat.id ? 'bg-black text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                            className={`px-6 py-2 text-xs font-black uppercase tracking-widest transition-colors border border-transparent
+                                ${selectedCategory?.id === cat.id ? 'bg-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]' : 'bg-gray-100 text-gray-500 hover:text-black hover:border-black'}`}
                         >
                             {cat.name}
                         </button>
@@ -396,20 +381,20 @@ export default function PosTerminal() {
                 </div>
 
                 {/* Product Grid */}
-                <div className="flex-1 p-6 overflow-y-auto">
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                         {products.map(p => (
                             <button 
                                 key={p.id}
                                 onClick={() => handleProductClick(p)}
-                                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-black text-left flex flex-col overflow-hidden h-56 group"
+                                className="bg-white border-2 border-transparent hover:border-black transition-all text-left flex flex-col overflow-hidden min-h-[16rem] h-auto group shadow-sm hover:shadow-lg"
                             >
-                                <div className="h-24 bg-gray-50 flex-shrink-0 relative overflow-hidden">
+                                <div className="h-32 bg-gray-100 flex-shrink-0 relative overflow-hidden border-b border-gray-100">
                                      {p.image_url ? (
                                          <img 
                                             src={p.image_url.startsWith('http') ? p.image_url : `${api.defaults.baseURL}${p.image_url}`} 
                                             alt={p.name}
-                                            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                                            className="w-full h-full object-cover transition-transform group-hover:scale-110 grayscale group-hover:grayscale-0"
                                          />
                                      ) : (
                                          <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -417,12 +402,12 @@ export default function PosTerminal() {
                                          </div>
                                      )}
                                 </div>
-                                <div className="p-3 flex-1 flex flex-col justify-between">
+                                <div className="p-4 flex-1 flex flex-col justify-between">
                                     <div>
-                                        <div className="font-bold text-gray-800 leading-tight group-hover:underline text-sm line-clamp-2 min-h-[2.5rem]">{p.name}</div>
-                                        <div className="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{p.description}</div>
+                                        <div className="font-black text-black leading-tight uppercase text-sm break-words">{p.name}</div>
+                                        <div className="text-[10px] text-gray-400 mt-1 font-mono uppercase break-words">{p.description}</div>
                                     </div>
-                                    <div className="font-mono text-sm font-bold text-black mt-1">₺{p.price}</div>
+                                    <div className="font-black text-lg text-black mt-2 text-right">₺{p.price}</div>
                                 </div>
                             </button>
                         ))}
@@ -431,62 +416,63 @@ export default function PosTerminal() {
             </div>
 
             {/* COLUMN 3: ORDER / CART (Right) */}
-            <div className="w-96 bg-white border-l border-gray-300 flex flex-col shadow-xl z-10">
+            <div className="w-96 bg-white border-l border-black flex flex-col shadow-2xl z-10">
                 {/* Header */}
-                <div className="h-16 bg-gray-50 border-b border-gray-200 flex items-center justify-between px-6">
+                <div className="h-16 bg-black text-white border-b border-gray-800 flex items-center justify-between px-6">
                     <div>
-                        <div className="text-xs text-gray-500 font-bold uppercase">SEÇİLİ MASA / SİPARİŞ</div>
-                        <div className="text-2xl font-black">{typeof selectedTable === 'number' ? `MASA ${selectedTable}` : selectedTable}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">SİPARİŞ ÖZETİ</div>
+                        <div className="text-xl font-black uppercase tracking-tighter">{typeof selectedTable === 'number' ? `MASA ${selectedTable}` : selectedTable}</div>
                     </div>
                     {selectedTable && (
-                        <button onClick={() => fetchTableOrders(selectedTable)} className="p-2 hover:bg-gray-200 rounded-full">
+                        <button onClick={() => fetchTableOrders(selectedTable)} className="p-2 hover:bg-gray-800 transition-colors">
                             <RefreshCcw size={16} />
                         </button>
                     )}
                 </div>
 
                 {/* Order List */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="flex-1 overflow-y-auto p-0 bg-gray-50">
                     {!selectedTable ? (
-                         <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center opacity-50">
-                            <Utensils size={48} className="mb-4"/>
-                            <p>Sipariş eklemek için<br/>soldan bir masa seçin.</p>
+                         <div className="h-full flex flex-col items-center justify-center text-gray-300 text-center">
+                            <Utensils size={48} className="mb-4 opacity-50"/>
+                            <p className="font-bold uppercase text-xs tracking-widest">Masa Seçiniz</p>
                          </div>
                     ) : tableOrders.length === 0 ? (
-                        <div className="text-center text-gray-400 py-10 italic">Henüz sipariş yok.</div>
+                        <div className="text-center text-gray-400 py-20 italic font-mono text-xs">SİPARİŞ YOK</div>
                     ) : (
                         groupTableOrders(tableOrders).map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center border-b border-gray-100 pb-2 last:border-0">
-                                <div className="flex-1">
+                            <div key={idx} className="flex justify-between items-start p-4 border-b border-gray-200 bg-white hover:bg-gray-50 transition-colors">
+                                <div className="flex-1 pr-2">
                                     <div className="flex items-center gap-2">
-                                        <div className="font-bold text-gray-800">{item.name}</div>
-                                        {item.status === 'READY' && <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-black border border-green-200">READY</span>}
-                                        {item.status === 'PREPARING' && <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-black border border-blue-200">COOKING</span>}
+                                        <div className="font-black text-sm uppercase">{item.name}</div>
+                                        {item.status === 'READY' && <CheckCircle size={12} className="text-green-600"/>}
                                     </div>
-                                    <div className="text-xs text-gray-500 font-mono">₺{item.price}</div>
+                                    <div className="text-xs text-gray-500 font-mono mt-0.5">₺{item.price}</div>
                                     {item.selectedOptions && item.selectedOptions.length > 0 && (
-                                        <div className="text-[10px] text-blue-600 font-bold mt-1">
+                                        <div className="text-[10px] text-black font-bold uppercase mt-1 pl-2 border-l-2 border-black">
                                             {item.selectedOptions.map(o => o.name).join(', ')}
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button 
-                                        onClick={() => handleItemRemove(item.id)}
-                                        className="w-8 h-8 rounded-full bg-gray-200 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors font-bold"
-                                    >
-                                        -
-                                    </button>
-                                    <span className="font-bold w-6 text-center">{item.quantity}</span>
-                                    <button 
-                                        onClick={() => handleProductClick(item)} 
-                                        className="w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 flex items-center justify-center transition-colors font-bold"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                <div className="font-mono font-bold w-16 text-right">
-                                    ₺{(parseFloat(item.price) * item.quantity).toFixed(2)}
+                                <div className="flex flex-col items-end gap-2">
+                                    <div className="font-mono font-black text-sm">
+                                        ₺{(parseFloat(item.price) * item.quantity).toFixed(2)}
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-gray-100 p-0.5 border border-gray-200">
+                                        <button 
+                                            onClick={() => handleItemRemove(item.id)}
+                                            className="w-6 h-6 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-bold text-xs"
+                                        >
+                                            -
+                                        </button>
+                                        <span className="font-bold w-6 text-center text-xs">{item.quantity}</span>
+                                        <button 
+                                            onClick={() => handleProductClick(item)} 
+                                            className="w-6 h-6 hover:bg-black hover:text-white flex items-center justify-center transition-colors font-bold text-xs"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))
@@ -494,16 +480,16 @@ export default function PosTerminal() {
                 </div>
 
                 {/* Footer / Actions */}
-                <div className="p-6 bg-gray-50 border-t border-gray-200">
+                <div className="p-6 bg-white border-t-2 border-black shadow-[0px_-4px_10px_rgba(0,0,0,0.1)]">
                     <div className="flex justify-between items-center mb-6">
-                        <span className="text-gray-500 font-bold text-sm">TOPLAM</span>
-                        <span className="text-3xl font-black">₺{tableTotal.toFixed(2)}</span>
+                        <span className="text-gray-500 font-bold text-xs uppercase tracking-widest">TOPLAM TUTAR</span>
+                        <span className="text-3xl font-black tracking-tighter">₺{tableTotal.toFixed(2)}</span>
                     </div>
 
                     <button 
                         onClick={handlePayment}
                         disabled={!selectedTable || tableOrders.length === 0}
-                        className="w-full bg-black text-white h-16 rounded-xl font-bold text-lg uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                        className="w-full bg-black text-white h-16 font-black text-lg uppercase tracking-widest hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 border-2 border-black active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
                     >
                         <CheckCircle />
                         Hesabı Kapat
@@ -514,93 +500,86 @@ export default function PosTerminal() {
         
         {/* Pending Order Modal */}
         {viewingPendingOrder && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-                    <div className="bg-yellow-400 p-4 flex justify-between items-center">
-                        <h3 className="font-black text-black uppercase">SİPARİŞ ONAYI</h3>
-                        <button onClick={() => setViewingPendingOrder(null)} className="p-1 hover:bg-white/20 rounded"><ArrowLeft/></button>
+            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                <div className="bg-white w-full max-w-lg overflow-hidden border-2 border-white shadow-2xl animate-slideUp">
+                    <div className="bg-white p-6 border-b-2 border-black flex justify-between items-center">
+                        <h3 className="font-black text-2xl uppercase tracking-tighter">SİPARİŞ ONAYI</h3>
+                        <button onClick={() => setViewingPendingOrder(null)} className="hover:rotate-90 transition-transform"><XCircle size={28}/></button>
                     </div>
-                    <div className="p-6">
+                    <div className="p-8">
                         {/* Header Info */}
-                        <div className="mb-6 grid grid-cols-2 gap-4">
-                            <div className="text-center p-2 bg-gray-50 rounded">
-                                <div className="text-[10px] text-gray-500 font-bold uppercase">MASA</div>
-                                <div className="text-xl font-black">{viewingPendingOrder.table_no}</div>
+                        <div className="mb-8 grid grid-cols-2 gap-4">
+                            <div className="text-center p-4 bg-gray-50 border border-black">
+                                <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">MASA</div>
+                                <div className="text-3xl font-black">{viewingPendingOrder.table_no}</div>
                             </div>
-                            <div className="text-center p-2 bg-gray-50 rounded">
-                                <div className="text-[10px] text-gray-500 font-bold uppercase">KAYNAK</div>
-                                <div className="text-xl font-black text-blue-600">{viewingPendingOrder.source || 'POS'}</div>
-                            </div>
-                            <div className="text-center p-2 bg-gray-50 rounded col-span-2">
-                                <div className="text-[10px] text-gray-500 font-bold uppercase">SİPARİŞ SAATİ</div>
-                                <div className="text-lg font-bold">
-                                    {new Date(viewingPendingOrder.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    <span className="text-xs font-normal text-gray-400 ml-2">
-                                        ({Math.floor((new Date() - new Date(viewingPendingOrder.created_at)) / 60000)} dk önce)
-                                    </span>
-                                </div>
+                            <div className="text-center p-4 bg-gray-50 border border-black">
+                                <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">KAYNAK</div>
+                                <div className="text-xl font-black text-black">{viewingPendingOrder.source || 'POS'}</div>
                             </div>
                         </div>
 
                         {/* Order Note */}
                         {viewingPendingOrder.note && (
-                            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-center">
-                                <div className="text-[10px] font-bold uppercase mb-1">SİPARİŞ NOTU</div>
-                                <div className="font-bold italic">"{viewingPendingOrder.note}"</div>
+                            <div className="mb-8 p-4 bg-black text-white text-center border-2 border-black">
+                                <div className="text-[10px] font-bold uppercase mb-2 tracking-widest opacity-70">SİPARİŞ NOTU</div>
+                                <div className="font-bold text-lg">"{viewingPendingOrder.note}"</div>
                             </div>
                         )}
                         
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 max-h-60 overflow-y-auto">
+                        <div className="border-t-2 border-b-2 border-black py-4 mb-8 max-h-60 overflow-y-auto">
                             {viewingPendingOrder.items.map((item, i) => (
-                                <div key={i} className="flex justify-between border-b border-gray-200 pb-2 last:border-0 mb-2 last:mb-0">
+                                <div key={i} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
                                     <div className="flex-1 pr-4 min-w-0">
-                                        <div className="font-bold truncate" title={item.name}>{item.name}</div>
-                                        <div className="text-xs text-gray-400">₺{item.price}</div>
+                                        <div className="font-black text-lg uppercase">{item.name}</div>
                                         {item.selectedOptions && item.selectedOptions.length > 0 && (
-                                            <div className="text-[10px] text-blue-600 font-bold mt-1">
+                                            <div className="text-[10px] font-bold uppercase mt-1 pl-2 border-l-2 border-black">
                                                 {item.selectedOptions.map(o => o.name).join(', ')}
                                             </div>
                                         )}
                                     </div>
-                                    <div className="font-mono font-bold whitespace-nowrap">x{item.quantity}</div>
+                                    <div className="font-mono font-bold whitespace-nowrap text-lg">x{item.quantity}</div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="flex items-center justify-between mb-6 font-bold text-lg">
-                            <span>TOPLAM TUTAR</span>
+                        <div className="flex items-center justify-between mb-8 font-black text-2xl border-2 border-black p-4 bg-gray-50">
+                            <span className="text-sm text-gray-500 uppercase tracking-widest">TOPLAM</span>
                             <span>₺{viewingPendingOrder.total_amount}</span>
                         </div>
 
                         <div className="flex gap-4">
                             <button 
                                 onClick={() => handleRejectOrder(viewingPendingOrder)}
-                                className="flex-1 bg-red-600 text-white py-4 rounded-lg font-black uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-lg border-2 border-black"
+                                className="flex-1 bg-white text-black border-2 border-black py-4 font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all text-sm"
                             >
-                                ✗ REDDET
+                                REDDET
                             </button>
                             <button 
                                 onClick={() => handleApproveOrder(viewingPendingOrder)}
-                                className="flex-1 bg-green-600 text-white py-4 rounded-lg font-black uppercase tracking-widest hover:bg-green-700 active:scale-95 transition-all shadow-lg border-2 border-black"
+                                className="flex-1 bg-black text-white border-2 border-black py-4 font-black uppercase tracking-widest hover:bg-gray-800 transition-all text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                             >
-                                ✓ ONAYLA
+                                ONAYLA
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
         )}
+
         {/* Option Selection Modal */}
         {optionModal && (
-            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-                <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                    <div className="bg-black text-white p-4 flex justify-between items-center shrink-0">
-                        <h3 className="font-bold text-lg">{optionModal.product.name}</h3>
-                        <button onClick={() => setOptionModal(null)} className="p-2 hover:bg-gray-800 rounded-full"><XCircle size={24}/></button>
+            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                <div className="bg-white w-full max-w-lg border-2 border-black shadow-2xl flex flex-col max-h-[90vh]">
+                    <div className="bg-black text-white p-6 flex justify-between items-center shrink-0">
+                        <div>
+                             <h3 className="font-black text-xl uppercase tracking-tighter">{optionModal.product.name}</h3>
+                             <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mt-1">SEÇENEK BELİRLEYİN</p>
+                        </div>
+                        <button onClick={() => setOptionModal(null)} className="hover:rotate-90 transition-transform"><XCircle size={24}/></button>
                     </div>
                     
-                    <div className="p-6 overflow-y-auto flex-1">
-                        <p className="text-sm text-gray-500 mb-4 font-bold uppercase tracking-wide">Lütfen Seçenekleri Belirleyin</p>
+                    <div className="p-6 overflow-y-auto flex-1 bg-gray-50">
                         <div className="space-y-3">
                             {optionModal.product.options.map((opt, idx) => {
                                 const isSelected = optionModal.selected.some(s => s.name === opt.name);
@@ -620,20 +599,20 @@ export default function PosTerminal() {
                                                 }));
                                             }
                                         }}
-                                        className={`w-full flex justify-between items-center p-4 rounded-xl border-2 transition-all
+                                        className={`w-full flex justify-between items-center p-4 border-2 transition-all
                                             ${isSelected 
-                                                ? 'border-black bg-gray-50' 
-                                                : 'border-gray-100 hover:border-gray-200'}`}
+                                                ? 'border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]' 
+                                                : 'border-gray-200 bg-white hover:border-black text-gray-500'}`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded border flex items-center justify-center
+                                            <div className={`w-5 h-5 border-2 flex items-center justify-center transition-colors
                                                 ${isSelected ? 'bg-black border-black' : 'border-gray-300'}`}>
-                                                {isSelected && <CheckCircle size={14} className="text-white"/>}
+                                                {isSelected && <CheckCircle size={12} className="text-white"/>}
                                             </div>
-                                            <span className={`font-bold ${isSelected ? 'text-black' : 'text-gray-600'}`}>{opt.name}</span>
+                                            <span className={`font-bold uppercase text-sm ${isSelected ? 'text-black' : 'text-gray-500'}`}>{opt.name}</span>
                                         </div>
-                                        <span className="font-mono font-bold text-gray-500">
-                                            {opt.price_change > 0 ? `+₺${opt.price_change}` : ''}
+                                        <span className="font-mono font-bold text-xs">
+                                            {opt.price_change > 0 ? `+₺${opt.price_change}` : 'ÜCRETSİZ'}
                                         </span>
                                     </button>
                                 );
@@ -641,10 +620,10 @@ export default function PosTerminal() {
                         </div>
                     </div>
 
-                    <div className="p-4 border-t border-gray-100 bg-gray-50 shrink-0">
+                    <div className="p-6 border-t-2 border-black bg-white shrink-0">
                         <button 
                             onClick={() => handleProductClick(optionModal.product, optionModal.selected)}
-                            className="w-full bg-black text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors shadow-lg"
+                            className="w-full bg-black text-white py-4 font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none border-2 border-black"
                         >
                             EKLE (₺{(parseFloat(optionModal.product.price) + optionModal.selected.reduce((a,b)=>a+b.price_change,0)).toFixed(2)})
                         </button>

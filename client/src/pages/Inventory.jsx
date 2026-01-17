@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import Modal from '../components/Modal';
-import { Pencil, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
 
 export default function Inventory() {
@@ -10,6 +10,7 @@ export default function Inventory() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const { showNotification } = useNotification();
+  const [loading, setLoading] = useState(true);
   
   // Category Edit State
   const [editingCategory, setEditingCategory] = useState(null);
@@ -27,14 +28,16 @@ export default function Inventory() {
     options: [] 
   });
   
-  // ... (useEffects and fetch functions remain same, omitted for brevity if using replace_file_content but here I need to be careful not to delete them if I'm replacing a chunk. I will target specific blocks to avoid deleting standard logic)
-  
-  // Fetch Categories
   useEffect(() => {
-    fetchCategories();
+    fetchInitialData();
   }, []);
 
-  // Fetch Products when Category changes
+  const fetchInitialData = async () => {
+    setLoading(true);
+    await fetchCategories();
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (selectedCategory) {
       fetchProducts(selectedCategory.id);
@@ -70,6 +73,7 @@ export default function Inventory() {
       await api.post('/api/categories', { name: newCategoryName });
       setNewCategoryName('');
       fetchCategories();
+      showNotification({ title: 'BAŞARILI', message: 'Kategori Eklendi', type: 'info' });
     } catch (err) {
       showNotification({ title: 'HATA', message: 'Kategori eklenemedi', type: 'error' });
     }
@@ -90,7 +94,7 @@ export default function Inventory() {
   };
 
   const handleDeleteCategory = async (e, id) => {
-      e.stopPropagation(); // Prevent selection
+      e.stopPropagation(); 
       const confirmed = await showNotification({ 
         title: 'KATEGORİYİ SİL', 
         message: 'Bu kategoriyi ve içindeki ürünleri silmek istediğinize emin misiniz?', 
@@ -100,11 +104,10 @@ export default function Inventory() {
       
       try {
           await api.delete(`/api/categories/${id}`);
-          // If selected was deleted, clear selection
           if (selectedCategory?.id === id) setSelectedCategory(null);
           fetchCategories();
       } catch (err) {
-          alert('Kategori silinemedi');
+          showNotification({ title: 'HATA', message: 'Kategori silinemedi', type: 'error' });
       }
   };
 
@@ -124,14 +127,12 @@ export default function Inventory() {
     
     try {
       if (editingProductId) {
-        // UPDATE existing product
         await api.put(`/api/products/${editingProductId}`, {
           ...formData,
           category_id: selectedCategory.id,
           price: parseFloat(formData.price)
         });
       } else {
-        // CREATE new product
         await api.post('/api/products', {
           ...formData,
           category_id: selectedCategory.id,
@@ -140,9 +141,10 @@ export default function Inventory() {
       }
       
       setIsProductModalOpen(false);
-      setEditingProductId(null); // Reset editing state
+      setEditingProductId(null); 
       setFormData({ name: '', price: '', description: '', is_available: true, image_url: '', options: [] });
       fetchProducts(selectedCategory.id);
+      showNotification({ title: 'BAŞARILI', message: editingProductId ? 'Ürün güncellendi' : 'Ürün eklendi', type: 'info' });
     } catch (err) {
       showNotification({ 
         title: 'HATA', 
@@ -178,7 +180,7 @@ export default function Inventory() {
       description: product.description || '',
       is_available: product.is_available,
       image_url: product.image_url || '',
-      options: product.options || [] // Load existing options
+      options: product.options || [] 
     });
     setIsProductModalOpen(true);
   };
@@ -186,10 +188,9 @@ export default function Inventory() {
   const handleToggleStatus = async (product) => {
     try {
       await api.put(`/api/products/${product.id}`, {
-        ...product, // Send other fields if needed by backend, usually backend handles partial updates or we send full object
+        ...product, 
         is_available: !product.is_available
       });
-      // Refresh list to show new status
       fetchProducts(selectedCategory.id);
     } catch (err) {
       console.error('Durum değiştirilemedi', err);
@@ -232,8 +233,7 @@ export default function Inventory() {
 
     try {
         await Promise.all(updates.map(u => api.put(`/api/categories/${u.id}`, { name: u.name, rank: u.rank })));
-        const updatedCats = newCats.map((c, i) => ({ ...c, rank: i }));
-        setCategories(updatedCats);
+        fetchCategories(); // Refresh to sync
     } catch (err) {
         console.error('Sıralama hatası:', err);
         showNotification({ title: 'HATA', message: 'Sıralama kaydedilemedi', type: 'error' });
@@ -260,8 +260,7 @@ export default function Inventory() {
 
     try {
         await Promise.all(updates.map(u => api.put(`/api/products/${u.id}`, { rank: u.rank })));
-        const updatedProds = newProds.map((p, i) => ({ ...p, rank: i }));
-        setProducts(updatedProds);
+        fetchProducts(selectedCategory.id); // Refresh to sync
     } catch (err) {
         console.error('Sıralama hatası:', err);
         showNotification({ title: 'HATA', message: 'Sıralama kaydedilemedi', type: 'error' });
@@ -269,11 +268,19 @@ export default function Inventory() {
     }
   };
 
+  if (loading) {
+      return (
+          <div className="h-full flex items-center justify-center">
+              <div className="spinner"></div>
+          </div>
+      );
+  }
+
   return (
-    <div className="flex h-full p-8 gap-8">
+    <div className="flex h-full p-8 gap-8 bg-white font-sans text-black">
       {/* Sidebar: Categories */}
-      <div className="w-1/4 flex flex-col gap-4">
-        <h2 className="font-bold uppercase tracking-widest border-b border-black pb-2">KATEGORİLER</h2>
+      <div className="w-80 flex flex-col gap-4 border-r-2 border-dashed border-gray-200 pr-8">
+        <h2 className="font-black uppercase tracking-widest text-lg border-b-2 border-black pb-4">KATEGORİLER</h2>
         
         {/* Add Category */}
         <div className="flex gap-2">
@@ -281,54 +288,55 @@ export default function Inventory() {
             type="text" 
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            placeholder="YENİ KAT..."
-            className="flex-1 border border-black p-2 text-xs focus:bg-gray-100 outline-none placeholder:text-gray-400"
+            placeholder="YENİ KATEGORİ ADI..."
+            className="flex-1 border-2 border-black p-3 text-xs focus:bg-gray-50 outline-none placeholder:text-gray-400 font-bold uppercase transition-all"
           />
           <button 
             onClick={handleAddCategory}
-            className="bg-black text-white px-3 font-bold hover:bg-gray-800"
+            className="bg-black text-white px-4 font-black hover:bg-white hover:text-black border-2 border-black transition-all active:scale-95"
           >
-            +
+            <Plus size={16}/>
           </button>
         </div>
 
         {/* Categories List */}
-        <div className="border border-black flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pr-2 space-y-2">
            {categories.map(cat => (
              <div 
                key={cat.id}
                onClick={() => setSelectedCategory(cat)}
-               className={`p-3 cursor-pointer border-b border-gray-200 last:border-b-0 hover:bg-gray-100 transition-colors flex justify-between items-center group ${
-                 selectedCategory?.id === cat.id ? 'bg-black text-white hover:bg-black' : ''
-               }`}
+               className={`p-4 cursor-pointer border-2 transition-all flex justify-between items-center group
+                 ${selectedCategory?.id === cat.id 
+                    ? 'bg-black text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]' 
+                    : 'bg-white text-black border-gray-100 hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]'}`}
              >
-                <div className="font-mono text-sm uppercase">{cat.name}</div>
-                <div className={`flex gap-1 ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                    <div className="flex flex-col mr-1">
+                <div className="font-black text-xs uppercase tracking-wide">{cat.name}</div>
+                <div className={`flex gap-2 ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                    <div className="flex flex-col gap-1">
                         <button 
                             onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'up')}
                             disabled={categories.indexOf(cat) === 0}
-                            className={`p-0.5 hover:bg-white/20 rounded disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                            className={`hover:text-gray-300 disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
                         >
                             <ArrowUp size={10} />
                         </button>
                         <button 
                             onClick={(e) => handleMoveCategory(e, categories.indexOf(cat), 'down')}
                             disabled={categories.indexOf(cat) === categories.length - 1}
-                            className={`p-0.5 hover:bg-white/20 rounded disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                            className={`hover:text-gray-300 disabled:opacity-30 ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
                         >
                             <ArrowDown size={10} />
                         </button>
                     </div>
                     <button 
                         onClick={(e) => openEditCategoryModal(e, cat)}
-                        className={`p-1 hover:bg-white/20 rounded ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                        className={`hover:scale-110 transition-transform ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
                     >
                         <Pencil size={14} />
                     </button>
                     <button 
                         onClick={(e) => handleDeleteCategory(e, cat.id)}
-                        className={`p-1 hover:bg-red-500 hover:text-white rounded ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
+                        className={`hover:text-red-500 transition-colors ${selectedCategory?.id === cat.id ? 'text-white' : 'text-black'}`}
                     >
                         <Trash2 size={14} />
                     </button>
@@ -336,18 +344,18 @@ export default function Inventory() {
              </div>
            ))}
            {categories.length === 0 && (
-             <div className="p-4 text-xs text-gray-400 text-center">KATEGORİ YOK</div>
+             <div className="p-8 text-xs text-gray-400 text-center font-bold uppercase italic border-2 border-dashed border-gray-200">KATEGORİ BULUNAMADI</div>
            )}
         </div>
       </div>
 
       {/* Main Content: Products */}
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex-1 flex flex-col gap-6 min-w-0">
         {selectedCategory ? (
           <>
-            <div className="flex justify-between items-center border-b border-black pb-2">
-              <h2 className="font-bold uppercase tracking-widest">
-                {selectedCategory.name} <span className="text-gray-400 text-xs ml-2">({products.length} ÜRÜN)</span>
+            <div className="flex justify-between items-center border-b-2 border-black pb-4">
+              <h2 className="font-black uppercase tracking-widest text-lg truncate">
+                {selectedCategory.name} <span className="text-gray-400 text-xs ml-2 font-medium">({products.length} ÜRÜN)</span>
               </h2>
               <button 
                 onClick={() => {
@@ -355,81 +363,92 @@ export default function Inventory() {
                   setFormData({ name: '', price: '', description: '', is_available: true, image_url: '', options: [] });
                   setIsProductModalOpen(true);
                 }}
-                className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black border border-black transition-colors"
+                className="bg-black text-white px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-white hover:text-black border-2 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
               >
-                YENİ ÜRÜN EKLE
+                + YENİ ÜRÜN
               </button>
             </div>
 
             {/* Products Table */}
-            <div className="border border-black flex-1 overflow-y-auto">
+            <div className="border-2 border-black flex-1 overflow-y-auto shadow-lg bg-white">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-gray-50 sticky top-0">
+                <thead className="bg-black text-white sticky top-0 z-10">
                   <tr>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-16 text-center">FOTO</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs uppercase">Ürün Adı / Açıklama</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-24 text-right">Fiyat</th>
-                    <th className="p-3 border-b border-r border-black font-bold text-xs w-20 text-center">Aktif</th>
-                    <th className="p-3 border-b border-black font-bold text-xs w-40 text-center">İşlem</th>
+                    <th className="p-4 border-r border-gray-800 font-bold text-xs w-20 text-center tracking-widest">FOTO</th>
+                    <th className="p-4 border-r border-gray-800 font-bold text-xs uppercase tracking-widest">ÜRÜN DETAYI</th>
+                    <th className="p-4 border-r border-gray-800 font-bold text-xs w-32 text-right tracking-widest">FİYAT</th>
+                    <th className="p-4 border-r border-gray-800 font-bold text-xs w-24 text-center tracking-widest">DURUM</th>
+                    <th className="p-4 font-bold text-xs w-48 text-center tracking-widest">İŞLEM</th>
                   </tr>
                 </thead>
                 <tbody>
                   {products.map(p => (
-                    <tr key={p.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors">
-                      <td className="p-3 border-r border-black text-center">
+                    <tr key={p.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors group">
+                      <td className="p-4 border-r border-gray-100 text-center align-top">
                          {p.image_url ? (
                            <img 
                             src={p.image_url.startsWith('http') ? p.image_url : `${api.defaults.baseURL}${p.image_url}`} 
                             alt={p.name} 
-                            className="w-10 h-10 object-cover border border-black inline-block"
+                            className="w-12 h-12 object-cover border-2 border-gray-200 inline-block grayscale group-hover:grayscale-0 transition-all"
                            />
                          ) : (
-                           <div className="w-10 h-10 border border-black bg-gray-100 flex items-center justify-center text-[8px] font-mono text-gray-400">NO IMG</div>
+                           <div className="w-12 h-12 border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-[9px] font-black text-gray-400">NO IMG</div>
                          )}
                       </td>
-                      <td className="p-3 border-r border-black">
-                        <div className="font-bold text-sm uppercase">{p.name}</div>
-                        {p.description && <div className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{p.description}</div>}
+                      <td className="p-4 border-r border-gray-100 align-top">
+                        <div className="font-black text-sm uppercase tracking-wide">{p.name}</div>
+                        {p.description && <div className="text-[10px] text-gray-500 mt-1 font-medium bg-gray-100 p-1 inline-block uppercase break-words">{p.description}</div>}
+                        {p.options && p.options.length > 0 && (
+                            <div className="mt-2 flex gap-1 flex-wrap">
+                                {p.options.map((o, i) => (
+                                    <span key={i} className="text-[9px] border border-black px-1.5 py-0.5 font-bold uppercase">{o.name}</span>
+                                ))}
+                            </div>
+                        )}
                       </td>
-                      <td className="p-3 border-r border-black font-mono text-sm text-right">₺{parseFloat(p.price).toFixed(2)}</td>
-                      <td className="p-3 border-r border-black text-center">
-                        <input 
-                          type="checkbox" 
-                          checked={p.is_available} 
-                          onChange={() => handleToggleStatus(p)}
-                          className="accent-black cursor-pointer w-4 h-4" 
-                        />
+                      <td className="p-4 border-r border-gray-100 font-mono text-sm text-right font-bold align-top">₺{parseFloat(p.price).toFixed(2)}</td>
+                      <td className="p-4 border-r border-gray-100 text-center align-top">
+                        <label className="inline-flex items-center cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={p.is_available} 
+                              onChange={() => handleToggleStatus(p)}
+                              className="sr-only peer"
+                            />
+                            <div className="relative w-9 h-5 bg-gray-200 peer-focus:outline-none ring-0 rounded-none peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-black"></div>
+                        </label>
                       </td>
-                      <td className="p-3 text-center flex items-center justify-center gap-2">
-                        <div className="flex flex-col gap-0.5 border border-gray-200 rounded p-0.5">
+                      <td className="p-4 text-center align-top">
+                        <div className="flex items-center justify-center gap-3 h-full">
+                            <div className="flex flex-col gap-1">
+                                <button 
+                                    onClick={() => handleMoveProduct(products.indexOf(p), 'up')}
+                                    disabled={products.indexOf(p) === 0}
+                                    className="p-1 hover:bg-black hover:text-white border border-gray-200 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-colors"
+                                >
+                                    <ArrowUp size={10} />
+                                </button>
+                                <button 
+                                    onClick={() => handleMoveProduct(products.indexOf(p), 'down')}
+                                    disabled={products.indexOf(p) === products.length - 1}
+                                    className="p-1 hover:bg-black hover:text-white border border-gray-200 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black transition-colors"
+                                >
+                                    <ArrowDown size={10} />
+                                </button>
+                            </div>
                             <button 
-                                onClick={() => handleMoveProduct(products.indexOf(p), 'up')}
-                                disabled={products.indexOf(p) === 0}
-                                className="p-0.5 hover:bg-gray-200 rounded disabled:opacity-30 text-black"
+                                onClick={() => handleEditProduct(p)}
+                                className="p-2 border border-black hover:bg-black hover:text-white transition-colors"
+                                title="Düzenle"
                             >
-                                <ArrowUp size={12} />
-                            </button>
-                            <button 
-                                onClick={() => handleMoveProduct(products.indexOf(p), 'down')}
-                                disabled={products.indexOf(p) === products.length - 1}
-                                className="p-0.5 hover:bg-gray-200 rounded disabled:opacity-30 text-black"
-                            >
-                                <ArrowDown size={12} />
-                            </button>
-                        </div>
-                        <div className="flex gap-2">
-                            <button 
-                            onClick={() => handleEditProduct(p)}
-                            className="text-xs underline hover:no-underline font-bold"
-                            >
-                            DÜZENLE
+                                <Pencil size={14} />
                             </button> 
-                            <span className="text-gray-300">|</span>
                             <button 
-                            onClick={() => handleDeleteProduct(p.id)}
-                            className="text-xs underline hover:no-underline text-gray-500 hover:text-black font-bold"
+                                onClick={() => handleDeleteProduct(p.id)}
+                                className="p-2 border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+                                title="Sil"
                             >
-                            SİL
+                                <Trash2 size={14} />
                             </button>
                         </div>
                       </td>
@@ -437,8 +456,8 @@ export default function Inventory() {
                   ))}
                   {products.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="p-8 text-center text-gray-400 text-xs italic">
-                        BU KATEGORİDE ÜRÜN YOK
+                      <td colSpan="5" className="p-12 text-center text-gray-400 text-xs font-black uppercase tracking-widest italic">
+                        BU KATEGORİDE HENÜZ ÜRÜN YOK
                       </td>
                     </tr>
                   )}
@@ -447,8 +466,9 @@ export default function Inventory() {
             </div>
           </>
         ) : (
-           <div className="flex-1 border border-black border-dashed flex items-center justify-center text-gray-400 font-mono text-sm">
-             ÜRÜN YÖNETİMİ İÇİN BİR KATEGORİ SEÇİN
+           <div className="flex-1 border-2 border-black border-dashed flex flex-col items-center justify-center bg-gray-50 text-gray-400 gap-4">
+             <div className="text-4xl opacity-20 font-black">←</div>
+             <div className="font-black text-sm uppercase tracking-widest">LÜTFEN BİR KATEGORİ SEÇİN</div>
            </div>
         )}
       </div>
@@ -459,84 +479,99 @@ export default function Inventory() {
         onClose={() => setIsProductModalOpen(false)} 
         title={editingProductId ? "ÜRÜNÜ DÜZENLE" : "YENİ ÜRÜN EKLE"}
       >
-        <form onSubmit={handleAddProduct} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Ürün Adı</label>
-            <input 
-              type="text" 
-              required
-              className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
-              value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Fiyat (₺)</label>
-            <input 
-              type="number" 
-              required
-              min="0"
-              step="0.01"
-              className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
-              value={formData.price}
-              onChange={e => setFormData({...formData, price: e.target.value})}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Açıklama</label>
-            <textarea 
-              className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none resize-none h-20"
-              value={formData.description}
-              onChange={e => setFormData({...formData, description: e.target.value})}
-              placeholder="Ürün açıklaması..."
-            />
-          </div>
-
-          <div>
-             <label className="block text-xs font-bold mb-1 uppercase">Ürün Fotoğrafı</label>
-             <div className="flex gap-2 mb-2">
+        <form onSubmit={handleAddProduct} className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Ürün Adı</label>
                 <input 
                   type="text" 
-                  placeholder="Fotoğraf URL..."
-                  className="flex-1 border border-black p-2 text-sm focus:bg-gray-50 outline-none"
+                  required
+                  className="w-full border-2 border-black p-3 text-sm font-bold focus:bg-gray-50 outline-none uppercase placeholder:text-gray-300"
+                  placeholder="ÖRN: CHEESEBURGER"
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Fiyat (₺)</label>
+                <input 
+                  type="number" 
+                  required
+                  min="0"
+                  step="0.01"
+                  className="w-full border-2 border-black p-3 text-sm font-bold font-mono focus:bg-gray-50 outline-none"
+                  value={formData.price}
+                  onChange={e => setFormData({...formData, price: e.target.value})}
+                />
+              </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Açıklama</label>
+            <textarea 
+              className="w-full border-2 border-black p-3 text-sm font-medium focus:bg-gray-50 outline-none resize-none h-24 uppercase placeholder:text-gray-300"
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
+              placeholder="ÜRÜN İÇERİĞİ VE DETAYLAR..."
+            />
+          </div>
+
+          <div>
+             <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Görsel</label>
+             <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="URL GİRİN VEYA YÜKLEYİN..."
+                  className="flex-1 border-2 border-black p-3 text-xs focus:bg-gray-50 outline-none font-mono"
                   value={formData.image_url}
                   onChange={e => setFormData({...formData, image_url: e.target.value})}
                 />
-                <label className="bg-black text-white px-4 py-2 text-xs font-bold uppercase cursor-pointer hover:bg-gray-800 transition-colors flex items-center">
+                <label className="bg-black text-white px-6 py-3 text-[10px] font-black uppercase cursor-pointer hover:bg-gray-800 transition-colors flex items-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] border-2 border-black">
                   YÜKLE
                   <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" />
                 </label>
              </div>
              {formData.image_url && (
-               <div className="border border-black p-2 bg-gray-50 flex items-center justify-center">
+               <div className="mt-2 border-2 border-dashed border-gray-300 p-4 bg-gray-50 flex items-center justify-between">
                   <img 
                     src={formData.image_url.startsWith('http') ? formData.image_url : `${api.defaults.baseURL}${formData.image_url}`} 
-                    className="max-h-32 object-contain" 
+                    className="h-16 w-16 object-cover border border-black grayscale" 
                     alt="Önizleme"
                   />
                   <button 
                     type="button"
                     onClick={() => setFormData({...formData, image_url: ''})}
-                    className="ml-4 text-xs font-bold text-red-600 underline"
+                    className="text-[10px] font-black text-red-600 hover:text-black uppercase tracking-widest border-b border-red-600 hover:border-black transition-colors"
                   >
-                    KALDIR
+                    GÖRSELİ KALDIR
                   </button>
                </div>
              )}
           </div>
 
           {/* Options Section */}
-          <div className="border border-black p-4 bg-gray-50">
-             <label className="block text-xs font-bold mb-2 uppercase">Varyantlar / Seçenekler</label>
-             <div className="flex flex-col gap-2 mb-2 max-h-40 overflow-y-auto">
+          <div className="border-2 border-black p-4 bg-gray-50">
+             <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
+                 <label className="block text-[10px] font-black uppercase tracking-widest">SEÇENEKLER / VARYANTLAR</label>
+                 <button 
+                    type="button"
+                    onClick={() => setFormData({...formData, options: [...formData.options, { name: '', price_change: 0 }]})}
+                    className="text-[9px] bg-black text-white px-3 py-1.5 font-bold uppercase hover:bg-gray-800 transition-colors"
+                 >
+                     + SEÇENEK EKLE
+                 </button>
+             </div>
+             
+             <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2">
+                 {formData.options.length === 0 && (
+                     <div className="text-center text-[10px] text-gray-400 font-bold uppercase py-2">Henüz seçenek eklenmedi</div>
+                 )}
                  {formData.options.map((opt, idx) => (
                      <div key={idx} className="flex gap-2 items-center">
                          <input 
                              type="text" 
-                             placeholder="Seçenek Adı (örn: 1.5 Porsiyon)"
-                             className="flex-1 border border-gray-300 p-1 text-xs outline-none focus:border-black"
+                             placeholder="SEÇENEK ADI"
+                             className="flex-1 border border-gray-300 p-2 text-xs outline-none focus:border-black font-bold uppercase"
                              value={opt.name}
                              onChange={(e) => {
                                  const newOpts = [...formData.options];
@@ -546,8 +581,8 @@ export default function Inventory() {
                          />
                          <input 
                              type="number" 
-                             placeholder="Fiyat Farkı (₺)"
-                             className="w-24 border border-gray-300 p-1 text-xs outline-none focus:border-black"
+                             placeholder="FARK (₺)"
+                             className="w-24 border border-gray-300 p-2 text-xs outline-none focus:border-black font-mono font-bold"
                              value={opt.price_change}
                              onChange={(e) => {
                                  const newOpts = [...formData.options];
@@ -561,39 +596,33 @@ export default function Inventory() {
                                  const newOpts = formData.options.filter((_, i) => i !== idx);
                                  setFormData({...formData, options: newOpts});
                              }}
-                             className="text-red-500 hover:text-red-700"
+                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                          >
                              <Trash2 size={14}/>
                          </button>
                      </div>
                  ))}
              </div>
-             <button 
-                type="button"
-                onClick={() => setFormData({...formData, options: [...formData.options, { name: '', price_change: 0 }]})}
-                className="text-xs bg-black text-white px-2 py-1 font-bold uppercase hover:bg-gray-700"
-             >
-                 + SeÇenek Ekle
-             </button>
           </div>
 
-          <div>
-             <label className="flex items-center gap-2 cursor-pointer">
-               <input 
-                 type="checkbox" 
-                 className="accent-black w-4 h-4"
-                 checked={formData.is_available}
-                 onChange={e => setFormData({...formData, is_available: e.target.checked})}
-               />
-               <span className="text-xs font-bold uppercase">Satışa Uygun</span>
+          <div className="flex items-center gap-2 pt-2">
+             <input 
+               type="checkbox" 
+               id="is_available"
+               className="w-5 h-5 accent-black cursor-pointer"
+               checked={formData.is_available}
+               onChange={e => setFormData({...formData, is_available: e.target.checked})}
+             />
+             <label htmlFor="is_available" className="text-xs font-black uppercase tracking-widest cursor-pointer select-none">
+               SATIŞA UYGUN (AKTİF)
              </label>
           </div>
 
           <button 
             type="submit" 
-            className="bg-black text-white p-3 font-bold uppercase tracking-widest hover:bg-gray-800 mt-4"
+            className="bg-black text-white w-full py-4 font-black uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-black border-2 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
           >
-            KAYDET
+            {editingProductId ? 'GÜNCELLEMEYİ KAYDET' : 'ÜRÜNÜ OLUŞTUR'}
           </button>
         </form>
       </Modal>
@@ -604,19 +633,19 @@ export default function Inventory() {
         onClose={() => setIsCategoryModalOpen(false)}
         title="KATEGORİ DÜZENLE"
       >
-          <form onSubmit={handleUpdateCategory} className="flex flex-col gap-4">
+          <form onSubmit={handleUpdateCategory} className="flex flex-col gap-6">
               <div>
-                  <label className="block text-xs font-bold mb-1 uppercase">Kategori Adı</label>
+                  <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Kategori Adı</label>
                   <input
                       type="text"
-                      className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
+                      className="w-full border-2 border-black p-3 text-sm font-bold uppercase focus:bg-gray-50 outline-none"
                       value={editCategoryName}
                       onChange={(e) => setEditCategoryName(e.target.value)}
                   />
               </div>
               <button 
                   type="submit" 
-                  className="bg-black text-white p-3 font-bold uppercase tracking-widest hover:bg-gray-800"
+                  className="bg-black text-white py-4 font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black border-2 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
               >
                   GÜNCELLE
               </button>

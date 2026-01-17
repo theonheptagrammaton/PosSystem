@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { ShoppingCart, LogOut, Send, Trash2, ArrowLeft } from 'lucide-react';
+import { LogOut, Send, Trash2, ArrowLeft, ArrowRight, Table } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
 
 export default function WaiterPanel() {
@@ -66,7 +66,7 @@ export default function WaiterPanel() {
   const addToCart = (product, selectedOptions = []) => {
       const optionPrice = selectedOptions.reduce((acc, opt) => acc + opt.price_change, 0);
       const finalPrice = parseFloat(product.price) + optionPrice;
-      const cartId = `${product.id}-${selectedOptions.map(o => o.name).sort().join('-')}`; // Unique ID for variant
+      const cartId = `${product.id}-${selectedOptions.map(o => o.name).sort().join('-')}`; 
 
       setCart(prev => {
           const existing = prev.find(item => item.cartId === cartId);
@@ -75,14 +75,14 @@ export default function WaiterPanel() {
           }
           return [...prev, { 
               ...product, 
-              cartId, // Use custom cartId for removal
+              cartId, 
               quantity: 1, 
               price: finalPrice,
               originalPrice: product.price,
               selectedOptions 
           }];
       });
-      showNotification({ title: 'Eklendi', message: `${product.name} sepete eklendi`, type: 'info' });
+      showNotification({ title: 'EKLENDİ', message: `${product.name} sepete eklendi`, type: 'info' });
   };
 
   const removeFromCart = (cartId) => {
@@ -93,7 +93,6 @@ export default function WaiterPanel() {
       if (cart.length === 0) return;
       setIsSubmitting(true);
       try {
-          // Flatten cart for API
           const items = [];
           let total = 0;
           cart.forEach(item => {
@@ -101,11 +100,6 @@ export default function WaiterPanel() {
               total += parseFloat(item.price) * item.quantity;
           });
 
-          // In real implementation we need TenantID. Assuming we have it in user context or local storage or fetch it.
-          // For now fetching from branches api stored in state would be better but let's re-fetch or use props if available.
-          // Quick fix: Fetch branch again or assume we have it. Let's assume we can get tenant_id from user session or branch endpoint needs to return it.
-          
-          // RE-FETCH Branch to get TenantID safely
           const bRes = await api.get('/api/branches');
           const branch = bRes.data.find(b => b.id === parseInt(branchId));
 
@@ -115,7 +109,7 @@ export default function WaiterPanel() {
               table_no: `MASA-${selectedTable}`,
               total_amount: total,
               items: items,
-              status: 'PENDING', // Bypasses approval, goes directly to kitchen
+              status: 'PENDING', 
               source: 'GARSON',
               note: orderNote
           });
@@ -135,20 +129,26 @@ export default function WaiterPanel() {
 
   if (activeTab === 'TABLES') {
       return (
-          <div className="min-h-screen bg-gray-100 p-4">
-              <div className="flex justify-between items-center mb-6">
-                  <h1 className="text-xl font-bold">Masa Seçimi</h1>
-                  <button onClick={() => navigate('/')} className="p-2 bg-white rounded shadow text-red-600"><LogOut size={20}/></button>
+          <div className="min-h-screen bg-gray-50 p-6 flex flex-col">
+              <div className="flex justify-between items-center mb-8 border-b-2 border-black pb-4">
+                  <div>
+                      <h1 className="text-3xl font-black uppercase tracking-tighter">Masa Seçimi</h1>
+                      <p className="text-xs font-bold text-gray-400 font-mono">LÜTFEN İŞLEM YAPILACAK MASAYI SEÇİNİZ</p>
+                  </div>
+                  <button onClick={() => navigate('/')} className="p-3 bg-black text-white hover:bg-white hover:text-black border border-black transition-all">
+                      <LogOut size={20}/>
+                  </button>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {tables.map(t => (
                       <button 
                           key={t}
                           onClick={() => handleTableSelect(t)}
-                          className="h-24 bg-white rounded-lg shadow flex flex-col items-center justify-center border border-gray-200 active:bg-gray-200"
+                          className="h-32 bg-white border-2 border-black flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
                       >
-                          <span className="text-2xl font-bold">{t}</span>
-                          <span className="text-xs text-gray-400">MASA</span>
+                          <div className="mb-2 group-hover:scale-110 transition-transform"><Table size={24}/></div>
+                          <span className="text-3xl font-black">{t}</span>
+                          <span className="text-[10px] font-bold tracking-widest uppercase mt-1 opacity-50">MASA</span>
                       </button>
                   ))}
               </div>
@@ -157,31 +157,34 @@ export default function WaiterPanel() {
   }
 
   return (
-      <div className="h-screen flex flex-col bg-white overflow-hidden relative">
+      <div className="h-screen flex flex-col bg-white overflow-hidden relative font-sans">
           {/* Header */}
-          <div className="bg-black text-white p-4 flex justify-between items-center shrink-0">
-              <button onClick={() => setActiveTab('TABLES')}><ArrowLeft/></button>
-              <div className="font-bold">MASA {selectedTable}</div>
-              <div className="bg-red-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-xs">
+          <div className="bg-black text-white p-4 flex justify-between items-center shrink-0 border-b border-white/20">
+              <button onClick={() => setActiveTab('TABLES')} className="p-2 hover:bg-white/20 transition-colors"><ArrowLeft/></button>
+              <div className="font-black text-xl tracking-widest uppercase">MASA {selectedTable}</div>
+              <div className="bg-white text-black w-8 h-8 flex items-center justify-center font-bold text-sm border-2 border-white">
                   {cart.reduce((a,b) => a + b.quantity, 0)}
               </div>
           </div>
 
           {/* Categories */}
-          <div className="p-2 bg-gray-100 overflow-x-auto whitespace-nowrap gap-2 flex shrink-0 border-b">
+          <div className="p-2 bg-white overflow-x-auto whitespace-nowrap gap-2 flex shrink-0 border-b-2 border-black">
               {categories.map(cat => (
                   <button
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat)}
-                      className={`px-4 py-2 rounded-full text-sm font-bold ${selectedCategory?.id === cat.id ? 'bg-black text-white' : 'bg-white border'}`}
+                      className={`px-6 py-3 text-xs font-black uppercase tracking-widest transition-all
+                          ${selectedCategory?.id === cat.id 
+                              ? 'bg-black text-white ring-2 ring-black ring-offset-2' 
+                              : 'bg-white text-black border border-black hover:bg-gray-100'}`}
                   >
                       {cat.name}
                   </button>
               ))}
           </div>
 
-          {/* Product List - Text Only */}
-          <div className="flex-1 overflow-y-auto p-2">
+          {/* Product List */}
+          <div className="flex-1 overflow-y-auto p-0 bg-gray-50">
               {products.map(p => (
                   <button 
                       key={p.id}
@@ -192,44 +195,49 @@ export default function WaiterPanel() {
                               addToCart(p);
                           }
                       }}
-                      className="w-full bg-white border-b p-4 flex justify-between items-center active:bg-gray-50 text-left"
+                      className="w-full bg-white border-b border-gray-200 p-6 flex justify-between items-center active:bg-black active:text-white group transition-colors text-left"
                   >
                       <div>
-                          <div className="font-bold text-lg">{p.name}</div>
-                          <div className="text-xs text-gray-500">{p.description}</div>
-                          {p.options && p.options.length > 0 && <div className="text-[10px] text-blue-600 font-bold mt-1">SEÇENEKLER MEVCUT</div>}
+                          <div className="font-black text-lg uppercase">{p.name}</div>
+                          <div className="text-xs text-gray-500 group-active:text-gray-400 font-mono mt-1">{p.description}</div>
+                          {p.options && p.options.length > 0 && (
+                              <div className="text-[10px] font-bold mt-2 flex items-center gap-1 uppercase tracking-widest text-blue-600 group-active:text-blue-300">
+                                  <span>Seçenekler</span> <ArrowRight size={12}/>
+                              </div>
+                          )}
                       </div>
-                      <div className="font-mono font-bold text-lg">₺{p.price}</div>
+                      <div className="font-mono font-bold text-lg">₺{parseFloat(p.price).toFixed(2)}</div>
                   </button>
               ))}
           </div>
 
           {/* Cart / Actions */}
-          <div className="bg-gray-50 border-t p-4 shrink-0">
-             {cart.length > 0 && (
+          <div className="bg-white border-t-2 border-black p-4 shrink-0 shadow-[0px_-4px_10px_rgba(0,0,0,0.1)]">
+             {cart.length > 0 ? (
                  <>
-                    <div className="mb-4 max-h-32 overflow-y-auto bg-white border rounded p-2">
+                    <div className="mb-4 max-h-32 overflow-y-auto bg-gray-50 border border-black p-2">
                         {cart.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center py-1 border-b last:border-0 border-dashed">
+                            <div key={idx} className="flex justify-between items-center py-2 border-b border-dashed border-gray-300 last:border-0 hover:bg-white transition-colors px-2">
                                 <div className="flex-1">
-                                    <div className="text-sm font-bold">{item.name} <span className="text-xs font-mono ml-1">x{item.quantity}</span></div>
+                                    <div className="text-sm font-bold uppercase">{item.name} <span className="text-xs font-mono ml-1 text-gray-500">x{item.quantity}</span></div>
                                     {item.selectedOptions && item.selectedOptions.length > 0 && (
-                                        <div className="text-[10px] text-gray-500">
+                                        <div className="text-[10px] text-gray-500 font-mono">
                                             {item.selectedOptions.map(o => o.name).join(', ')}
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-mono text-sm">₺{(item.price * item.quantity).toFixed(2)}</span>
-                                    <button onClick={() => removeFromCart(item.cartId)} className="text-red-500"><Trash2 size={14}/></button>
+                                <div className="flex items-center gap-4">
+                                    <span className="font-mono text-sm font-bold">₺{(item.price * item.quantity).toFixed(2)}</span>
+                                    <button onClick={() => removeFromCart(item.cartId)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
                                 </div>
                             </div>
                         ))}
                     </div>
                     
                     <textarea 
-                        className="w-full p-2 border rounded mb-4 text-sm"
-                        placeholder="Sipariş Notu (Opsiyonel)"
+                        className="w-full p-3 border border-black mb-4 text-xs font-mono bg-white focus:bg-gray-50 transition-colors resize-none placeholder-gray-500"
+                        placeholder="SİPARİŞ NOTU EKLE..."
+                        rows={2}
                         value={orderNote}
                         onChange={e => setOrderNote(e.target.value)}
                     />
@@ -237,28 +245,32 @@ export default function WaiterPanel() {
                     <button 
                         onClick={submitOrder} 
                         disabled={isSubmitting}
-                        className="w-full py-4 bg-green-600 text-white rounded-lg font-bold text-lg flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-black text-white border-2 border-black font-black text-lg uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                     >
-                        <Send size={20} />
+                        {isSubmitting ? <div className="spinner w-5 h-5 border-white border-t-transparent" /> : <Send size={20} />}
                         SİPARİŞİ GÖNDER (₺{cart.reduce((acc, i) => acc + (i.price * i.quantity), 0).toFixed(2)})
                     </button>
                  </>
+             ) : (
+                 <div className="text-center py-4 text-gray-400 font-bold uppercase text-xs tracking-widest">Sepet Boş</div>
              )}
           </div>
 
           {/* Option Modal */}
           {optionModal && (
               <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center animate-fadeIn">
-                  <div className="bg-white w-full rounded-t-2xl p-6 flex flex-col gap-4 max-h-[80vh]">
-                      <div className="flex justify-between items-start">
+                  <div className="bg-white w-full border-t-2 border-black p-6 flex flex-col gap-6 max-h-[85vh] animate-slideUp">
+                      <div className="flex justify-between items-start border-b border-black pb-4">
                           <div>
-                              <h3 className="font-black text-xl uppercase">{optionModal.product.name}</h3>
-                              <p className="text-gray-500 text-sm">Seçenekleri belirleyin</p>
+                              <h3 className="font-black text-2xl uppercase tracking-tighter">{optionModal.product.name}</h3>
+                              <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Lütfen Seçenekleri Belirleyin</p>
                           </div>
-                          <button onClick={() => setOptionModal(null)} className="p-2 bg-gray-100 rounded font-bold">IPTAL</button>
+                          <button onClick={() => setOptionModal(null)} className="p-2 border border-black hover:bg-black hover:text-white transition-colors">
+                            <span className="font-bold text-xs uppercase">VAZGEÇ</span>
+                          </button>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto border-t border-b py-2 flex flex-col gap-2">
+                      <div className="flex-1 overflow-y-auto py-2 flex flex-col gap-2">
                           {optionModal.product.options.map((opt, idx) => {
                               const isSelected = optionModal.selected.some(o => o.name === opt.name);
                               return (
@@ -271,11 +283,11 @@ export default function WaiterPanel() {
                                               setOptionModal({...optionModal, selected: [...optionModal.selected, opt]});
                                           }
                                       }}
-                                      className={`p-4 rounded border text-left flex justify-between items-center transition-all
-                                          ${isSelected ? 'bg-black text-white border-black ring-2 ring-black ring-offset-2' : 'bg-white border-gray-200 text-gray-700'}`}
+                                      className={`p-4 border-2 text-left flex justify-between items-center transition-all group
+                                          ${isSelected ? 'bg-black text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white border-gray-200 hover:border-black text-black'}`}
                                   >
-                                      <span className="font-bold">{opt.name}</span>
-                                      <span className="font-mono">{opt.price_change > 0 ? `+₺${opt.price_change}` : ''}</span>
+                                      <span className="font-bold text-sm uppercase">{opt.name}</span>
+                                      <span className="font-mono text-xs font-bold">{opt.price_change > 0 ? `+₺${opt.price_change}` : 'ÜCRETSİZ'}</span>
                                   </button>
                               );
                           })}
@@ -286,7 +298,7 @@ export default function WaiterPanel() {
                               addToCart(optionModal.product, optionModal.selected);
                               setOptionModal(null);
                           }}
-                          className="w-full py-4 bg-green-600 text-white font-bold uppercase rounded-lg text-lg"
+                          className="w-full py-4 bg-green-600 border-2 border-green-700 text-white font-black uppercase tracking-widest text-lg hover:bg-green-700 active:scale-[0.98] transition-all"
                       >
                           EKLE (+₺{optionModal.selected.reduce((a, b) => a + b.price_change, 0)})
                       </button>

@@ -8,10 +8,10 @@ export default function Onboarding() {
   const [companyName, setCompanyName] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { showNotification } = useNotification();
 
-  // Onboarding zaten yapılmışsa veya yetkisizse yönlendir
   useEffect(() => {
     const userString = localStorage.getItem('user');
     if (userString) {
@@ -26,6 +26,7 @@ export default function Onboarding() {
 
   const handleOnboard = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
     try {
       await api.put('/api/users/onboard', {
@@ -34,7 +35,6 @@ export default function Onboarding() {
         phone: phone
       });
 
-      // LocalStorage'daki kullanıcıyı güncelle
       const user = JSON.parse(localStorage.getItem('user'));
       if (user) {
         user.is_onboarded = true;
@@ -42,7 +42,6 @@ export default function Onboarding() {
         localStorage.setItem('user', JSON.stringify(user));
       }
 
-      // Dashboard'a yönlendir
       navigate('/dashboard');
       
     } catch (error) {
@@ -52,55 +51,54 @@ export default function Onboarding() {
         message: error.response?.data?.error || 'Sunucu Hatası', 
         type: 'error' 
       });
+    } finally {
+        setLoading(false);
     }
   };
 
-  useEffect(() => {
-    console.log('Onboarding component mounted. Phone field should be visible.');
-  }, []);
-
   return (
     <div className="min-h-screen bg-white text-black flex items-center justify-center font-sans">
-      <div className="w-full max-w-lg border-2 border-black p-12">
+      <div className="w-full max-w-lg border-2 border-black p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
         
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold uppercase tracking-tighter mb-2">Başlangıç Kurulumu</h1>
-          <p className="text-sm font-mono text-gray-500">KAYIT_PROTOKOLUNU_TAMAMLA</p>
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-black uppercase tracking-widest mb-2">BAŞLANGIÇ KURULUMU</h1>
+          <div className="h-1 w-20 bg-black mx-auto mb-4"></div>
+          <p className="text-xs font-mono font-bold text-gray-500 uppercase tracking-widest">SİSTEM KAYDI & AKTİVASYON</p>
         </div>
 
         <form onSubmit={handleOnboard} className="space-y-8">
           
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest block">Firma Adı</label>
+            <label className="text-[10px] font-black uppercase tracking-widest block text-gray-400">Firma Adı</label>
             <input
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
-              placeholder="İŞLETME ADINI GİRİNİZ"
+              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-black bg-transparent uppercase placeholder:text-gray-200"
+              placeholder="İŞLETME ADI"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest block">Ad Soyad</label>
+            <label className="text-[10px] font-black uppercase tracking-widest block text-gray-400">Ad Soyad</label>
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
-              placeholder="AD SOYAD GİRİNİZ"
+              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-black bg-transparent uppercase placeholder:text-gray-200"
+              placeholder="ADINIZ SOYADINIZ"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest block">Telefon Numarası</label>
+            <label className="text-[10px] font-black uppercase tracking-widest block text-gray-400">Telefon Numarası</label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-mono bg-transparent"
+              className="w-full border-b-2 border-black px-2 py-3 focus:border-black outline-none transition-colors rounded-none text-xl font-black bg-transparent uppercase placeholder:text-gray-200 font-mono"
               placeholder="5XX XXX XX XX"
               pattern="[0-9]{10}"
               title="10 haneli telefon numarası giriniz (5XXXXXXXXX)"
@@ -108,13 +106,14 @@ export default function Onboarding() {
             />
           </div>
 
-          <div className="pt-4">
+          <div className="pt-8">
             <button
               type="submit"
-              className="group w-full flex items-center justify-between bg-white border-2 border-black text-black px-6 py-4 font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors rounded-none"
+              disabled={loading}
+              className="group w-full flex items-center justify-between bg-black text-white px-8 py-6 font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black border-2 border-black transition-all rounded-none disabled:opacity-50 disabled:cursor-not-allowed shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
             >
-              <span>Kurulumu Tamamla</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <span>{loading ? 'KURULUM YAPILIYOR...' : 'KURULUMU TAMAMLA'}</span>
+              {!loading && <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />}
             </button>
           </div>
 

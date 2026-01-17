@@ -4,16 +4,17 @@ import api from '../../api';
 import { ChevronDown, ChevronUp, Minus, Plus, CheckCircle, X } from 'lucide-react';
 
 export default function MobileMenu() {
-  const { tenantId, branchId, tableId } = useParams(); // Using tableId as table_no
+  const { tenantId, branchId, tableId } = useParams(); 
   const [data, setData] = useState({ categories: [], products: [] });
   const [expandedCategory, setExpandedCategory] = useState(null);
-  const [cart, setCart] = useState([]); // Array of { productId, quantity, selectedOptions, key, price }
+  const [cart, setCart] = useState([]); 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Option Modal State
-  const [optionModal, setOptionModal] = useState(null); // { product, selected: [] }
+  const [optionModal, setOptionModal] = useState(null); 
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [orderNote, setOrderNote] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,9 +35,6 @@ export default function MobileMenu() {
     };
     fetchData();
   }, [tenantId]);
-
-  const [showCartModal, setShowCartModal] = useState(false);
-  const [orderNote, setOrderNote] = useState('');
 
   const toggleCategory = (id) => {
     setExpandedCategory(prev => prev === id ? null : id);
@@ -91,7 +89,6 @@ export default function MobileMenu() {
   };
 
   const handlePlaceOrder = async () => {
-    // Final Submission from Modal
     const items = cart.map(item => ({
         id: item.productId,
         name: item.name,
@@ -126,161 +123,59 @@ export default function MobileMenu() {
   const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   if (orderPlaced) {
-    // Show success banner instead of full-screen blocker
     return (
-      <div className="bg-white min-h-screen pb-24 relative">
+      <div className="bg-white min-h-screen pb-24 relative font-sans">
         {/* Success Banner */}
-        <div className="sticky top-0 z-50 bg-green-50 text-black p-4 flex items-center justify-between animate-fadeIn shadow-sm border-b border-green-100">
-          <div className="flex items-center gap-2">
-            <CheckCircle size={24} className="text-green-600" />
+        <div className="sticky top-0 z-50 bg-black text-white p-4 flex items-center justify-between animate-fadeIn shadow-lg">
+          <div className="flex items-center gap-3">
+            <CheckCircle size={24} className="text-white" />
             <div>
-              <div className="font-bold">Sipariş Alındı!</div>
-              <div className="text-xs font-medium">Mutfağımız hazırlıyor...</div>
+              <div className="font-black uppercase tracking-widest text-sm">Sipariş Alındı</div>
+              <div className="text-[10px] font-bold opacity-70">Mutfağımız hazırlıyor...</div>
             </div>
           </div>
           <button 
             onClick={() => setOrderPlaced(false)}
-            className="border border-black hover:bg-black hover:text-white px-3 py-1 rounded-none text-xs font-bold transition-colors"
+            className="border-2 border-white hover:bg-white hover:text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all"
           >
             YENİ SİPARİŞ
           </button>
         </div>
 
-        {/* Continue with normal menu view */}
         {/* Header */}
         <div className="p-8 border-b border-gray-100 flex flex-col items-center justify-center bg-white text-black">
-           <h1 className="text-xl font-light uppercase tracking-[0.3em] font-sans">{data.company_name || 'RESTORAN MENÜ'}</h1>
-           <div className="h-4 w-px bg-zinc-200 my-2"></div>
-           <p className="text-[10px] font-medium text-zinc-400 tracking-tighter uppercase italic">Masa {tableId}</p>
+           <h1 className="text-xl font-black uppercase tracking-[0.3em] text-center">{data.company_name || 'RESTORAN MENÜ'}</h1>
+           <div className="h-4 w-px bg-black my-2"></div>
+           <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Masa {tableId}</p>
         </div>
 
-        {/* Categories Accordion */}
-        <div className="p-4 flex flex-col gap-4">
-          {data.categories.map(cat => {
-            const categoryProducts = data.products.filter(p => p.category_id === cat.id);
-            const isExpanded = expandedCategory === cat.id;
-
-            if (categoryProducts.length === 0) return null;
-
-            return (
-              <div key={cat.id} className="border-b border-black last:border-b-0 pb-4">
-                <button 
-                  onClick={() => toggleCategory(cat.id)}
-                  className="w-full flex justify-between items-center py-4 font-medium text-sm uppercase tracking-[0.2em] text-zinc-800 text-left"
-                >
-                  {cat.name}
-                  {isExpanded ? <ChevronUp size={16} className="text-zinc-400"/> : <ChevronDown size={16} className="text-zinc-400"/>}
-                </button>
-                
-                {/* Products List */}
-                {isExpanded && (
-                  <div className="flex flex-col gap-6 mt-2 animate-fadeIn">
-                    {categoryProducts.map(product => (
-                        <div key={product.id} className="flex flex-col gap-4 group">
-                           <div className="flex gap-5">
-                             {product.image_url && (
-                               <div className="w-20 h-20 shrink-0 border border-black overflow-hidden bg-gray-50">
-                                 <img 
-                                   src={product.image_url.startsWith('http') ? product.image_url : `${api.defaults.baseURL}${product.image_url}`} 
-                                   alt={product.name}
-                                   className="w-full h-full object-cover"
-                                 />
-                               </div>
-                             )}
-                             <div className="flex-1">
-                               <div className="flex justify-between items-start">
-                                 <h3 className="font-bold text-sm uppercase">{product.name}</h3>
-                                 <div className="font-mono font-bold whitespace-nowrap ml-2">
-                                   ₺{product.price}
-                                 </div>
-                               </div>
-                               <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{product.description}</p>
-                             </div>
-                           </div>
-                         
-                         <div className="flex items-center justify-end mt-4 gap-4">
-                            {product.options && product.options.length > 0 ? (
-                                // Product WITH Options
-                                <div className="flex items-center gap-4">
-                                    {getProductQty(product.id) > 0 && <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Sepette: {getProductQty(product.id)}</span>}
-                                    <button 
-                                      onClick={() => setOptionModal({ product, selected: [] })}
-                                      style={{ backgroundColor: '#18181b', color: '#ffffff' }}
-                                      className="bg-zinc-900 text-white px-8 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-none hover:bg-black transition-all active:scale-95 shadow-lg"
-                                    >
-                                      EKLE +
-                                    </button>
-                                </div>
-                            ) : (
-                                // Standard Product
-                                <div className="flex items-center bg-zinc-50 rounded-none px-2 py-1 border border-zinc-100">
-                                    <button 
-                                      onClick={() => removeFromCart(`${product.id}-`)}
-                                      className="p-2 text-zinc-400 hover:text-black transition-colors"
-                                    >
-                                      <Minus size={16} />
-                                 </button>
-                                   
-                                   <div className="font-medium min-w-[32px] text-center text-zinc-900 text-sm">
-                                     {getProductQty(product.id)}
-                                   </div>
- 
-                                   <button 
-                                     onClick={() => addToCart(product)}
-                                     className="p-2 text-zinc-900 hover:text-black transition-colors"
-                                   >
-                                     <Plus size={16} />
-                                   </button>
-                                </div>
-                            )}
-                         </div>
-                         <div className="h-px bg-zinc-50 w-full mt-2"></div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        {/* Re-render categorization for continued browsing */}
+        <div className="p-4 flex flex-col gap-4 opacity-50 pointer-events-none grayscale">
+             {/* Simplified view for background */}
+             <div className="text-center text-xs font-mono uppercase mt-10">Siparişiniz hazırlanıyor...</div>
         </div>
-
-        {cartItemCount > 0 && (
-          <div className="fixed bottom-6 left-6 right-6 bg-zinc-900 text-white p-5 flex justify-between items-center z-40 rounded-none shadow-2xl animate-slideUp">
-             <div className="flex flex-col">
-               <span className="text-[9px] text-zinc-400 font-bold tracking-[0.2em] uppercase">Sipariş Toplamı</span>
-               <span className="text-xl font-light tracking-tighter">₺{totalAmount.toFixed(2)}</span>
-             </div>
-             
-             <button 
-               onClick={() => setShowCartModal(true)}
-               className="bg-white text-black px-6 py-3 rounded-none font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all text-[10px] active:scale-95"
-             >
-               SEPETE GİT
-             </button>
-          </div>
-        )}
       </div>
     );
   }
 
   if (loading) {
       return (
-          <div className="min-h-screen flex flex-col items-center justify-center bg-white p-10 font-mono">
-              <div className="w-10 h-10 border-4 border-black border-t-transparent animate-spin mb-4"></div>
-              <p className="text-xs uppercase tracking-[0.2em]">Menü Yükleniyor...</p>
+          <div className="min-h-screen flex flex-col items-center justify-center bg-white p-10 font-sans">
+              <div className="spinner mb-4"></div>
+              <p className="text-xs uppercase tracking-[0.2em] font-bold animate-pulse">Menü Yükleniyor...</p>
           </div>
       );
   }
 
   if (error) {
       return (
-          <div className="min-h-screen flex flex-col items-center justify-center bg-white p-10 text-center">
-              <div className="p-8">
-                <h1 className="text-xl font-light text-black uppercase mb-4 tracking-[0.2em]">BİR HATA OLUŞTU</h1>
-                <p className="text-xs text-zinc-500 mb-8 max-w-xs mx-auto uppercase leading-relaxed">{error}</p>
+          <div className="min-h-screen flex flex-col items-center justify-center bg-white p-10 text-center font-sans">
+              <div className="p-8 border-2 border-black">
+                <h1 className="text-lg font-black text-black uppercase mb-4 tracking-widest">HATA</h1>
+                <p className="text-xs text-gray-500 mb-8 max-w-xs mx-auto uppercase font-bold">{error}</p>
                 <button 
                     onClick={() => window.location.reload()}
-                    className="bg-black text-white px-10 py-4 text-[10px] font-bold uppercase tracking-[0.3em] rounded-none"
+                    className="bg-black text-white px-8 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black border-2 border-black transition-all"
                 >
                     TEKRAR DENE
                 </button>
@@ -289,18 +184,17 @@ export default function MobileMenu() {
       );
   }
 
-  // Totals calculated at the top for use in both view states
   return (
-    <div className="bg-white min-h-screen pb-24 relative">
+    <div className="bg-white min-h-screen pb-24 relative font-sans text-black">
       {/* Header */}
-      <div className="p-10 border-b border-zinc-50 flex flex-col items-center justify-center bg-white text-black">
-         <h1 className="text-2xl font-light uppercase tracking-[0.3em] font-sans text-center">{data.company_name || 'RESTORAN MENÜ'}</h1>
-         <div className="h-6 w-[1px] bg-zinc-200 my-4"></div>
-         <p className="text-[10px] font-bold text-zinc-400 tracking-[0.2em] uppercase">MASA {tableId}</p>
+      <div className="p-10 border-b border-gray-100 flex flex-col items-center justify-center bg-white">
+         <h1 className="text-2xl font-black uppercase tracking-[0.3em] text-center leading-relaxed">{data.company_name || 'RESTORAN MENÜ'}</h1>
+         <div className="h-6 w-[2px] bg-black my-4"></div>
+         <p className="text-[10px] font-black text-gray-400 tracking-[0.2em] uppercase">MASA {tableId}</p>
       </div>
 
-      {/* Categories Accordion */}
-      <div className="p-4 flex flex-col gap-4">
+      {/* Categories */}
+      <div className="p-4 flex flex-col gap-0">
         {data.categories.map(cat => {
           const categoryProducts = data.products.filter(p => p.category_id === cat.id);
           const isExpanded = expandedCategory === cat.id;
@@ -308,78 +202,75 @@ export default function MobileMenu() {
           if (categoryProducts.length === 0) return null;
 
           return (
-            <div key={cat.id} className="pb-2">
+            <div key={cat.id} className="border-b border-black last:border-0">
               <button 
                 onClick={() => toggleCategory(cat.id)}
-                className="w-full flex justify-between items-center py-5 font-medium text-xs uppercase tracking-[0.3em] text-zinc-900 text-left border-b border-zinc-50"
+                className={`w-full flex justify-between items-center py-6 font-black text-sm uppercase tracking-[0.2em] text-left hover:bg-gray-50 transition-colors px-2
+                ${isExpanded ? 'bg-black text-white' : 'bg-white text-black'}`}
               >
-                {cat.name}
-                {isExpanded ? <ChevronUp size={14} className="text-zinc-500"/> : <ChevronDown size={14} className="text-zinc-500"/>}
+                <span>{cat.name}</span>
+                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
               
               {/* Products List */}
               {isExpanded && (
-                <div className="flex flex-col gap-10 mt-6 animate-fadeIn">
+                <div className="flex flex-col gap-0 mt-0 animate-fadeIn border-l-2 border-black">
                   {categoryProducts.map(product => (
-                      <div key={product.id} className="flex flex-col gap-4 group">
-                         <div className="flex gap-6">
+                      <div key={product.id} className="flex flex-col p-6 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                         <div className="flex gap-4 items-start">
                            {product.image_url && (
-                             <div className="w-24 h-24 shrink-0 rounded-none overflow-hidden bg-zinc-50 shadow-sm border border-zinc-50">
+                             <div className="w-24 h-24 shrink-0 bg-gray-100 border border-gray-200">
                                <img 
                                  src={product.image_url.startsWith('http') ? product.image_url : `${api.defaults.baseURL}${product.image_url}`} 
                                  alt={product.name}
-                                 className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"
+                                 className="w-full h-full object-cover grayscale"
                                />
                              </div>
                            )}
-                           <div className="flex-1 flex flex-col justify-center">
-                             <div className="flex justify-between items-baseline mb-1">
-                               <h3 className="font-semibold text-sm text-zinc-900 uppercase tracking-widest">{product.name}</h3>
-                               <div className="text-xs font-bold text-zinc-900 ml-4 italic">
+                           <div className="flex-1 min-w-0">
+                             <div className="flex justify-between items-start mb-1 flex-wrap gap-2">
+                               <h3 className="font-black text-sm uppercase tracking-wide break-words">{product.name}</h3>
+                               <div className="font-mono font-bold text-sm whitespace-nowrap">
                                  ₺{product.price}
                                </div>
                              </div>
-                             <p className="text-[10px] text-zinc-500 leading-relaxed font-medium mt-1 line-clamp-2 uppercase tracking-tighter">{product.description}</p>
+                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide break-words leading-relaxed">{product.description}</p>
                            </div>
                          </div>
                        
-                       <div className="flex items-center justify-end mt-4 gap-6">
+                       <div className="flex items-center justify-end mt-4 gap-4">
                           {product.options && product.options.length > 0 ? (
-                              // Product WITH Options
                               <div className="flex items-center gap-4">
-                                  {getProductQty(product.id) > 0 && <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Sepette: {getProductQty(product.id)}</span>}
+                                  {getProductQty(product.id) > 0 && <span className="text-[10px] font-black text-black uppercase tracking-widest border-b border-black">SEPETTE: {getProductQty(product.id)}</span>}
                                   <button 
                                     onClick={() => setOptionModal({ product, selected: [] })}
-                                    style={{ backgroundColor: '#18181b', color: '#ffffff' }}
-                                    className="bg-zinc-900 text-white px-8 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] rounded-none hover:bg-black transition-all shadow-lg active:scale-95"
+                                    className="bg-black text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black border-2 border-black transition-all active:translate-y-1"
                                   >
-                                    EKLE +
+                                    SEÇENEK EKLE
                                   </button>
                               </div>
                           ) : (
-                              // Standard Product
-                              <div className="flex items-center bg-zinc-50 rounded-none px-2 py-1 border border-zinc-100">
+                              <div className="flex items-center border-2 border-black bg-white">
                                   <button 
                                     onClick={() => removeFromCart(`${product.id}-`)}
-                                    className="p-2 text-zinc-400 hover:text-black transition-colors"
+                                    className="p-2 text-black hover:bg-gray-100 transition-colors border-r border-black"
                                   >
                                     <Minus size={14} />
                                   </button>
                                   
-                                  <div className="font-medium min-w-[32px] text-center text-zinc-900 text-xs tracking-tighter">
+                                  <div className="font-mono font-bold min-w-[32px] text-center text-sm">
                                     {getProductQty(product.id)}
                                   </div>
 
                                   <button 
                                     onClick={() => addToCart(product)}
-                                    className="p-2 text-zinc-900 hover:text-black transition-colors"
+                                    className="p-2 text-black hover:bg-gray-100 transition-colors border-l border-black"
                                   >
                                     <Plus size={14} />
                                   </button>
                               </div>
                           )}
                        </div>
-                       <div className="h-px bg-zinc-50 w-full mt-6"></div>
                     </div>
                   ))}
                 </div>
@@ -390,60 +281,57 @@ export default function MobileMenu() {
       </div>
 
       {cartItemCount > 0 && (
-        <div 
-            style={{ backgroundColor: '#18181b', color: '#ffffff' }}
-            className="fixed bottom-6 left-6 right-6 p-6 flex justify-between items-center z-40 rounded-none shadow-2xl animate-slideUp border border-zinc-700"
-        >
-           <div className="flex flex-col">
-             <span className="text-[10px] text-zinc-400 font-bold tracking-[0.3em] uppercase mb-1">TOPLAM</span>
-             <span className="text-2xl font-light tracking-tighter">₺{totalAmount.toFixed(2)}</span>
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t-2 border-black z-40 animate-slideUp">
+           <div className="bg-black text-white p-4 flex justify-between items-center shadow-2xl">
+               <div className="flex flex-col">
+                 <span className="text-[9px] text-gray-400 font-bold tracking-[0.2em] uppercase">TOPLAM</span>
+                 <span className="text-2xl font-black tracking-tighter font-mono">₺{totalAmount.toFixed(2)}</span>
+               </div>
+               
+               <button 
+                 onClick={() => setShowCartModal(true)}
+                 className="bg-white text-black px-6 py-3 font-black uppercase tracking-[0.2em] text-[10px] hover:bg-gray-200 transition-colors"
+               >
+                 SEPETİ GÖR ({cartItemCount})
+               </button>
            </div>
-           
-           <button 
-             onClick={() => setShowCartModal(true)}
-             style={{ backgroundColor: '#ffffff', color: '#18181b' }}
-             className="bg-white text-black px-8 py-3 rounded-none font-bold uppercase tracking-[0.2em] transition-all text-[11px] active:scale-95 shadow-lg"
-           >
-             SEPETİ GÖR
-           </button>
         </div>
       )}
 
       {/* Cart Review Modal */}
       {showCartModal && (
-          <div className="fixed inset-0 z-50 bg-white/20 backdrop-blur-3xl flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fadeIn">
-              <div className="bg-white w-full max-w-lg rounded-none overflow-hidden flex flex-col max-h-[92vh] shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.1)] border-t border-zinc-50">
-                  <div className="p-8 pb-4 flex justify-between items-center">
-                      <h3 className="font-light text-xl uppercase tracking-[0.3em] text-zinc-900">SİPARİŞİNİZ</h3>
-                      <button onClick={() => setShowCartModal(false)} className="text-zinc-300 hover:text-black p-2 transition-colors">
-                          <X size={24} strokeWidth={1}/>
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fadeIn">
+              <div className="bg-white w-full max-w-lg flex flex-col max-h-[90vh] border-2 border-white shadow-2xl">
+                  <div className="p-6 border-b-2 border-black flex justify-between items-center bg-gray-50">
+                      <h3 className="font-black text-lg uppercase tracking-[0.3em]">SİPARİŞ ÖZETİ</h3>
+                      <button onClick={() => setShowCartModal(false)}>
+                          <X size={24} className="hover:rotate-90 transition-transform"/>
                       </button>
                   </div>
                   
-                  <div className="p-8 pt-4 overflow-y-auto flex-1">
+                  <div className="p-6 overflow-y-auto flex-1 bg-white">
                       {cart.map((item, idx) => (
-                          <div key={idx} className="flex justify-between items-start mb-6 border-b border-zinc-100 pb-4 last:border-0">
-                              <div>
-                                  <div className="font-bold uppercase text-xs tracking-widest text-zinc-900">{item.name}</div>
-                                  <div className="text-[11px] text-zinc-500 mt-1 uppercase tracking-tight font-bold italic">₺{item.price} x {item.quantity}</div>
+                          <div key={idx} className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4 last:border-0 last:mb-0">
+                              <div className="flex-1 pr-4">
+                                  <div className="font-black uppercase text-sm tracking-wide break-words">{item.name}</div>
+                                  <div className="text-[10px] text-gray-500 mt-1 uppercase font-bold font-mono">₺{item.price} x {item.quantity}</div>
                                   {item.selectedOptions && item.selectedOptions.length > 0 && (
-                                      <div className="text-[10px] text-zinc-600 mt-2 uppercase tracking-widest bg-zinc-100 px-3 py-1.5 inline-block rounded-none font-medium">
-                                          {item.selectedOptions.map(o => o.name).join(' · ')}
+                                      <div className="text-[9px] text-black border-l-2 border-black pl-2 mt-2 uppercase font-bold tracking-wide">
+                                          {item.selectedOptions.map(o => o.name).join(' + ')}
                                       </div>
                                   )}
                               </div>
                               <div className="flex flex-col items-end gap-2">
-                                  <div className="font-bold text-sm tracking-tight text-zinc-900">₺{(item.price * item.quantity).toFixed(2)}</div>
-                                  <button onClick={() => removeFromCart(item.key)} className="text-[10px] text-red-600 hover:text-red-700 font-black uppercase tracking-[0.2em] transition-colors">ÇIKAR</button>
+                                  <div className="font-mono font-bold text-sm">₺{(item.price * item.quantity).toFixed(2)}</div>
+                                  <button onClick={() => removeFromCart(item.key)} className="text-[9px] text-red-600 font-black uppercase tracking-widest hover:underline">KALDIR</button>
                               </div>
                           </div>
                       ))}
 
-                      <div className="mt-8 pt-8 border-t border-zinc-100">
-                          <label className="block text-[11px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-4">Sipariş Notu</label>
+                      <div className="mt-8 pt-8 border-t-2 border-black">
                           <textarea 
-                              className="w-full bg-zinc-50 border border-zinc-100 p-5 rounded-none font-sans text-sm focus:ring-2 focus:ring-zinc-200 outline-none transition-all placeholder:text-zinc-400 text-zinc-900"
-                              placeholder="Özel isteklerinizi belirtebilirsiniz..."
+                              className="w-full bg-gray-50 border-2 border-gray-200 p-4 font-bold text-xs focus:border-black outline-none transition-all placeholder:text-gray-400 uppercase tracking-wide"
+                              placeholder="Sipariş Notu Ekleyin..."
                               rows={3}
                               value={orderNote}
                               onChange={e => setOrderNote(e.target.value)}
@@ -451,39 +339,37 @@ export default function MobileMenu() {
                       </div>
                   </div>
 
-                  <div className="p-8 bg-zinc-50 shrink-0">
-                       <div className="flex justify-between items-center mb-8">
-                           <span className="text-[11px] font-black tracking-[0.3em] text-zinc-500 uppercase">Toplam Tutar</span>
-                           <span className="text-3xl font-bold text-zinc-900 tracking-tighter">₺{totalAmount.toFixed(2)}</span>
+                  <div className="p-6 bg-black text-white shrink-0">
+                       <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                           <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">GENEL TOPLAM</span>
+                           <span className="text-3xl font-black tracking-tighter font-mono">₺{totalAmount.toFixed(2)}</span>
                        </div>
                        <button 
                           onClick={handlePlaceOrder}
-                          style={{ backgroundColor: '#18181b', color: '#ffffff' }}
-                          className="w-full bg-zinc-900 text-white py-5 rounded-none font-black uppercase tracking-[0.4em] text-[12px] hover:bg-black transition-all active:scale-95 shadow-2xl"
+                          className="w-full bg-white text-black py-4 font-black uppercase tracking-[0.3em] text-[12px] hover:bg-gray-200 transition-all border-2 border-black active:translate-y-1"
                        >
                            SİPARİŞİ ONAYLA
                        </button>
-                       <div className="h-6"></div>
                   </div>
               </div>
           </div>
       )}
+      
       {/* Option Modal */}
       {optionModal && (
-          <div className="fixed inset-0 z-50 bg-white/40 backdrop-blur-3xl flex items-end justify-center animate-fadeIn p-0">
-              <div className="bg-white w-full max-w-lg rounded-none p-10 flex flex-col max-h-[92vh] shadow-[0_-30px_70px_-15px_rgba(0,0,0,0.15)] border-t border-zinc-100">
-                  <div className="flex justify-between items-start mb-10">
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center animate-fadeIn p-0">
+              <div className="bg-white w-full max-w-lg p-0 flex flex-col max-h-[90vh] border-t-4 border-black">
+                  <div className="p-6 flex justify-between items-start bg-gray-50 border-b border-black">
                       <div>
-                          <h3 className="font-bold text-2xl uppercase tracking-[0.1em] text-zinc-900">{optionModal.product.name}</h3>
-                          <div className="h-1 w-12 bg-zinc-900 my-4"></div>
-                          <p className="text-zinc-600 text-[11px] font-black uppercase tracking-[0.2em]">Tercihlerinizi seçin</p>
+                          <h3 className="font-black text-xl uppercase tracking-tight leading-tight">{optionModal.product.name}</h3>
+                          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500 mt-2">SEÇENEKLERİ DÜZENLE</p>
                       </div>
-                      <button onClick={() => setOptionModal(null)} className="p-3 text-zinc-400 hover:text-black bg-zinc-100 rounded-none">
+                      <button onClick={() => setOptionModal(null)} className="p-2 hover:bg-black hover:text-white transition-colors border-2 border-transparent hover:border-black">
                           <X size={24} />
                       </button>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto pb-10 flex flex-col gap-4">
+                  <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-3">
                       {optionModal.product.options.map((opt, idx) => {
                           const isSelected = optionModal.selected.some(o => o.name === opt.name);
                           return (
@@ -496,13 +382,13 @@ export default function MobileMenu() {
                                           setOptionModal({...optionModal, selected: [...optionModal.selected, opt]});
                                       }
                                   }}
-                                  className={`p-6 rounded-none text-left flex justify-between items-center transition-all duration-500
+                                  className={`p-5 text-left flex justify-between items-center transition-all border-2
                                       ${isSelected 
-                                        ? 'bg-zinc-900 text-white shadow-xl shadow-zinc-200 scale-[1.02]' 
-                                        : 'bg-zinc-50 text-zinc-600 hover:bg-zinc-100'}`}
+                                        ? 'bg-black text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]' 
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'}`}
                               >
-                                  <span className="font-medium text-xs uppercase tracking-widest">{opt.name}</span>
-                                  <span className="font-light text-xs italic">{opt.price_change > 0 ? `+₺${opt.price_change}` : '0'}</span>
+                                  <span className="font-black text-xs uppercase tracking-widest">{opt.name}</span>
+                                  <span className="font-mono font-bold text-xs">{opt.price_change > 0 ? `+₺${opt.price_change}` : '0'}</span>
                               </button>
                           );
                       })}
@@ -513,12 +399,10 @@ export default function MobileMenu() {
                           addToCart(optionModal.product, optionModal.selected);
                           setOptionModal(null);
                       }}
-                      style={{ backgroundColor: '#18181b', color: 'white' }}
-                      className="w-full py-5 rounded-none font-bold uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-zinc-300 active:scale-95 transition-all"
+                      className="w-full py-6 bg-black text-white font-black uppercase tracking-[0.3em] text-xs hover:bg-gray-900 transition-all border-t-2 border-white"
                   >
-                      SİPARİŞE EKLE (+₺{optionModal.selected.reduce((a, b) => a + b.price_change, 0)})
+                      EKLE (+₺{optionModal.selected.reduce((a, b) => a + b.price_change, 0)})
                   </button>
-                  <div className="h-6"></div> {/* Safe area spacer */}
               </div>
           </div>
       )}

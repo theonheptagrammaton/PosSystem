@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,37 +6,74 @@
 
 @layer base {
   html {
-    /* Prevent layout shifts when scrollbar appears */
+    font-family: 'Inter', sans-serif;
     scrollbar-gutter: stable;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-black tracking-tighter;
   }
 
   body {
     @apply bg-white text-black font-sans antialiased;
-    /* Enforce consistent line-height and rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
-  /* Enforce sharp corners globally just in case */
+
+  /* Enforce sharp corners globally */
   * {
     @apply rounded-none;
-    /* Strict box model */
     box-sizing: border-box;
   }
 
-  /* Prevent image layout shifts */
   img, svg, video, canvas, audio, iframe, embed, object {
     display: block;
     max-width: 100%;
   }
 
   button {
-    @apply font-medium border border-black px-6 py-2 transition-all active:bg-black active:text-white uppercase tracking-wider text-sm;
-    /* Prevent button height shifts */
-    line-height: normal; 
+    @apply font-medium border border-black px-6 py-2 transition-all 
+    active:bg-black active:text-white 
+    uppercase tracking-wider text-sm;
+    line-height: normal;
   }
 
-  input {
-    @apply border border-gray outline-none px-4 py-2 focus:border-black transition-colors w-full;
+  /* Global Button Hover Enhancement */
+  button:hover {
+    @apply shadow-[2px_2px_0px_0px_rgba(0,0,0,1)];
+  }
+  button:active {
+    @apply transform translate-x-[1px] translate-y-[1px] shadow-none;
+  }
+
+  input, select, textarea {
+    @apply border border-gray outline-none px-4 py-2 focus:border-black transition-colors w-full bg-white text-black;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .animate-slideUp {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  /* Highlight Color */
+  ::selection {
+    @apply bg-black text-white;
   }
 }

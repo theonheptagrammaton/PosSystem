@@ -6,11 +6,10 @@ import {
   TopProductsChart, 
   CategoryShareChart 
 } from '../components/GodMode/AnalyticalCharts';
-import OccupancyGauge from '../components/GodMode/OccupancyGauge';
 import io from 'socket.io-client';
 import api from '../api';
-import Modal from '../components/Modal'; // Assuming Modal exists, verified in file list
-import { X } from 'lucide-react';
+import Modal from '../components/Modal'; 
+import { X, RefreshCcw } from 'lucide-react';
 
 export default function Dashboard() {
   const { isGodMode, toggleGodMode } = useGodMode();
@@ -20,6 +19,7 @@ export default function Dashboard() {
   const [occupancyRate, setOccupancyRate] = useState(0); 
   const [selectedOrder, setSelectedOrder] = useState(null); 
   const [isMobile, setIsMobile] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -42,7 +42,8 @@ export default function Dashboard() {
   }, []);
 
   const fetchInitialData = async () => {
-      fetchOrders();
+      setLoading(true);
+      await fetchOrders();
       try {
           const [catRes, prodRes] = await Promise.all([
               api.get('/api/categories'),
@@ -51,11 +52,12 @@ export default function Dashboard() {
           setCategories(catRes.data);
           setProducts(prodRes.data);
       } catch (err) { console.error('Initial data fetch error', err); }
+      finally { setLoading(false); }
   };
 
   const fetchOrders = async () => {
       try {
-          const res = await api.get('/api/orders'); // Fetch persistent history
+          const res = await api.get('/api/orders'); 
           setOrders(res.data);
           calculateOccupancy(res.data);
       } catch (err) {
@@ -65,7 +67,6 @@ export default function Dashboard() {
 
   const calculateOccupancy = async (ordersData) => {
     try {
-       // 1. Get Total Capacity (from all branches)
        const branchRes = await api.get('/api/branches');
        const totalCapacity = branchRes.data.reduce((acc, b) => acc + (b.table_count || 10), 0);
        
@@ -74,11 +75,6 @@ export default function Dashboard() {
            return;
        }
 
-       // 2. Count Active Tables (Status = 'PENDING')
-       // The orders data from /api/orders returns *all* orders (history + active).
-       // Active tables have orders with status 'PENDING' (being served)
-       
-       // Count unique tables that are currently busy
        const activeTables = new Set(
            ordersData.filter(o => o.status === 'PENDING').map(o => o.table_no)
        ).size;
@@ -92,19 +88,14 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    // Initialize Socket connection
     socketRef.current = io(api.defaults.baseURL, {
       query: { tenantId }
     });
 
-    // Listen for new orders
-    socketRef.current.on('new_order', (data) => {
-      // Refresh list to get db state or optimistic update
-      // Simple re-fetch is safest for consistency
+    socketRef.current.on('new_order', () => {
       fetchOrders();
     });
     
-    // Also listen for closed tables to update status to COMPLETED
     socketRef.current.on('table_closed', () => {
         fetchOrders();
     });
@@ -114,13 +105,11 @@ export default function Dashboard() {
     };
   }, [tenantId]);
 
-
-
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
   };
 
-  // 1. Daily Revenue Flow
+  // Calculations for Charts
   const calculateDailyRevenue = () => {
     const today = new Date().toDateString();
     const todayOrders = orders.filter(o => o.status === 'TAMAMLANDI' && o.created_at && new Date(o.created_at).toDateString() === today);
@@ -133,7 +122,6 @@ export default function Dashboard() {
     });
   };
 
-  // 2. Branch Performance
   const calculateBranchPerf = () => {
     const perfMap = {};
     const validOrders = orders.filter(o => o.status === 'TAMAMLANDI');
@@ -145,7 +133,6 @@ export default function Dashboard() {
     return Object.entries(perfMap).map(([name, total]) => ({ name, total }));
   };
 
-  // 3. Top Products
   const calculateTopProducts = () => {
     const prodMap = {};
     const validOrders = orders.filter(o => o.status === 'TAMAMLANDI');
@@ -161,7 +148,6 @@ export default function Dashboard() {
         .slice(0, 5);
   };
 
-  // 4. Category Distribution
   const calculateCategoryDist = () => {
     const distMap = {};
     const validOrders = orders.filter(o => o.status === 'TAMAMLANDI');
@@ -187,9 +173,20 @@ export default function Dashboard() {
 
   const shouldShowGodMode = isGodMode || isMobile;
 
+  if (loading) {
+      return (
+          <div className="min-h-screen flex items-center justify-center bg-white text-black">
+              <div className="text-center">
+                  <div className="spinner mx-auto mb-4"></div>
+                  <p className="text-xs font-black uppercase tracking-widest animate-pulse">YÜKLENİYOR</p>
+              </div>
+          </div>
+      );
+  }
+
   if (shouldShowGodMode) {
     return (
-      <div className="p-8 h-full bg-black text-white overflow-y-auto relative">
+      <div className="p-8 h-full bg-black text-white overflow-y-auto relative font-sans">
         <div className="flex justify-between items-center border-b-2 border-white pb-4 mb-8">
             <h1 className="text-xl md:text-2xl font-black uppercase tracking-[0.2em]">
                 {isMobile ? 'MOBİL ANALİZ' : 'ANALİTİK KONTROL ÜSSÜ // GOD MODE'}
@@ -222,7 +219,6 @@ export default function Dashboard() {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
-          {/* DAILY REVENUE */}
           <div className="border border-white/20 bg-white/5 p-6 backdrop-blur-md">
              <div className="mb-4 flex justify-between items-center text-[10px] font-mono tracking-widest text-gray-500 uppercase">
                 <span>METRİK: GÜNLÜK GELİR AKIŞI</span>
@@ -233,7 +229,6 @@ export default function Dashboard() {
              </div>
           </div>
 
-          {/* BRANCH PERFORMANCE */}
           <div className="border border-white/20 bg-white/5 p-6 backdrop-blur-md">
              <div className="mb-4 flex justify-between items-center text-[10px] font-mono tracking-widest text-gray-500 uppercase">
                 <span>METRİK: ŞUBE PERFORMANSI</span>
@@ -244,7 +239,6 @@ export default function Dashboard() {
              </div>
           </div>
 
-          {/* TOP PRODUCTS */}
           <div className="border border-white/20 bg-white/5 p-6 backdrop-blur-md">
              <div className="mb-4 flex justify-between items-center text-[10px] font-mono tracking-widest text-gray-500 uppercase">
                 <span>METRİK: EN ÇOK SATANLAR</span>
@@ -255,7 +249,6 @@ export default function Dashboard() {
              </div>
           </div>
 
-          {/* CATEGORY DISTRIBUTION */}
           <div className="border border-white/20 bg-white/5 p-6 backdrop-blur-md">
              <div className="mb-4 flex justify-between items-center text-[10px] font-mono tracking-widest text-gray-500 uppercase">
                 <span>METRİK: KATEGORİ DAĞILIMI</span>
@@ -266,68 +259,66 @@ export default function Dashboard() {
              </div>
           </div>
         </div>
-
-        {/* Global Stats Overlay */}
-
-
-
       </div>
     );
   }
 
   // Standard View
   return (
-    <div className="p-8 h-full relative">
-      <h1 className="text-2xl font-bold uppercase mb-6">Canlı Durum</h1>
+    <div className="p-8 h-full relative font-sans text-black">
+      <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-black uppercase tracking-widest">Canlı Durum</h1>
+          <button onClick={fetchOrders} className="p-2 border border-black hover:bg-black hover:text-white transition-colors">
+              <RefreshCcw size={20}/>
+          </button>
+      </div>
       
-      <div className="w-full border border-black max-w-5xl">
+      <div className="w-full border-2 border-black max-w-5xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-black bg-gray-100">
-              <th className="p-4 border-r border-black font-bold uppercase text-sm">Sipariş ID</th>
-              <th className="p-4 border-r border-black font-bold uppercase text-sm">Tarih</th>
-              <th className="p-4 border-r border-black font-bold uppercase text-sm">Bayi / Masa</th>
-              <th className="p-4 border-r border-black font-bold uppercase text-sm">Durum</th>
-              <th className="p-4 font-bold uppercase text-sm">Tutar</th>
-              <th className="p-4 border-l border-black font-bold uppercase text-sm text-center">İşlem</th>
+            <tr className="border-b-2 border-black bg-black text-white">
+              <th className="p-4 font-bold uppercase text-xs tracking-widest">Sipariş ID</th>
+              <th className="p-4 font-bold uppercase text-xs tracking-widest">Tarih</th>
+              <th className="p-4 font-bold uppercase text-xs tracking-widest">Bayi / Masa</th>
+              <th className="p-4 font-bold uppercase text-xs tracking-widest">Durum</th>
+              <th className="p-4 font-bold uppercase text-xs tracking-widest">Tutar</th>
+              <th className="p-4 font-bold uppercase text-xs tracking-widest text-center">İşlem</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 ? (
                <tr>
-                 <td colSpan="6" className="p-4 text-center text-gray-400 italic">HENÜZ SİPARİŞ YOK</td>
+                 <td colSpan="6" className="p-8 text-center text-gray-400 font-bold uppercase italic">HENÜZ SİPARİŞ YOK</td>
                </tr>
             ) : orders.map((row, idx) => (
               <tr key={idx} className="border-b border-black last:border-b-0 hover:bg-gray-50 transition-colors">
-                <td className="p-4 border-r border-black font-mono">{row.id}</td>
-                <td className="p-4 border-r border-black font-mono text-xs">
-                    {new Date(row.created_at).toLocaleDateString('tr-TR')} <br/>
-                    {new Date(row.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
+                <td className="p-4 border-r border-gray-200 font-mono font-bold">#{row.id}</td>
+                <td className="p-4 border-r border-gray-200 font-mono text-xs">
+                    {new Date(row.created_at).toLocaleDateString('tr-TR')} <span className="text-gray-400">|</span> {new Date(row.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
                 </td>
-                <td className="p-4 border-r border-black text-sm">
-                    <div className="font-bold">{row.branch_name || '-'}</div>
-                    <div className="text-xs text-gray-500">{row.table_no || '-'}</div>
+                <td className="p-4 border-r border-gray-200 text-sm">
+                    <div className="font-black uppercase">{row.branch_name || '-'}</div>
+                    <div className="text-xs text-gray-500 font-mono uppercase">{row.table_no || '-'}</div>
                 </td>
-                <td className="p-4 border-r border-black text-xs font-bold">
-                  <span className={`px-2 py-1 ${
-                    row.status === 'DOLU' || row.status === 'PENDING' ? 'bg-red-600 text-black animate-pulse' : 
-                    row.status === 'TAMAMLANDI' || row.status === 'COMPLETED' ? 'bg-green-600 text-black' :
-                    'bg-gray-200 text-black'
-                  }`}>
-                    {row.status}
+                <td className="p-4 border-r border-gray-200 text-xs font-bold">
+                  <span className={`px-3 py-1 uppercase tracking-widest font-black inline-block text-[10px]
+                    ${row.status === 'DOLU' || row.status === 'PENDING' ? 'bg-black text-white animate-pulse' : 
+                      row.status === 'TAMAMLANDI' || row.status === 'COMPLETED' ? 'bg-white text-black border border-black' :
+                      'bg-gray-200 text-gray-600'}`}>
+                    {row.status === 'PENDING' ? 'BEKLİYOR' : row.status}
                   </span>
                 </td>
-                <td className="p-4 font-mono border-r border-black">
+                <td className="p-4 font-mono font-bold border-r border-gray-200">
                   {typeof row.amount === 'string' ? row.amount : 
                    typeof row.total_amount === 'number' ? `₺${row.total_amount.toFixed(2)}` :
                    row.total_amount ? `₺${parseFloat(row.total_amount).toFixed(2)}` : '₺0.00'}
                 </td>
-                <td className="p-4 border-l border-black text-center">
+                <td className="p-4 text-center">
                    <button 
                      onClick={() => handleViewOrder(row)}
-                     className="text-xs underline hover:no-underline"
+                     className="text-xs font-bold uppercase underline hover:no-underline hover:bg-black hover:text-white px-2 py-1 transition-colors"
                    >
-                     GÖRÜNTÜLE
+                     DETAY
                    </button>
                 </td>
               </tr>
@@ -336,8 +327,6 @@ export default function Dashboard() {
         </table>
       </div>
 
-
-
         {/* View Modal */}
         <Modal 
           isOpen={!!selectedOrder}
@@ -345,28 +334,43 @@ export default function Dashboard() {
           title="SİPARİŞ DETAYI"
         >
           {selectedOrder && (
-            <div>
-              <p className="mb-2"><strong>ID:</strong> {selectedOrder.id}</p>
-              <p className="mb-2"><strong>Masa:</strong> {selectedOrder.table_no}</p>
-              <p className="mb-2"><strong>Şube:</strong> {selectedOrder.branch_name}</p>
-              <p className="mb-2"><strong>Durum:</strong> {selectedOrder.status}</p>
-              <p className="mb-2"><strong>Tutar:</strong> {
-                typeof selectedOrder.amount === 'string' ? selectedOrder.amount :
-                typeof selectedOrder.total_amount === 'number' ? `₺${selectedOrder.total_amount.toFixed(2)}` :
-                selectedOrder.total_amount ? `₺${parseFloat(selectedOrder.total_amount).toFixed(2)}` : '₺0.00'
-              }</p>
-              <div className="mt-4 border-t border-gray-300 pt-2">
-                <strong>İçerik:</strong>
+            <div className="font-mono text-sm">
+              <div className="grid grid-cols-2 gap-4 mb-4 border-b border-black pb-4">
+                  <div>
+                      <div className="text-[10px] text-gray-500 font-bold uppercase">ID</div>
+                      <div className="text-lg font-black">#{selectedOrder.id}</div>
+                  </div>
+                  <div className="text-right">
+                      <div className="text-[10px] text-gray-500 font-bold uppercase">Tutar</div>
+                      <div className="text-lg font-black">
+                        {typeof selectedOrder.amount === 'string' ? selectedOrder.amount :
+                        typeof selectedOrder.total_amount === 'number' ? `₺${selectedOrder.total_amount.toFixed(2)}` :
+                        selectedOrder.total_amount ? `₺${parseFloat(selectedOrder.total_amount).toFixed(2)}` : '₺0.00'}
+                      </div>
+                  </div>
+                  <div>
+                      <div className="text-[10px] text-gray-500 font-bold uppercase">Masa</div>
+                      <div className="font-bold">{selectedOrder.table_no}</div>
+                  </div>
+                  <div className="text-right">
+                      <div className="text-[10px] text-gray-500 font-bold uppercase">Şube</div>
+                      <div className="font-bold">{selectedOrder.branch_name}</div>
+                  </div>
+              </div>
+
+              <div>
+                <strong className="text-black uppercase text-xs tracking-widest block mb-2">Sipariş İçeriği</strong>
                 {selectedOrder.details || selectedOrder.items ? (
-                  <div className="mt-2 space-y-1">
+                  <div className="space-y-1">
                     {(selectedOrder.details || selectedOrder.items || []).map((item, idx) => (
-                      <div key={idx} className="text-sm bg-gray-50 p-2 rounded">
-                        {item.name} x{item.quantity || 1} = ₺{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                      <div key={idx} className="flex justify-between bg-gray-50 p-2 border border-gray-100">
+                        <span className="font-bold">{item.name} <span className="text-xs font-normal text-gray-500">x{item.quantity || 1}</span></span>
+                        <span>₺{((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400 mt-1">Detay bulunamadı</p>
+                  <p className="text-xs text-gray-400 italic">Detay bulunamadı</p>
                 )}
               </div>
             </div>

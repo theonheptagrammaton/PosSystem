@@ -16,10 +16,15 @@ export default function Users() {
     full_name: '' 
   });
   const { showNotification } = useNotification();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUsers();
-    fetchBranches();
+    const init = async () => {
+        setLoading(true);
+        await Promise.all([fetchUsers(), fetchBranches()]);
+        setLoading(false);
+    };
+    init();
   }, []);
 
   const fetchUsers = async () => {
@@ -81,13 +86,21 @@ export default function Users() {
     }
   };
 
+  if (loading) {
+      return (
+          <div className="h-full flex items-center justify-center">
+              <div className="spinner"></div>
+          </div>
+      );
+  }
+
   return (
-    <div className="p-8 h-full">
-       <div className="flex justify-between items-center mb-6 border-b border-black pb-2">
-        <h1 className="text-2xl font-bold uppercase tracking-widest">Kullanıcı Yönetimi</h1>
+    <div className="p-8 h-full font-sans text-black">
+       <div className="flex justify-between items-center mb-6 border-b-2 border-black pb-4">
+        <h1 className="text-2xl font-black uppercase tracking-widest">Kullanıcı Yönetimi</h1>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black border border-black transition-colors flex items-center gap-2"
+          className="bg-black text-white px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-white hover:text-black border-2 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] flex items-center gap-2"
         >
           <Plus size={16} />
           <span>Yeni Kullanıcı</span>
@@ -96,43 +109,52 @@ export default function Users() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {users.map(user => (
-          <div key={user.id} className="border border-black p-6 hover:bg-gray-50 transition-colors relative">
-            <div className="flex justify-between items-start mb-4">
-               <div className="flex items-center gap-2">
-                 <User className="w-5 h-5" />
+          <div key={user.id} className="border-2 border-black p-6 hover:bg-gray-50 transition-colors shadow-sm relative group bg-white">
+            <div className="flex justify-between items-start mb-6">
+               <div className="flex items-center gap-3">
+                 <div className="p-2 bg-gray-100 border border-black">
+                    <User className="w-5 h-5" />
+                 </div>
                  <div>
-                    <h2 className="font-bold uppercase text-lg leading-none">{user.username}</h2>
-                    <span className="text-xs text-gray-400 font-mono">{user.full_name}</span>
+                    <h2 className="font-black uppercase text-lg leading-none tracking-wide">{user.username}</h2>
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{user.full_name}</span>
                  </div>
                </div>
                
-               {user.role !== 'admin' && ( // Prevent deleting other admins or self if api allowed
-                  <button onClick={() => handleDelete(user.id)} className="p-1 hover:bg-red-600 hover:text-white transition-colors border border-transparent hover:border-red-600">
-                    <Trash2 size={14} />
+               {user.role !== 'admin' && (
+                  <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-600 hover:text-white transition-colors border-2 border-transparent hover:border-black opacity-0 group-hover:opacity-100">
+                    <Trash2 size={16} />
                   </button>
                )}
             </div>
 
-            <div className="space-y-2 text-sm font-mono border-t border-gray-100 pt-2">
-               <div className="flex justify-between">
-                  <span className="text-gray-500">ROL:</span>
-                  <span className={`font-bold uppercase ${
-                      user.role === 'admin' ? 'text-purple-600' :
-                      user.role === 'branch_manager' ? 'text-blue-600' : 'text-green-600'
+            <div className="space-y-3 text-xs font-mono border-t-2 border-black pt-4">
+               <div className="flex justify-between items-center">
+                  <span className="text-gray-500 font-bold uppercase tracking-wide">ROL</span>
+                  <span className={`font-black uppercase px-2 py-0.5 border ${
+                      user.role === 'admin' ? 'bg-black text-white border-black' :
+                      user.role === 'branch_manager' ? 'bg-white text-black border-black' : 'bg-gray-100 text-gray-600 border-gray-300'
                   }`}>
                     {user.role === 'branch_manager' ? 'Bayi Yetkilisi' :
-                     user.role === 'cashier' ? 'Kasiyer' : user.role}
+                     user.role === 'cashier' ? 'Kasiyer' : 
+                     user.role === 'waiter' ? 'Garson' :
+                     user.role === 'kitchen' ? 'Mutfak' : 'Admin'}
                   </span>
                </div>
                {user.branch_id && (
-                   <div className="flex justify-between">
-                     <span className="text-gray-500">ŞUBE ID:</span>
-                     <span>{user.branch_id}</span>
+                   <div className="flex justify-between items-center">
+                     <span className="text-gray-500 font-bold uppercase tracking-wide">ŞUBE ID</span>
+                     <span className="font-bold">{user.branch_id}</span>
                    </div>
                )}
             </div>
           </div>
         ))}
+        {users.length === 0 && (
+            <div className="col-span-full text-center py-20 border-2 border-dashed border-gray-300 text-gray-400 font-black uppercase tracking-widest italic">
+                KULLANICI BULUNAMADI
+            </div>
+        )}
       </div>
 
       <Modal
@@ -140,42 +162,47 @@ export default function Users() {
         onClose={() => setIsModalOpen(false)}
         title="YENİ KULLANICI EKLE"
       >
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Rol</label>
-            <select 
-              className="w-full border border-black p-2 text-sm outline-none bg-white"
-              value={formData.role}
-              onChange={e => setFormData({...formData, role: e.target.value})}
-            >
-                <option value="cashier">Kasiyer (Sadece POS)</option>
-                <option value="waiter">Garson (Mobil Sipariş)</option>
-                <option value="kitchen">Mutfak (KDS Ekranı)</option>
-                <option value="branch_manager">Bayi Yetkilisi (Şube Yönetimi)</option>
-                {/* Admin creation can be restricted or allowed */}
-            </select>
+            <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Rol</label>
+            <div className="relative">
+                <select 
+                className="w-full border-2 border-black p-3 text-sm font-bold uppercase outline-none bg-white appearance-none"
+                value={formData.role}
+                onChange={e => setFormData({...formData, role: e.target.value})}
+                >
+                    <option value="cashier">Kasiyer (Sadece POS)</option>
+                    <option value="waiter">Garson (Mobil Sipariş)</option>
+                    <option value="kitchen">Mutfak (KDS Ekranı)</option>
+                    <option value="branch_manager">Bayi Yetkilisi (Şube Yönetimi)</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-xs">▼</div>
+            </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Şube</label>
-            <select 
-              className="w-full border border-black p-2 text-sm outline-none bg-white"
-              value={formData.branch_id}
-              onChange={e => setFormData({...formData, branch_id: e.target.value})}
-              required
-            >
-                {branches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-            </select>
-            <p className="text-[10px] text-gray-400 mt-1">Bu kullanıcı sadece seçili şubeye erişebilecek.</p>
+            <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Şube</label>
+            <div className="relative">
+                <select 
+                className="w-full border-2 border-black p-3 text-sm font-bold uppercase outline-none bg-white appearance-none"
+                value={formData.branch_id}
+                onChange={e => setFormData({...formData, branch_id: e.target.value})}
+                required
+                >
+                    {branches.map(b => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-xs">▼</div>
+            </div>
+            <p className="text-[9px] text-gray-400 mt-1 font-bold uppercase tracking-wide">Kullanıcı sadece bu şubeye erişebilir.</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Ad Soyad</label>
+            <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Ad Soyad</label>
             <input 
               type="text" 
-              className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
+              className="w-full border-2 border-black p-3 text-sm font-bold uppercase focus:bg-gray-50 outline-none placeholder:text-gray-300"
               value={formData.full_name}
               onChange={e => setFormData({...formData, full_name: e.target.value})}
               placeholder="Personel Adı"
@@ -183,32 +210,32 @@ export default function Users() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Kullanıcı Adı</label>
+            <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Kullanıcı Adı</label>
             <input 
               type="text" 
               required
-              className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
+              className="w-full border-2 border-black p-3 text-sm font-bold uppercase focus:bg-gray-50 outline-none placeholder:text-gray-300"
               value={formData.username}
               onChange={e => setFormData({...formData, username: e.target.value})}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1 uppercase">Şifre</label>
+            <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Şifre</label>
             <input 
               type="password" 
               required
               minLength={6}
-              className="w-full border border-black p-2 text-sm focus:bg-gray-50 outline-none"
+              className="w-full border-2 border-black p-3 text-sm font-bold focus:bg-gray-50 outline-none placeholder:text-gray-300"
               value={formData.password}
               onChange={e => setFormData({...formData, password: e.target.value})}
-              placeholder="En az 6 karakter"
+              placeholder="******"
             />
           </div>
 
           <button 
             type="submit" 
-            className="bg-black text-white p-3 font-bold uppercase tracking-widest hover:bg-gray-800 mt-4"
+            className="bg-black text-white w-full py-4 font-black uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-black border-2 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
           >
             OLUŞTUR
           </button>
