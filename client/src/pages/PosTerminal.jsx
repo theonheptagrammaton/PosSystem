@@ -168,13 +168,14 @@ export default function PosTerminal() {
       setSelectedTable(id);
   };
 
-    const handleProductClick = async (product, selectedOptions = []) => {
+    const handleProductClick = async (product, selectedOptions = [], forceAdd = false) => {
       if (!selectedTable) {
         showNotification({ title: 'UYARI', message: 'Lütfen önce bir masa veya sipariş türü seçin!', type: 'info' });
         return;
       }
 
-      if (!selectedOptions.length && product.options && product.options.length > 0) {
+      // Only force modal open if NOT coming from the modal confirmation (forceAdd is false)
+      if (!forceAdd && !selectedOptions.length && product.options && product.options.length > 0) {
           setOptionModal({ product, selected: [] });
           return;
       }
@@ -636,7 +637,7 @@ export default function PosTerminal() {
 
                     <div className="p-6 border-t-2 border-black bg-white shrink-0">
                         <button 
-                            onClick={() => handleProductClick(optionModal.product, optionModal.selected)}
+                            onClick={() => handleProductClick(optionModal.product, optionModal.selected, true)}
                             className="w-full bg-black text-white py-4 font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none border-2 border-black"
                         >
                             EKLE (₺{(parseFloat(optionModal.product.price) + optionModal.selected.reduce((a,b)=>a+b.price_change,0)).toFixed(2)})

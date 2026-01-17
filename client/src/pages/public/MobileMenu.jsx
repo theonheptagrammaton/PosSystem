@@ -281,10 +281,10 @@ export default function MobileMenu() {
                                                 onClick={() => removeFromCart(`${product.id}-`)}
                                                 className="w-10 h-10 flex items-center justify-center text-black hover:bg-gray-100 transition-colors border-r-2 border-black active:bg-gray-200"
                                               >
-                                                <Minus size={16} strokeWidth={3} />
+                                                <Minus size={16} strokeWidth={3} color="black" />
                                               </button>
                                               
-                                              <div className="font-black min-w-[40px] text-center text-lg">
+                                              <div className="font-black min-w-[40px] text-center text-lg text-black">
                                                 {getProductQty(product.id)}
                                               </div>
 
@@ -292,7 +292,7 @@ export default function MobileMenu() {
                                                 onClick={() => addToCart(product)}
                                                 className="w-10 h-10 flex items-center justify-center text-black hover:bg-gray-100 transition-colors border-l-2 border-black active:bg-gray-200"
                                               >
-                                                <Plus size={16} strokeWidth={3} />
+                                                <Plus size={16} strokeWidth={3} color="black" />
                                               </button>
                                           </div>
                                       </div>
