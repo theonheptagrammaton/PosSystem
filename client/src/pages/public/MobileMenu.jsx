@@ -223,11 +223,6 @@ export default function MobileMenu() {
 
           return (
             <div key={cat.id} className="animate-fadeIn">
-              <div className="flex items-center gap-4 mb-4">
-                  <div className="h-px bg-black flex-1"></div>
-                  <h2 className="font-black text-lg uppercase tracking-[0.2em] text-center bg-black text-white px-4 py-1 transform -skew-x-12">{cat.name}</h2>
-                  <div className="h-px bg-black flex-1"></div>
-              </div>
               
               {/* Products List */}
               <div className="flex flex-col gap-4">
@@ -270,7 +265,7 @@ export default function MobileMenu() {
                                             onClick={() => setOptionModal({ product, selected: [] })}
                                             className="bg-black text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
                                           >
-                                            SEÇENEK EKLE
+                                            SEÇENEKLER
                                           </button>
                                       </div>
                                   ) : (
