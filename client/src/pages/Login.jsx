@@ -92,8 +92,16 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs font-mono text-gray-500">
-          SECURE_GATEWAY_V1
+        <div className="mt-6 text-center text-xs font-mono text-gray-400 flex flex-col items-center gap-2">
+          <div>GÜRÜLTÜNÜN ÜZERİNDE ÇALIŞAN SİSTEMLER</div>
+          <a 
+            href="https://theon.com.tr" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-[10px] opacity-50 hover:opacity-100 transition-opacity uppercase tracking-widest"
+          >
+            theon.com.tr
+          </a>
         </div>
       </div>
     </div>

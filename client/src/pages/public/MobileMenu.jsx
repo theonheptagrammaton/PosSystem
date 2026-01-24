@@ -143,8 +143,18 @@ export default function MobileMenu() {
             YENİ SİPARİŞ VER
         </button>
         
-        <div className="absolute bottom-8 text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-            MASA: {tableId}
+        <div className="absolute bottom-8 flex flex-col items-center gap-2">
+            <div className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                MASA: {tableId}
+            </div>
+            <a 
+              href="https://theon.com.tr" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[9px] text-gray-700 opacity-40 hover:opacity-100 transition-opacity uppercase tracking-widest font-black"
+            >
+              theon.com.tr
+            </a>
         </div>
       </div>
     );
@@ -301,6 +311,18 @@ export default function MobileMenu() {
             </div>
           );
         })}
+      </div>
+      
+      {/* Footer Link */}
+      <div className="flex justify-center pb-8 opacity-30">
+        <a 
+          href="https://theon.com.tr" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-[9px] font-black uppercase tracking-[0.3em] hover:opacity-100 transition-all"
+        >
+          Powered by theon.com.tr
+        </a>
       </div>
 
       {cartItemCount > 0 && (
