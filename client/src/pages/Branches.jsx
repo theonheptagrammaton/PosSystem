@@ -64,7 +64,11 @@ export default function Branches() {
       await api.delete(`/api/branches/${id}`);
       fetchBranches();
     } catch (err) {
-      showNotification({ title: 'HATA', message: 'Silme işlemi başarısız', type: 'error' });
+      showNotification({ 
+        title: 'HATA', 
+        message: 'Silme işlemi başarısız: ' + (err.response?.data?.error || err.message), 
+        type: 'error' 
+      });
     }
   };
 

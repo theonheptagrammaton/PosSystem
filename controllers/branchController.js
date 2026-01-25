@@ -89,7 +89,7 @@ const deleteBranch = async (req, res) => {
     res.json({ message: 'Branch deleted successfully' });
   } catch (error) {
     console.error('Error deleting branch:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Silme işlemi başarısız: ' + error.message });
   }
 };
 
