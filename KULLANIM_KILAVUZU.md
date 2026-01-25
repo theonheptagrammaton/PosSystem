@@ -1,100 +1,109 @@
-# THEON POS: AKILLI İŞLETME YÖNETİM SİSTEMİ
-## Kullanım Kılavuzu & İşletme Rehberi
+# THEON POS & QR SİSTEMİ: İŞLETME SAHİBİ KULLANIM KILAVUZU
 
-Bu kılavuz, **Theon POS** sisteminin tüm yeteneklerini ve bu yeteneklerin işletmenize sağlayacağı verimliliği maksimize etmek için hazırlanmıştır. Sistemimiz sadece bir kasa programı değil, mutfaktan masaya, kasanızdan analiz raporlarınıza kadar tüm operasyonunuzu birbirine bağlayan akıllı bir ekosistemdir.
-
----
-
-## 1. Neden Theon POS? (İşletmenize Faydaları)
-
-Theon POS, modern restoran ve kafe işletmeciliğinin ihtiyaç duyduğu 3 temel sütun üzerine inşa edilmiştir:
-
-*   **Sıfır Hata:** Garsonun masada aldığı sipariş, aynı saniyede mutfaktaki şefin önündeki ekrana düşer. El yazısı hataları veya sözlü yanlış anlamalar tarih olur.
-*   **Maksimum Hız:** QR Menü sayesinde müşteri garson beklemeden siparişini verebilir, mutfak personeli tek tuşla garsona "sipariş hazır" bildirimi gönderebilir.
-*   **Veriye Dayalı Büyüme:** Hangi ürünün ne kadar kazandırdığını, en yoğun saatinizde kaç personel gerektiğini tahmin eden "God Mode" analizleri ile stratejik kararlar alırsınız.
+Bu kılavuz, işletmenizi modernize etmek, operasyonel hızınızı %40'a kadar artırmak ve cironuzu yapay zeka destekli taktiklerle büyütmek için tasarlanmış olan **Theon POS** sisteminin tüm yeteneklerini keşfetmenizi sağlar.
 
 ---
 
-## 2. Sistemin Temel Bileşenleri
+## 1. SİSTEMİN İŞLETMENİZE SAĞLAYACAĞI TEMEL FAYDALAR
 
-Sistemimiz dört ana panelden oluşur ve hepsi gerçek zamanlı (Real-time) olarak birbiriyle konuşur:
-
-### A. Yönetici Paneli (Dashboard & God Mode)
-İşletmenizin kontrol merkezidir. Satışları naklen izleyebilir, ürünlerinizi güncelleyebilir ve derinlemesine cirosal analizler yapabilirsiniz.
-*   **God Mode:** Kara temaslı özel arayüzü ile yapay zeka destekli "Kâr Artırma Taktikleri" sunar. (Örn: "En yoğun saatiniz 20:00, personel sayısını artırın.")
-
-### B. POS Terminali (Kasa Ekranı)
-Kasada duran yetkilinin her şeye hâkim olduğu ekrandır. Tüm masaların doluluk oranı, bekleyen onaylar ve ödeme işlemleri buradan yönetilir.
-
-### C. Garson Paneli (Mobil Sipariş)
-Garsonlarınızın herhangi bir tablet veya telefondan eriştiği, masada sipariş alıp anında mutfağa geçtiği hızlı arabirimdir.
-
-### D. Mutfak Paneli (Üretim Takibi)
-Aşçıların önündeki dijital sipariş fişidir. Hazırlanan siparişler tek dokunuşla "Hazır" olarak işaretlenir.
+Theon POS, sadece bir kasa programı değildir; işletmenizin sinir sistemidir.
+*   **Sıfır Hata Prosedürü**: QR menü ve garson paneli sayesinde siparişlerin yanlış iletilme ihtimali ortadan kalkar.
+*   **Maksimum Hız**: Mutfak ve servis arasındaki fiziksel mesafeyi dijital köprüyle kapatır. Sipariş anında mutfaktadır.
+*   **Canlı Denetim**: Dünyanın neresinde olursanız olun, kasanızdaki kuruşuna kadar tüm trafiği canlı izleyebilirsiniz.
+*   **Stratejik Karar Destek**: Hangi ürününüz "yıldız", hangisi "ölü yatırım"? Sistem bunu sizin için analiz eder.
+*   **Müşteri Memnuniyeti**: "Garson nerede?" sorusunu bitiren "Garson Çağır" ve hızlı servis altyapısı.
 
 ---
 
-## 3. YENİ: Akıllı Bildirim Sistemi (Personel Haberleşmesi)
+## 2. BAŞLANGIÇ: İLK ADIMLAR (ONBOARDING)
 
-Theon POS, artık kendi içinde bir haberleşme ağına sahiptir. Tüm panellerin sağ üstünde bulunan **Zil (Bildirim)** ikonu, işletme içi koordinasyonu sağlar.
+Sisteme ilk giriş yaptığınızda karşınıza çıkan **Onboarding (Kurulum)** ekranı, işletmenizin kimliğini oluşturur.
 
-### Zil Sesi (Zil.mp3)
-Sistemdeki her kritik işlemde (yeni sipariş, masa çağrısı vb.) özel bir **Zil Sesi** çalar. Bu sayede personel sürekli ekrana bakmak zorunda kalmaz, sesi duyduğunda işlem yapar.
-
-### Kişi Çağırma Özelliği
-1. Herhangi bir panelden sağ üstteki zil simgesine tıklayın.
-2. **"Kişiler"** sekmesine gidin.
-3. İşletmedeki herhangi bir personelin ismine tıklayın.
-4. O personelin ekranında anında sesli bir uyarı ve **"X sizi çağırıyor"** bildirimi görünecektir. 
-   *(Örn: Kasa, mutfağa "şefim bir bakar mısın" demek yerine tek tıkla çağrı atabilir.)*
-
-### Bildirim Yönetimi
-Gelen bildirimler **"Tamamlandı"** olarak işaretlenene kadar listede kalır. **"Ertele"** seçeneği ile bildirimi listede tutup modal penceresini kapatabilirsiniz.
+1.  **Şirket Adı**: Faturanızı ve menünüzü temsil edecek resmi veya ticari adınız.
+2.  **Yönetici Bilgileri**: Sizinle iletişim kurulacak ana hesap detayları.
+3.  **Hızlı Kurulum**: Bu aşamayı tamamladıktan sonra sistem sizi doğrudan ana yönetim paneline yönlendirir.
 
 ---
 
-## 4. Akıllı QR Menü & Garson Çağırma
+## 3. ANALİTİK KONTROL ÜSSÜ (DASHBOARD & GOD MODE)
 
-Müşterileriniz masadaki QR kodu okuttuğunda karşılarına çıkan dijital menüden şunları yapabilirler:
+İşletme sahibi olarak en çok vakit geçireceğiniz alan burasıdır.
 
-*   **Garson Çağır Butonu:** Müşteri menünün en üstündeki **"Garson Çağır"** butonuna bastığında; işletmedeki tüm garsonların ve kasanın paneline anında bir **Zil Sesu** uyarısı gider: *"MASA X GARSON BEKLİYOR."*
-*   **Dijital Sipariş:** Müşteri kendi siparişini sepete ekleyip onayladığında, bu sipariş POS ekranına "Onay Bekliyor" olarak düşer. Onaylandığı an mutfağa iletilir.
+### Canlı Durum İzleme
+*   **Günlük Gelir Akışı**: Gün içindeki satış hacmini saatlik grafiklerle görün.
+*   **Şube Performansı**: Birden fazla şubeniz varsa, hangi şubenin "yarışı önde götürdüğünü" anlık izleyin.
+*   **Kapasite Takibi**: İşletmenizin yüzde kaçının dolu olduğunu (`Occupancy Rate`) yukarıdaki sayaçtan takip edin.
 
----
-
-## 5. Operasyonel İş Akışı (Örnek Senaryo)
-
-1.  **Müşteri Gelir:** Masadaki QR kodu okutur.
-2.  **Hızlı Hazırlık:** Müşteri kararsız kalırsa QR menüdeki **"Garson Çağır"**a basar. Garsonun cebine sesli bildirim gider.
-3.  **Sipariş:** Garson mobil panelinden veya müşteri QR menüden siparişi verir.
-4.  **Üretim:** Mutfak panelindeki fiş anında yanıp sönmeye başlar ve sesli uyarı çalar. Şef siparişi hazırlar.
-5.  **Servis:** Şef mutfak ekranında "Hazır" butonuna basar. Garsona ve kasaya "Sipariş Hazır" bildirimi ve **Zil Sesi** gider.
-6.  **Ödeme:** Müşteri kasaya gelir, kasiyer POS ekranından ilgili masayı seçer ve "Hesabı Kapat" diyerek işlemi bitirir. Tüm veriler anında "Raporlar" kısmına yazılır.
+### GOD MODE (Analitik Mod)
+Dashboard üzerindeki butona bastığınızda açılan bu mod, size işletme koçluğu yapar:
+*   **Saatlik Yoğunluk**: Mutfağa en çok yükün bineceği saatleri önceden tahmin etmenizi sağlar.
+*   **Yapay Zeka Taktikleri**: Sistem verileri tarar ve size; *"X ürünü hiç satılmıyor, menüden çıkarın"* veya *"Garsonlarınıza şu ürünü önermesini söyleyerek ciro artırabilirsiniz"* gibi somut öneriler sunar.
 
 ---
 
-## 6. Kurulum ve Ayarlar
+## 4. POS TERMİNALİ: MERKEZİ KOMUTA (KASA)
 
-### Şube ve Masa Ayarları
-`Sol Menü > Şubeler` kısmından yeni şube ekleyebilir veya mevcut şubenin masa sayısını güncelleyebilirsiniz. Masa sayısı güncellendiğinde `Masalar` bölümünde QR kodlar otomatik oluşturulur.
+Kasa başında duran personel veya sizin tarafınızdan kullanılan tam kapsamlı yönetim ekranıdır.
 
-### Ürün ve Kategori Yönetimi
-`Sol Menü > Envanter` kısmından ürünlerinizin fiyatlarını güncelleyebilir, yeni fotoğraflar ekleyebilir veya stokta biten ürünleri geçici olarak satışa kapatabilirsiniz.
-
-### Personel Hesapları
-`Sol Menü > Kullanıcılar` kısmından her personele uygun rolü tanımlayın:
-*   **Admin:** Tam yetki ve analizler.
-*   **Kasiyer:** Sadece POS ve Ödeme.
-*   **Garson:** Sadece mobil sipariş.
-*   **Mutfak:** Sadece üretim ekranı.
+*   **Masa Yönetimi**: Sol tarafta tüm masalarınızın doluluk durumunu (Siyah: Dolu, Beyaz: Boş) görebilirsiniz.
+*   **Sipariş Onayı**: QR Menüden veya Garson Paneli'nden gelen siparişler "Onay Bekliyor" şeklinde kasanıza düşer. Siz onaylamadan mutfağa gitmez (Opsiyonel güvenli mod).
+*   **Ödeme Alma (Hesabı Kapat)**: Masaya tıklandığında "Hesabı Kapat" butonuyla ödemeyi tek tıkla alır ve masayı yeni müşteri için hazır (boş) hale getirirsiniz.
+*   **Ürün Ekleme**: Sağ taraftaki kategorilerden hızlıca seçim yaparak masaya doğrudan ürün ekleyebilirsiniz.
 
 ---
 
-## 7. Önemli İpuçları & Güvenlik
+## 5. GARSON PANELİ: SAHA OPERASYONU
 
-*   **İlk Tıklama:** Tarayıcıların ses politikası gereği, sayfa açıldığında ekrana en az bir kez tıklanmalıdır. Bu sayede **Zil Sesleri** aktif hale gelir.
-*   **Z-Raporu:** Her akşam `Raporlar` bölümünden günün Z-Raporunu alıp sistem dışı kaydedebilirsiniz.
-*   **Bağlantı:** Eğer Wi-Fi koparsa sistem sizi uyaracaktır. Sayfayı yenilemek bağlantıyı (Socket.io) tekrar kuracaktır.
+Garsonların elindeki tablet veya telefonlarla kullandığı mobil uyumlu arayüzdür.
+
+*   **Masalar**: Garson, sadece masayı seçer ve siparişleri ekler.
+*   **Sipariş Notu**: *"Az pişmiş olsun"* veya *"Buzlu gelsin"* gibi notları anında iletir.
+*   **Mutfakla Senkronizasyon**: Garson, siparişi gönderdiği an mutfak ekranı canlanır ve zil sesiyle aşçıları uyarır.
 
 ---
-**Theon POS** ile işletmenizi kağıt kalem karmaşasından kurtarıp, dijital hıza ve veri odaklı kazanca taşıyın. Başarılar dileriz!
+
+## 6. MUTFAK PANELİ: ÜRETİM YÖNETİMİ
+
+Aşçıların ve bar personelinin kullandığı "sipariş kuyruğu" ekranıdır.
+
+*   **Sipariş Kartları**: Gelen her sipariş, masa numarası ve sipariş saatiyle birlikte birer kart olarak görünür.
+*   **Hazırlanıyor / Hazır**: Personel siparişi hazırlamaya başladığında ilgili butona basar, bitirdiğinde ise "HAZIR" butonuna basar.
+*   **Anlık Uyarı**: Yeni bir sipariş düştüğünde mutfakta yüksek bir **Zil Sesi** çalar.
+
+---
+
+## 7. QR MENÜ: MÜŞTERİ DENEYİMİ
+
+Müşterilerin masadaki QR kodu okutarak ulaştığı dijital dünyadır.
+
+1.  **Sipariş Verme**: Müşteri kendi telefonundan ürünleri seçer, seçeneklerini (örn: şeker miktarı) belirler ve siparişini gönderir.
+2.  **GARSON ÇAĞIR**: Menünün üst kısmındaki butona basıldığında, tüm panellerde (POS ve Garson) sesli bir uyarı çalar ve **"X Masası Garson Bekliyor"** bildirimi çıkar. Bu özellik garsonların masaları sürekli gözle kontrol etme yükünü ortadan kaldırır.
+
+---
+
+## 8. BİLDİRİM VE İLETİŞİM SİSTEMİ (ZİL SESİ)
+
+Sistemin en güçlü yanlarından biri ekip içi iletişimdir.
+
+*   **Zil İkonu (Sağ Üst)**: Tüm yönetim panellerinde bulunur.
+*   **Bildirimler Sekmesi**: Gelen garson çağırma veya yönetici çağrılarını listeler. "Tamamlandı" diyerek silebilirsiniz.
+*   **Kişiler Sekmesi**: İşletmedeki diğer aktif personeli listeler. Bir isme tıkladığınızda, o personelin cihazında yüksek sesli bir **ZİL** çalar ve ekranında *"Sizi çağırıyorlar"* mesajı çıkar.
+
+---
+
+## 9. YÖNETİM VE AYARLAR
+
+*   **Ürünler & Kategoriler**: Resim yükleyebilir, fiyatları anında güncelleyebilir ve stok durumuna göre "stokta yok" işaretlemesi yapabilirsiniz.
+*   **Şube Yönetimi**: Yeni şube açabilir, şube bazlı masa sayılarını belirleyebilirsiniz.
+*   **Kullanıcı Yönetimi**: Kasacı, Garson, Mutfak veya Yönetici rollerinde personel tanımlayabilir ve yetkilerini sınırlayabilirsiniz.
+
+---
+
+## 10. PROFESYONEL İPUÇLARI
+
+1.  **Ses Ayarları**: Sistemdeki zil seslerinin duyulması için herhangi bir tarayıcı sayfasında ilk açılışta ekrana en az bir kez tıklamanız yeterlidir (Tarayıcı güvenlik kuralı).
+2.  **Dashboard Kullanımı**: Sabah kahvenizi içerken Dashboard'daki "Yapay Zeka Taktikleri"ni okumayı alışkanlık edinin.
+3.  **QR Menü Resimleri**: Ürünlerinize iştah açıcı resimler eklemeyi unutmayın; görseli olan ürünlerin satılma ihtimali %30 daha fazladır.
+
+---
+**Theon POS ile işletmenizi geleceğe taşıyoruz. İyi çalışmalar!**
