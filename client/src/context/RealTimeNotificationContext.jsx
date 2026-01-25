@@ -22,14 +22,38 @@ export function RealTimeNotificationProvider({ children }) {
 
     const fetchUsers = useCallback(async () => {
         try {
-            // For notification center, we need all users of the tenant to call them
-            // We use the existing users endpoint
             const res = await api.get('/api/users');
             setUsers(res.data);
         } catch (err) {
             console.error('Error fetching users for notification:', err);
         }
     }, []);
+
+    // Function to play sound reliably
+    const playZil = useCallback(() => {
+        if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(e => {
+                console.warn('Audio play failed (waiting for interaction):', e);
+            });
+        }
+    }, []);
+
+    // Unlock audio on first interaction
+    useEffect(() => {
+        const unlock = () => {
+            playZil();
+            // After first play attempt (even if failed/silent), we can remove listener
+            window.removeEventListener('click', unlock);
+            window.removeEventListener('touchstart', unlock);
+        };
+        window.addEventListener('click', unlock);
+        window.addEventListener('touchstart', unlock);
+        return () => {
+            window.removeEventListener('click', unlock);
+            window.removeEventListener('touchstart', unlock);
+        };
+    }, [playZil]);
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -40,15 +64,32 @@ export function RealTimeNotificationProvider({ children }) {
             query: { tenantId: user.tenant_id }
         });
 
+        // 1. Listen for manual notifications (User to User, QR to Waiter)
         newSocket.on('new_notification', (notification) => {
-            // Check if notification is for this user, for all waiters, or if user is admin (sees all)
             const isForMe = notification.to_user_id === user.id;
             const isWaiterCall = notification.type === 'CALL_WAITER' && (user.role === 'waiter' || user.role === 'admin');
             const isAdmin = user.role === 'admin';
 
             if (isForMe || isWaiterCall || isAdmin) {
                 setNotifications(prev => [notification, ...prev]);
-                audioRef.current.play().catch(e => console.error('Audio play error:', e));
+                playZil();
+            }
+        });
+
+        // 2. Listen for new orders (Notify POS/Kitchen)
+        newSocket.on('new_order', (data) => {
+            // Play sound for approvals or new pending orders
+            const isAdminOrKitchen = user.role === 'admin' || user.role === 'kitchen';
+            if (isAdminOrKitchen && (data.status === 'WAITING_APPROVAL' || data.status === 'PENDING')) {
+                playZil();
+            }
+        });
+
+        // 3. Listen for order ready (Notify Waiter/POS)
+        newSocket.on('order_ready', () => {
+            const isWaiterOrAdmin = user.role === 'waiter' || user.role === 'admin';
+            if (isWaiterOrAdmin) {
+                playZil();
             }
         });
 
