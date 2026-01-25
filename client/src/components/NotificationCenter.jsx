@@ -100,8 +100,8 @@ export default function NotificationCenter() {
                                             {u.username.substring(0, 2)}
                                         </div>
                                         <div>
-                                            <div className="text-xs font-black uppercase">{u.full_name || u.username}</div>
-                                            <div className="text-[9px] font-mono text-zinc-400 uppercase">{u.role}</div>
+                                            <div className="text-xs font-black uppercase text-black">{u.full_name || u.username}</div>
+                                            <div className="text-[9px] font-mono text-zinc-500 uppercase">{u.role}</div>
                                         </div>
                                     </button>
                                 ))}
