@@ -5,6 +5,7 @@ import { ShoppingCart, ArrowLeft, Trash2, Utensils, CheckCircle, RefreshCcw, Bel
 import notificationSound from '../assets/zil.mp3';
 import io from 'socket.io-client';
 import { useNotification } from '../context/NotificationContext';
+import NotificationCenter from '../components/NotificationCenter';
 
 export default function PosTerminal() {
   const { branchId } = useParams();
@@ -283,7 +284,10 @@ export default function PosTerminal() {
                 <button onClick={() => window.close()} className="hover:text-gray-300"><ArrowLeft /></button>
                 <h1 className="font-black tracking-widest text-lg uppercase">{branch.name} POS</h1>
             </div>
-            <div className="font-mono text-sm font-bold opacity-75">{new Date().toLocaleTimeString()}</div>
+            <div className="flex items-center gap-6">
+                <div className="font-mono text-sm font-bold opacity-75 hidden md:block">{new Date().toLocaleTimeString()}</div>
+                <NotificationCenter />
+            </div>
         </div>
 
         <div className="flex-1 flex overflow-hidden">

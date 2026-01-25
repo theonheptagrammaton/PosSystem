@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { LogOut, Send, Trash2, ArrowLeft, ArrowRight, Table } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
+import NotificationCenter from '../components/NotificationCenter';
 
 export default function WaiterPanel() {
   const { branchId } = useParams();
@@ -135,9 +136,12 @@ export default function WaiterPanel() {
                       <h1 className="text-3xl font-black uppercase tracking-tighter">Masa Seçimi</h1>
                       <p className="text-xs font-bold text-gray-400 font-mono">LÜTFEN İŞLEM YAPILACAK MASAYI SEÇİNİZ</p>
                   </div>
-                  <button onClick={() => navigate('/')} className="p-3 bg-black text-white hover:bg-white hover:text-black border border-black transition-all">
-                      <LogOut size={20}/>
-                  </button>
+                  <div className="flex items-center gap-4">
+                      <NotificationCenter />
+                      <button onClick={() => navigate('/')} className="p-3 bg-black text-white hover:bg-white hover:text-black border border-black transition-all">
+                          <LogOut size={20}/>
+                      </button>
+                  </div>
               </div>
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                   {tables.map(t => (
@@ -162,8 +166,11 @@ export default function WaiterPanel() {
           <div className="bg-black text-white p-4 flex justify-between items-center shrink-0 border-b border-white/20">
               <button onClick={() => setActiveTab('TABLES')} className="p-2 hover:bg-white/20 transition-colors"><ArrowLeft/></button>
               <div className="font-black text-xl tracking-widest uppercase">MASA {selectedTable}</div>
-              <div className="bg-white text-black w-8 h-8 flex items-center justify-center font-bold text-sm border-2 border-white">
-                  {cart.reduce((a,b) => a + b.quantity, 0)}
+              <div className="flex items-center gap-3">
+                  <NotificationCenter />
+                  <div className="bg-white text-black w-8 h-8 flex items-center justify-center font-bold text-sm border-2 border-white">
+                      {cart.reduce((a,b) => a + b.quantity, 0)}
+                  </div>
               </div>
           </div>
 

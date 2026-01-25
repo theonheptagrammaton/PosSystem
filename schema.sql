@@ -44,3 +44,20 @@ CREATE INDEX idx_users_tenant ON users(tenant_id);
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_branches_tenant ON branches(tenant_id);
 CREATE INDEX idx_users_tenant_username ON users(tenant_id, username);
+
+-- Notifications Table
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    from_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    to_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    table_no VARCHAR(20),
+    message TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    type VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_notifications_tenant ON notifications(tenant_id);
+CREATE INDEX idx_notifications_to_user ON notifications(to_user_id);
+CREATE INDEX idx_notifications_status ON notifications(status);

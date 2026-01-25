@@ -5,12 +5,15 @@ import App from './App.jsx'
 
 import { GodModeProvider } from './context/GodModeContext.jsx'
 import { NotificationProvider } from './context/NotificationContext.jsx'
+import { RealTimeNotificationProvider } from './context/RealTimeNotificationContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <GodModeProvider>
       <NotificationProvider>
-        <App />
+        <RealTimeNotificationProvider>
+            <App />
+        </RealTimeNotificationProvider>
       </NotificationProvider>
     </GodModeProvider>
   </StrictMode>,

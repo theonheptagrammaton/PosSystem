@@ -69,6 +69,7 @@ const productRoutes = require('./routes/productRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 // --- EKSİK OLAN SATIRLAR BURADA BİTİYOR ---
 
 // Temel Rota (Sağlık Kontrolü)
@@ -95,6 +96,9 @@ app.use('/api/branches', branchRoutes);
 
 // Admin için
 app.use('/api/admin', adminRoutes);
+
+// Bildirimler için
+app.use('/api/notifications', notificationRoutes);
 
 // Veritabanı Bağlantı Kontrolü
 pool.connect()

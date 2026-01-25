@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api';
-import { ChevronDown, ChevronUp, Minus, Plus, CheckCircle, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Minus, Plus, CheckCircle, X, Bell } from 'lucide-react';
 
 export default function MobileMenu() {
   const { tenantId, branchId, tableId } = useParams(); 
@@ -120,6 +120,21 @@ export default function MobileMenu() {
     }
   };
 
+  const handleWaiterCall = async () => {
+    try {
+        await api.post('/api/notifications', {
+            tenant_id: tenantId,
+            table_no: tableId,
+            message: `MASA ${tableId} GARSON BEKLİYOR.`,
+            type: 'CALL_WAITER'
+        });
+        alert('Garson çağrıldı!');
+    } catch (err) {
+        console.error('Garson çağrılamadı:', err);
+        alert('İşlem başarısız.');
+    }
+  };
+
   const totalAmount = calculateTotal();
   const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -193,6 +208,12 @@ export default function MobileMenu() {
          <h1 className="text-xl font-black uppercase tracking-[0.3em] text-center leading-relaxed">{data.company_name || 'RESTORAN MENÜ'}</h1>
          <div className="h-4 w-[2px] bg-black my-2"></div>
          <p className="text-[10px] font-black text-gray-400 tracking-[0.2em] uppercase">MASA {tableId}</p>
+         <button 
+            onClick={handleWaiterCall}
+            className="mt-4 px-4 py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border-2 border-black hover:bg-white hover:text-black transition-all"
+         >
+            <Bell size={14} /> GARSON ÇAĞIR
+         </button>
       </div>
 
       {/* Sticky Categories Bar */}

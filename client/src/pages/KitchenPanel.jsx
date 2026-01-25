@@ -4,6 +4,7 @@ import io from 'socket.io-client';
 import { useNotification } from '../context/NotificationContext';
 import { ChefHat, Clock, CheckCircle, XCircle, Bell, RefreshCcw, LogOut } from 'lucide-react';
 import notificationSound from '../assets/zil.mp3';
+import NotificationCenter from '../components/NotificationCenter';
 
 export default function KitchenPanel() {
     const [orders, setOrders] = useState([]);
@@ -116,9 +117,12 @@ export default function KitchenPanel() {
                          <div className="text-gray-400 text-[10px] font-black uppercase tracking-tighter">BEKLEYEN SİPARİŞ</div>
                          <div className="text-black text-4xl font-black">{orders.length}</div>
                     </div>
-                    <button onClick={fetchActiveOrders} className="bg-white text-black border border-black p-3 hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none group">
-                        <RefreshCcw size={20} className="group-active:rotate-180 transition-transform" />
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <NotificationCenter />
+                        <button onClick={fetchActiveOrders} className="bg-white text-black border border-black p-3 hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none group">
+                            <RefreshCcw size={20} className="group-active:rotate-180 transition-transform" />
+                        </button>
+                    </div>
                     <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login'; }} className="bg-red-50 text-red-600 border border-red-200 p-3 hover:bg-red-600 hover:text-white transition-all">
                         <LogOut size={20} />
                     </button>
