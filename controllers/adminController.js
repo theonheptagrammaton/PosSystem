@@ -50,11 +50,25 @@ const getGlobalStats = async (req, res) => {
 // --- Tenant Management ---
 const getAllTenants = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM tenants ORDER BY created_at DESC');
+    const query = `
+      SELECT 
+        t.id, 
+        t.company_name, 
+        t.domain, 
+        t.is_active, 
+        t.created_at,
+        u.username as admin_username,
+        u.password as admin_password,
+        u.id as admin_user_id
+      FROM tenants t
+      LEFT JOIN users u ON u.tenant_id = t.id AND u.role = 'admin'
+      ORDER BY t.created_at DESC
+    `;
+    const result = await pool.query(query);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching tenants:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error: ' + error.message });
   }
 };
 
@@ -92,12 +106,50 @@ const createTenant = async (req, res) => {
         admin_user: userRes.rows[0]
     });
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
     console.error('Error creating tenant:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Sistem Hatası: ' + error.message });
   } finally {
-      client.release();
+      if (client) client.release();
   }
+};
+
+const updateTenantAdmin = async (req, res) => {
+    const { id } = req.params; // tenant_id
+    const { admin_username, admin_password, company_name, domain } = req.body;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Update Tenant Info
+        await client.query(
+            'UPDATE tenants SET company_name = $1, domain = $2 WHERE id = $3',
+            [company_name, domain, id]
+        );
+
+        // 2. Update Admin User Info
+        // We look for the user with role 'admin' for this tenant
+        const userRes = await client.query(
+            'UPDATE users SET username = $1, password = $2 WHERE tenant_id = $3 AND role = $4 RETURNING id',
+            [admin_username, admin_password, id, 'admin']
+        );
+
+        if (userRes.rows.length === 0) {
+            // If no admin user exists, maybe create one? 
+            // But for now let's just assume it exists if it was created via createTenant
+            throw new Error('İşletme yöneticisi bulunamadı.');
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'İşletme ve yönetici bilgileri güncellendi' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error updating tenant admin:', error);
+        res.status(500).json({ error: 'Güncelleme hatası: ' + error.message });
+    } finally {
+        client.release();
+    }
 };
 
 const deleteTenant = async (req, res) => {
@@ -226,5 +278,6 @@ module.exports = {
   getAllTenants,
   createTenant,
   deleteTenant,
-  getSalesAnalytics
+  getSalesAnalytics,
+  updateTenantAdmin
 };

@@ -31,6 +31,15 @@ export default function SuperAdmin() {
     const [adminUser, setAdminUser] = useState('');
     const [adminPass, setAdminPass] = useState('');
 
+    // Editing State
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState({
+        company_name: '',
+        domain: '',
+        admin_username: '',
+        admin_password: ''
+    });
+
     useEffect(() => {
         const init = async () => {
              setLoading(true);
@@ -101,6 +110,31 @@ export default function SuperAdmin() {
             showNotification({ title: 'BAŞARILI', message: 'Şirket silindi', type: 'info' });
         } catch (err) {
             showNotification({ title: 'HATA', message: 'Silme başarısız', type: 'error' });
+        }
+    };
+
+    const handleEditClick = (t) => {
+        setEditingId(t.id);
+        setEditForm({
+            company_name: t.company_name,
+            domain: t.domain || '',
+            admin_username: t.admin_username || '',
+            admin_password: t.admin_password || ''
+        });
+    };
+
+    const handleUpdateTenant = async () => {
+        try {
+            await api.put(`/api/admin/tenants/${editingId}`, editForm);
+            showNotification({ title: 'BAŞARILI', message: 'Bilgiler güncellendi', type: 'info' });
+            setEditingId(null);
+            fetchTenants();
+        } catch (err) {
+            showNotification({ 
+                title: 'HATA', 
+                message: 'Güncelleme başarısız: ' + (err.response?.data?.error || err.message), 
+                type: 'error' 
+            });
         }
     };
 
@@ -333,6 +367,8 @@ export default function SuperAdmin() {
                                         <th className="p-4 border-r border-white/10">ID</th>
                                         <th className="p-4 border-r border-white/10">Şirket Adı</th>
                                         <th className="p-4 border-r border-white/10">Domain</th>
+                                        <th className="p-4 border-r border-white/10">Admin K.Adı</th>
+                                        <th className="p-4 border-r border-white/10">Admin Şifre</th>
                                         <th className="p-4 border-r border-white/10">Oluşturulma</th>
                                         <th className="p-4 text-center">İşlem</th>
                                     </tr>
@@ -341,22 +377,84 @@ export default function SuperAdmin() {
                                     {tenants.map(t => (
                                         <tr key={t.id} className="hover:bg-white/5 transition-colors group">
                                             <td className="p-4 font-mono text-gray-500 border-r border-white/10">#{t.id}</td>
-                                            <td className="p-4 font-bold text-white border-r border-white/10 uppercase tracking-wide">{t.company_name}</td>
-                                            <td className="p-4 font-mono border-r border-white/10">{t.domain || '-'}</td>
+                                            <td className="p-4 font-bold text-white border-r border-white/10">
+                                                {editingId === t.id ? (
+                                                    <input 
+                                                        className="bg-zinc-900 border border-white/30 px-2 py-1 text-xs w-full outline-none focus:border-white"
+                                                        value={editForm.company_name}
+                                                        onChange={e => setEditForm({...editForm, company_name: e.target.value})}
+                                                    />
+                                                ) : t.company_name}
+                                            </td>
+                                            <td className="p-4 font-mono border-r border-white/10">
+                                                {editingId === t.id ? (
+                                                    <input 
+                                                        className="bg-zinc-900 border border-white/30 px-2 py-1 text-xs w-full outline-none focus:border-white"
+                                                        value={editForm.domain}
+                                                        onChange={e => setEditForm({...editForm, domain: e.target.value})}
+                                                    />
+                                                ) : (t.domain || '-')}
+                                            </td>
+                                            <td className="p-4 font-mono border-r border-white/10">
+                                                {editingId === t.id ? (
+                                                    <input 
+                                                        className="bg-zinc-900 border border-white/30 px-2 py-1 text-xs w-full outline-none focus:border-white text-blue-400"
+                                                        value={editForm.admin_username}
+                                                        onChange={e => setEditForm({...editForm, admin_username: e.target.value})}
+                                                    />
+                                                ) : (t.admin_username || '-')}
+                                            </td>
+                                            <td className="p-4 font-mono border-r border-white/10">
+                                                {editingId === t.id ? (
+                                                    <input 
+                                                        className="bg-zinc-900 border border-white/30 px-2 py-1 text-xs w-full outline-none focus:border-white text-green-400"
+                                                        value={editForm.admin_password}
+                                                        onChange={e => setEditForm({...editForm, admin_password: e.target.value})}
+                                                    />
+                                                ) : (t.admin_password || '-')}
+                                            </td>
                                             <td className="p-4 font-mono border-r border-white/10">{new Date(t.created_at).toLocaleDateString('tr-TR')}</td>
                                             <td className="p-4 text-center">
-                                                <button 
-                                                    onClick={() => handleDeleteTenant(t.id)}
-                                                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-white/10 transition-colors border border-transparent hover:border-red-900"
-                                                    title="SİL"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {editingId === t.id ? (
+                                                        <>
+                                                            <button 
+                                                                onClick={handleUpdateTenant}
+                                                                className="text-[9px] font-black bg-blue-600 text-white px-2 py-1 hover:bg-blue-500"
+                                                            >
+                                                                KAYDET
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => setEditingId(null)}
+                                                                className="text-[9px] font-black bg-zinc-800 text-white px-2 py-1 hover:bg-zinc-700"
+                                                            >
+                                                                İPTAL
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button 
+                                                                onClick={() => handleEditClick(t)}
+                                                                className="p-2 text-gray-500 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/20"
+                                                                title="DÜZENLE"
+                                                            >
+                                                                <Activity size={16} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDeleteTenant(t.id)}
+                                                                className="p-2 text-gray-500 hover:text-red-500 hover:bg-white/10 transition-colors border border-transparent hover:border-red-900"
+                                                                title="SİL"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
                                     {tenants.length === 0 && (
-                                        <tr><td colSpan="5" className="p-12 text-center italic uppercase font-bold tracking-widest text-gray-600">SİSTEM KAYITLI ŞİRKET YOK.</td></tr>
+                                        <tr><td colSpan="7" className="p-12 text-center italic uppercase font-bold tracking-widest text-gray-600">SİSTEM KAYITLI ŞİRKET YOK.</td></tr>
                                     )}
                                 </tbody>
                             </table>

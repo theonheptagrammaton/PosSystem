@@ -8,6 +8,7 @@ CREATE TYPE user_role AS ENUM ('admin', 'manager', 'cashier', 'waiter', 'kitchen
 CREATE TABLE tenants (
     id SERIAL PRIMARY KEY,
     company_name VARCHAR(255) NOT NULL,
+    domain VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

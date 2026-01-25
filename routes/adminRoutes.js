@@ -18,6 +18,7 @@ router.use(requireSuperAdmin);
 router.get('/stats', adminController.getGlobalStats);
 router.get('/tenants', adminController.getAllTenants);
 router.post('/tenants', adminController.createTenant);
+router.put('/tenants/:id', adminController.updateTenantAdmin);
 router.delete('/tenants/:id', adminController.deleteTenant);
 router.get('/analytics', adminController.getSalesAnalytics);
 

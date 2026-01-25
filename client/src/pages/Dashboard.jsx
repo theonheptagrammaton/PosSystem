@@ -511,7 +511,7 @@ export default function Dashboard() {
               <div>
                 <strong className="text-black uppercase text-xs tracking-widest block mb-2">Sipariş İçeriği</strong>
                 {selectedOrder.details || selectedOrder.items ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1 max-h-[40vh] overflow-y-auto pr-2">
                     {(selectedOrder.details || selectedOrder.items || []).map((item, idx) => (
                       <div key={idx} className="flex justify-between bg-gray-50 p-2 border border-gray-100">
                         <span className="font-bold">{item.name} <span className="text-xs font-normal text-gray-500">x{item.quantity || 1}</span></span>
