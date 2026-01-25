@@ -78,7 +78,7 @@ exports.createNotification = async (req, res) => {
         res.status(201).json(newNotification);
     } catch (error) {
         console.error('Error creating notification:', error);
-        res.status(500).json({ error: 'Bildirim oluşturulamadı' });
+        res.status(500).json({ error: 'Bildirim oluşturulamadı: ' + error.message });
     }
 };
 
