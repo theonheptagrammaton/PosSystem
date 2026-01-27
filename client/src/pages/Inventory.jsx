@@ -576,7 +576,7 @@ export default function Inventory() {
                  </button>
              </div>
              
-             <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2">
+             <div className="flex flex-col gap-2">
                  {formData.options.length === 0 && (
                      <div className="text-center text-[10px] text-gray-400 font-bold uppercase py-4 border-2 border-dashed border-gray-200">
                         Henüz seçenek eklenmedi.
