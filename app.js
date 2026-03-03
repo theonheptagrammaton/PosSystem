@@ -100,7 +100,7 @@ app.use('/api/admin', adminRoutes);
 // Bildirimler için
 app.use('/api/notifications', notificationRoutes);
 
-// Veritabanı Bağlantı Kontrolü
+// Veritabanı Bağlantı Kontrolü + Migration
 pool.connect()
     .then(client => {
         return client.query('SELECT NOW()')
@@ -108,9 +108,18 @@ pool.connect()
                 client.release()
                 console.log('Database connection successful:', res.rows[0].now);
             })
+            .then(() => {
+                // Migration: password_version sütunu yoksa ekle
+                return pool.query(`
+                    ALTER TABLE users
+                    ADD COLUMN IF NOT EXISTS password_version INT NOT NULL DEFAULT 1
+                `);
+            })
+            .then(() => {
+                console.log('Migration OK: password_version column ensured.');
+            })
             .catch(err => {
-                client.release()
-                console.error('Database connection error:', err.stack);
+                console.error('Database connection/migration error:', err.stack);
             });
     })
     .catch(err => console.error('Error acquiring client', err.stack));

@@ -128,10 +128,9 @@ const updateTenantAdmin = async (req, res) => {
             [company_name, domain, id]
         );
 
-        // 2. Update Admin User Info
-        // We look for the user with role 'admin' for this tenant
+        // 2. Update Admin User Info (password_version artırılarak mevcut oturumlar geçersiz kılınır)
         const userRes = await client.query(
-            'UPDATE users SET username = $1, password = $2 WHERE tenant_id = $3 AND role = $4 RETURNING id',
+            'UPDATE users SET username = $1, password = $2, password_version = COALESCE(password_version, 1) + 1 WHERE tenant_id = $3 AND role = $4 RETURNING id',
             [admin_username, admin_password, id, 'admin']
         );
 

@@ -99,14 +99,15 @@ const login = async (req, res) => {
 
     // 3. Token Oluştur
     const token = jwt.sign(
-      { 
+      {
         id: user.id,
-        userId: user.id, 
-        tenant_id: user.tenant_id, 
+        userId: user.id,
+        tenant_id: user.tenant_id,
         tenantId: user.tenant_id,
         role: user.role,
         branch_id: user.branch_id,
-        branchId: user.branch_id
+        branchId: user.branch_id,
+        passwordVersion: user.password_version || 1
       },
       process.env.JWT_SECRET || 'gizli_anahtar', // .env dosyasındaki secret
       { expiresIn: '24h' }

@@ -8,12 +8,15 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ 
-    username: '', 
-    password: '', 
-    role: 'cashier', 
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    role: 'cashier',
     branch_id: '',
-    full_name: '' 
+    full_name: ''
   });
   const { showNotification } = useNotification();
   const [loading, setLoading] = useState(true);
@@ -71,6 +74,23 @@ export default function Users() {
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      showNotification({ title: 'HATA', message: 'Şifre en az 6 karakter olmalı', type: 'error' });
+      return;
+    }
+    try {
+      await api.put(`/api/users/${selectedUser.id}`, { password: newPassword });
+      showNotification({ title: 'BAŞARILI', message: `${selectedUser.username} şifresi güncellendi, oturumu sonlandırıldı`, type: 'info' });
+      setIsPasswordModalOpen(false);
+      setNewPassword('');
+      setSelectedUser(null);
+    } catch (err) {
+      showNotification({ title: 'HATA', message: err.response?.data?.error || 'Şifre güncellenemedi', type: 'error' });
+    }
+  };
+
   const handleDelete = async (id) => {
     const confirmed = await showNotification({ 
       title: 'KULLANICIYI SİL', 
@@ -122,9 +142,18 @@ export default function Users() {
                </div>
                
                {user.role !== 'admin' && (
-                  <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-600 hover:text-white transition-colors border-2 border-transparent hover:border-black opacity-0 group-hover:opacity-100">
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => { setSelectedUser(user); setIsPasswordModalOpen(true); }}
+                      className="p-2 hover:bg-black hover:text-white transition-colors border-2 border-transparent hover:border-black opacity-0 group-hover:opacity-100"
+                      title="Şifre Değiştir"
+                    >
+                      <Key size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-600 hover:text-white transition-colors border-2 border-transparent hover:border-black opacity-0 group-hover:opacity-100">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                )}
             </div>
 
@@ -156,6 +185,36 @@ export default function Users() {
             </div>
         )}
       </div>
+
+      <Modal
+        isOpen={isPasswordModalOpen}
+        onClose={() => { setIsPasswordModalOpen(false); setNewPassword(''); setSelectedUser(null); }}
+        title={`ŞİFRE DEĞİŞTİR — ${selectedUser?.username || ''}`}
+      >
+        <form onSubmit={handleChangePassword} className="flex flex-col gap-5">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide border border-yellow-400 bg-yellow-50 px-3 py-2">
+            Şifre değiştirildiğinde kullanıcının mevcut oturumu <span className="text-black">anında sonlandırılır</span>.
+          </p>
+          <div>
+            <label className="block text-[10px] font-black mb-1 uppercase tracking-widest text-gray-500">Yeni Şifre</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              className="w-full border-2 border-black p-3 text-sm font-bold focus:bg-gray-50 outline-none placeholder:text-gray-300"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="En az 6 karakter"
+            />
+          </div>
+          <button
+            type="submit"
+            className="bg-black text-white w-full py-4 font-black uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-black border-2 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+          >
+            ŞİFREYİ GÜNCELLE
+          </button>
+        </form>
+      </Modal>
 
       <Modal
         isOpen={isModalOpen}

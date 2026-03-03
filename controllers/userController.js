@@ -103,6 +103,59 @@ exports.createUser = async (req, res) => {
   }
 };
 
+// Update User (Admin Only) - şifre değişince password_version artırılır
+exports.updateUser = async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId || req.user.tenant_id;
+    const { id } = req.params;
+    const { password, full_name, branch_id } = req.body;
+
+    if (!password && !full_name && !branch_id) {
+      return res.status(400).json({ error: 'Güncellenecek en az bir alan gerekli' });
+    }
+
+    // Kullanıcının bu tenant'a ait olduğunu doğrula
+    const check = await pool.query(
+      'SELECT id FROM users WHERE id = $1 AND tenant_id = $2',
+      [id, tenantId]
+    );
+    if (check.rows.length === 0) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (full_name !== undefined) {
+      updates.push(`full_name = $${idx++}`);
+      values.push(full_name);
+    }
+    if (branch_id !== undefined) {
+      updates.push(`branch_id = $${idx++}`);
+      values.push(branch_id);
+    }
+    if (password) {
+      updates.push(`password = $${idx++}`);
+      updates.push(`password_version = COALESCE(password_version, 1) + 1`);
+      values.push(password);
+    }
+
+    values.push(id);
+    values.push(tenantId);
+
+    await pool.query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx++} AND tenant_id = $${idx}`,
+      values
+    );
+
+    res.json({ message: 'Kullanıcı güncellendi' });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // Delete User
 exports.deleteUser = async (req, res) => {
   try {
