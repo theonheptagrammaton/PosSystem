@@ -39,11 +39,21 @@ export function RealTimeNotificationProvider({ children }) {
         }
     }, []);
 
-    // Unlock audio on first interaction
+    // Unlock audio context on first interaction (silently, no sound)
     useEffect(() => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const businessRoles = ['admin', 'waiter', 'kitchen', 'cashier', 'pos'];
+        if (!user || !businessRoles.includes(user.role)) return;
+
         const unlock = () => {
-            playZil();
-            // After first play attempt (even if failed/silent), we can remove listener
+            if (audioRef.current) {
+                audioRef.current.volume = 0;
+                audioRef.current.play().then(() => {
+                    audioRef.current.pause();
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.volume = 1;
+                }).catch(() => {});
+            }
             window.removeEventListener('click', unlock);
             window.removeEventListener('touchstart', unlock);
         };
@@ -53,7 +63,7 @@ export function RealTimeNotificationProvider({ children }) {
             window.removeEventListener('click', unlock);
             window.removeEventListener('touchstart', unlock);
         };
-    }, [playZil]);
+    }, []);
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
