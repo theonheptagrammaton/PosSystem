@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { hashPassword } = require('../utils/password');
 
 // --- Onboarding Logic ---
 exports.onboardUser = async (req, res) => {
@@ -63,7 +64,6 @@ exports.getUsers = async (req, res) => {
 exports.createUser = async (req, res) => {
   try {
     const tenantId = req.user.tenantId || req.user.tenant_id;
-    console.log('Creating user for Tenant:', tenantId, 'Body:', req.body); // DEBUG LOG
 
     const { username, password, role, branch_id, full_name } = req.body;
 
@@ -91,7 +91,7 @@ exports.createUser = async (req, res) => {
     // Insert
     const result = await pool.query(
       'INSERT INTO users (tenant_id, username, password, role, branch_id, full_name, is_onboarded) VALUES ($1, $2, $3, $4, $5, $6, TRUE) RETURNING id, username, role, branch_id',
-      [tenantId, username, password, role, branch_id, full_name || '']
+      [tenantId, username, await hashPassword(password), role, branch_id, full_name || '']
     );
 
     res.status(201).json(result.rows[0]);
@@ -138,7 +138,7 @@ exports.updateUser = async (req, res) => {
     if (password) {
       updates.push(`password = $${idx++}`);
       updates.push(`password_version = COALESCE(password_version, 1) + 1`);
-      values.push(password);
+      values.push(await hashPassword(password));
     }
 
     values.push(id);

@@ -5,17 +5,20 @@ const http = require('http');
 const { Server } = require('socket.io');
 require('dotenv').config();
 
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set.');
+  process.exit(1);
+}
+
 const app = express();
 const server = http.createServer(app);
 
 // --- GÜVENLİK AYARLARI (CORS) ---
-// Hem canlı siteyi hem de kendi bilgisayarını kabul edecek liste
-const allowedOrigins = [
-  "https://pos.theon.com.tr",
-  "https://posapi.theon.com.tr",
-  "http://localhost:5173",
-  "http://localhost:3000"
-];
+// ALLOWED_ORIGINS: virgülle ayrılmış liste (örn. "https://pos.example.com,http://localhost:5173")
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 
 // Socket.io Ayarları
 const io = new Server(server, {

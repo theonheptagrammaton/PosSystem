@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { hashPassword } = require('../utils/password');
 
 // --- Global Stats ---
 const getGlobalStats = async (req, res) => {
@@ -58,7 +59,6 @@ const getAllTenants = async (req, res) => {
         t.is_active, 
         t.created_at,
         u.username as admin_username,
-        u.password as admin_password,
         u.id as admin_user_id
       FROM tenants t
       LEFT JOIN users u ON u.tenant_id = t.id AND u.role = 'admin'
@@ -92,11 +92,10 @@ const createTenant = async (req, res) => {
     const newTenant = tenantRes.rows[0];
 
     // 2. Create Admin User for Tenant
-    // Note: In production you should hash the password! storing plain for now as per system behavior
     const userRes = await client.query(
         `INSERT INTO users (tenant_id, username, password, role, full_name, is_onboarded) 
-         VALUES ($1, $2, $3, 'admin', 'Mekan Sahibi', true) RETURNING *`,
-        [newTenant.id, admin_username, admin_password]
+         VALUES ($1, $2, $3, 'admin', 'Mekan Sahibi', true) RETURNING id, tenant_id, username, role, full_name`,
+        [newTenant.id, admin_username, await hashPassword(admin_password)]
     );
 
     await client.query('COMMIT');
@@ -128,11 +127,17 @@ const updateTenantAdmin = async (req, res) => {
             [company_name, domain, id]
         );
 
-        // 2. Update Admin User Info (password_version artırılarak mevcut oturumlar geçersiz kılınır)
-        const userRes = await client.query(
-            'UPDATE users SET username = $1, password = $2, password_version = COALESCE(password_version, 1) + 1 WHERE tenant_id = $3 AND role = $4 RETURNING id',
-            [admin_username, admin_password, id, 'admin']
-        );
+        // 2. Update Admin User Info
+        // Şifre boş bırakılırsa değiştirilmez; verilirse hash'lenir ve password_version artırılarak mevcut oturumlar geçersiz kılınır
+        const userRes = admin_password
+            ? await client.query(
+                'UPDATE users SET username = $1, password = $2, password_version = COALESCE(password_version, 1) + 1 WHERE tenant_id = $3 AND role = $4 RETURNING id',
+                [admin_username, await hashPassword(admin_password), id, 'admin']
+            )
+            : await client.query(
+                'UPDATE users SET username = $1 WHERE tenant_id = $2 AND role = $3 RETURNING id',
+                [admin_username, id, 'admin']
+            );
 
         if (userRes.rows.length === 0) {
             // If no admin user exists, maybe create one? 

@@ -119,7 +119,7 @@ export default function SuperAdmin() {
             company_name: t.company_name,
             domain: t.domain || '',
             admin_username: t.admin_username || '',
-            admin_password: t.admin_password || ''
+            admin_password: ''
         });
     };
 
@@ -408,10 +408,12 @@ export default function SuperAdmin() {
                                                 {editingId === t.id ? (
                                                     <input 
                                                         className="bg-zinc-900 border border-white/30 px-2 py-1 text-xs w-full outline-none focus:border-white text-green-400"
+                                                        type="password"
+                                                        placeholder="Değiştirmek için yeni şifre"
                                                         value={editForm.admin_password}
                                                         onChange={e => setEditForm({...editForm, admin_password: e.target.value})}
                                                     />
-                                                ) : (t.admin_password || '-')}
+                                                ) : '••••••'}
                                             </td>
                                             <td className="p-4 font-mono border-r border-white/10">{new Date(t.created_at).toLocaleDateString('tr-TR')}</td>
                                             <td className="p-4 text-center">
